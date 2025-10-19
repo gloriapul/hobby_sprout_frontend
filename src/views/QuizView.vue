@@ -1,0 +1,735 @@
+<template>
+  <div class="quiz-view">
+    <div class="quiz-header">
+      <h1>Hobby Personality Quiz</h1>
+      <p class="quiz-description">
+        Discover hobbies that match your personality! Answer these questions to get personalized
+        recommendations.
+      </p>
+    </div>
+
+    <div v-if="!quizStarted && !quizCompleted" class="quiz-intro">
+      <div class="intro-card">
+        <h2>Ready to find your perfect hobby?</h2>
+        <p>
+          This quiz will ask you about your preferences, interests, and personality traits to
+          recommend hobbies that suit you best.
+        </p>
+        <ul class="quiz-features">
+          <li>✨ Personalized recommendations</li>
+          <li>🎯 Based on your unique preferences</li>
+          <li>⏱️ Takes about 5 minutes</li>
+          <li>🔄 Retake anytime</li>
+        </ul>
+        <button @click="startQuiz" class="start-quiz-button">Start Quiz</button>
+      </div>
+    </div>
+
+    <div v-else-if="quizStarted && !quizCompleted" class="quiz-content">
+      <div class="progress-section">
+        <div class="progress-bar">
+          <div class="progress-fill" :style="{ width: progressPercentage + '%' }"></div>
+        </div>
+        <span class="progress-text"
+          >Question {{ currentQuestionIndex + 1 }} of {{ totalQuestions }}</span
+        >
+      </div>
+
+      <div v-if="currentQuestion" class="question-card">
+        <h2 class="question-text">{{ currentQuestion.text }}</h2>
+        <div class="answers-grid">
+          <button
+            v-for="answer in currentQuestion.answers"
+            :key="answer.id"
+            @click="selectAnswer(answer)"
+            class="answer-button"
+            :class="{ selected: selectedAnswer?.id === answer.id }"
+          >
+            {{ answer.text }}
+          </button>
+        </div>
+
+        <div class="question-actions">
+          <button
+            @click="previousQuestion"
+            :disabled="currentQuestionIndex === 0"
+            class="nav-button prev-button"
+          >
+            ← Previous
+          </button>
+          <button @click="nextQuestion" :disabled="!selectedAnswer" class="nav-button next-button">
+            {{ isLastQuestion ? 'Finish Quiz' : 'Next →' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div v-else-if="quizCompleted" class="quiz-results">
+      <div class="results-card">
+        <h2>🎉 Quiz Complete!</h2>
+        <div v-if="loadingMatch" class="loading-match">
+          <div class="loading-spinner"></div>
+          <p>Analyzing your responses to find your perfect hobby match...</p>
+        </div>
+        <div v-else-if="hobbyMatch" class="hobby-recommendation">
+          <h3>Your Perfect Hobby Match:</h3>
+          <div class="hobby-match-card">
+            <h4>{{ hobbyMatch }}</h4>
+            <p>This hobby has been carefully selected based on your personality and preferences!</p>
+            <div class="action-buttons">
+              <button @click="addHobbyToProfile" class="add-hobby-btn">✨ Add to My Hobbies</button>
+              <button @click="retakeQuiz" class="retake-btn">🔄 Take Quiz Again</button>
+            </div>
+          </div>
+        </div>
+        <div v-else class="no-match">
+          <p>Unable to generate a hobby match. Please try again.</p>
+          <button @click="retakeQuiz" class="retake-btn">Retake Quiz</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="loading" class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p>Processing your answers...</p>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { useProfileStore } from '@/stores/profile'
+import { ApiService } from '@/services/api'
+
+const router = useRouter()
+const authStore = useAuthStore()
+const profileStore = useProfileStore()
+
+// Quiz state
+const quizStarted = ref(false)
+const quizCompleted = ref(false)
+const loading = ref(false)
+const loadingMatch = ref(false)
+const currentQuestionIndex = ref(0)
+const selectedAnswer = ref<any>(null)
+const answers = ref<any[]>([])
+const hobbyMatch = ref<string | null>(null)
+
+// Sample quiz questions (in a real app, these would come from the QuizMatchmaker concept)
+const quizQuestions = ref([
+  {
+    id: 1,
+    text: 'How do you prefer to spend your free time?',
+    answers: [
+      { id: 1, text: 'Outdoors and active', value: 'outdoor_active' },
+      { id: 2, text: 'Indoors and creative', value: 'indoor_creative' },
+      { id: 3, text: 'Learning new skills', value: 'learning' },
+      { id: 4, text: 'Socializing with others', value: 'social' },
+    ],
+  },
+  {
+    id: 2,
+    text: 'What type of activities energize you most?',
+    answers: [
+      { id: 1, text: 'Physical challenges', value: 'physical' },
+      { id: 2, text: 'Mental puzzles', value: 'mental' },
+      { id: 3, text: 'Artistic expression', value: 'artistic' },
+      { id: 4, text: 'Helping others', value: 'helping' },
+    ],
+  },
+  {
+    id: 3,
+    text: 'How do you like to learn new things?',
+    answers: [
+      { id: 1, text: 'Hands-on practice', value: 'hands_on' },
+      { id: 2, text: 'Reading and research', value: 'reading' },
+      { id: 3, text: 'Watching tutorials', value: 'visual' },
+      { id: 4, text: 'Group classes', value: 'group' },
+    ],
+  },
+  {
+    id: 4,
+    text: "What's your ideal weekend activity?",
+    answers: [
+      { id: 1, text: 'Hiking or sports', value: 'outdoor_sports' },
+      { id: 2, text: 'Crafting or building', value: 'crafting' },
+      { id: 3, text: 'Reading or writing', value: 'intellectual' },
+      { id: 4, text: 'Cooking or gardening', value: 'practical' },
+    ],
+  },
+  {
+    id: 5,
+    text: 'How important is social interaction in your hobbies?',
+    answers: [
+      { id: 1, text: 'I prefer solo activities', value: 'solo' },
+      { id: 2, text: 'Small groups are perfect', value: 'small_group' },
+      { id: 3, text: 'The more people, the better', value: 'large_group' },
+      { id: 4, text: 'Depends on my mood', value: 'flexible' },
+    ],
+  },
+])
+
+const currentQuestion = computed(() => {
+  return quizQuestions.value[currentQuestionIndex.value]
+})
+
+const totalQuestions = computed(() => quizQuestions.value.length)
+
+const progressPercentage = computed(() => {
+  return ((currentQuestionIndex.value + 1) / totalQuestions.value) * 100
+})
+
+const isLastQuestion = computed(() => {
+  return currentQuestionIndex.value === totalQuestions.value - 1
+})
+
+const startQuiz = () => {
+  quizStarted.value = true
+  currentQuestionIndex.value = 0
+  answers.value = []
+  selectedAnswer.value = null
+}
+
+const selectAnswer = (answer: any) => {
+  selectedAnswer.value = answer
+}
+
+const nextQuestion = async () => {
+  if (!selectedAnswer.value) return
+
+  // Save the answer
+  answers.value[currentQuestionIndex.value] = selectedAnswer.value
+
+  // Submit response to API
+  if (authStore.user) {
+    try {
+      await ApiService.callConceptAction('QuizMatchmaker', 'submitResponse', {
+        user: authStore.user.id,
+        question: currentQuestion.value.id.toString(),
+        response: selectedAnswer.value.value,
+      })
+    } catch (error) {
+      console.error('Failed to submit quiz response:', error)
+    }
+  }
+
+  if (isLastQuestion.value) {
+    // Complete the quiz and generate hobby match
+    loading.value = true
+    quizCompleted.value = true
+
+    // Generate hobby match
+    await generateHobbyMatch()
+    loading.value = false
+  } else {
+    // Move to next question
+    currentQuestionIndex.value++
+    selectedAnswer.value = answers.value[currentQuestionIndex.value] || null
+  }
+}
+
+const previousQuestion = () => {
+  if (currentQuestionIndex.value > 0) {
+    currentQuestionIndex.value--
+    selectedAnswer.value = answers.value[currentQuestionIndex.value] || null
+  }
+}
+
+const viewRecommendations = () => {
+  // Store quiz results and navigate to recommendations
+  localStorage.setItem('quizResults', JSON.stringify(answers.value))
+  router.push('/dashboard/recommendations')
+}
+
+const generateHobbyMatch = async () => {
+  if (!authStore.user) return
+
+  loadingMatch.value = true
+  try {
+    const response = await ApiService.callConceptAction<{ matchedHobby: string }>(
+      'QuizMatchmaker',
+      'generateHobbyMatch',
+      { user: authStore.user.id },
+    )
+
+    if ('matchedHobby' in response) {
+      hobbyMatch.value = response.matchedHobby
+    }
+  } catch (error: any) {
+    console.error('Failed to generate hobby match:', error)
+    if (error.message?.includes('already exists')) {
+      // Get existing match
+      try {
+        const existingMatch = await ApiService.callConceptAction<{ hobbyMatch: string }>(
+          'QuizMatchmaker',
+          '_getMatchedHobby',
+          { user: authStore.user.id },
+        )
+        if ('hobbyMatch' in existingMatch) {
+          hobbyMatch.value = existingMatch.hobbyMatch
+        }
+      } catch (getError) {
+        console.error('Failed to get existing match:', getError)
+      }
+    }
+  } finally {
+    loadingMatch.value = false
+  }
+}
+
+const addHobbyToProfile = async () => {
+  if (!hobbyMatch.value || !authStore.user) return
+
+  try {
+    await profileStore.setHobby(hobbyMatch.value)
+    alert(
+      `${hobbyMatch.value} has been added to your hobbies! Now you can create goals for it in the Milestones section.`,
+    )
+    router.push('/dashboard/milestones')
+  } catch (error) {
+    console.error('Failed to add hobby to profile:', error)
+    alert('Failed to add hobby to profile. Please try again.')
+  }
+}
+
+const retakeQuiz = async () => {
+  if (authStore.user && hobbyMatch.value) {
+    try {
+      // Delete existing hobby match so user can generate a new one
+      await ApiService.callConceptAction('QuizMatchmaker', 'deleteHobbyMatch', {
+        user: authStore.user.id,
+      })
+    } catch (error) {
+      console.error('Failed to delete existing match:', error)
+    }
+  }
+
+  quizStarted.value = false
+  quizCompleted.value = false
+  currentQuestionIndex.value = 0
+  answers.value = []
+  selectedAnswer.value = null
+  hobbyMatch.value = null
+  loadingMatch.value = false
+}
+
+onMounted(() => {
+  // Check if user has existing quiz results
+  const existingResults = localStorage.getItem('quizResults')
+  if (existingResults) {
+    // Could show option to view previous results
+  }
+})
+</script>
+
+<style scoped>
+.quiz-view {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  position: relative;
+}
+
+.quiz-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.quiz-header h1 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 2.5rem;
+  background: linear-gradient(135deg, #81c784, #388e3c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.quiz-description {
+  color: #666;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.intro-card {
+  background: white;
+  border-radius: 16px;
+  padding: 3rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.intro-card h2 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.8rem;
+}
+
+.intro-card p {
+  color: #666;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.quiz-features {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.quiz-features li {
+  color: #555;
+  font-size: 1rem;
+  padding: 0.5rem;
+}
+
+.start-quiz-button {
+  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+  color: white;
+  border: none;
+  padding: 1rem 3rem;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.start-quiz-button:hover {
+  transform: translateY(-2px);
+}
+
+.quiz-content {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.progress-section {
+  padding: 2rem 2rem 1rem 2rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.progress-bar {
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #81c784, #388e3c);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.question-card {
+  padding: 3rem 2rem;
+}
+
+.question-text {
+  margin: 0 0 2rem 0;
+  color: #333;
+  font-size: 1.5rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.answers-grid {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 3rem;
+}
+
+.answer-button {
+  background: white;
+  border: 2px solid #e9ecef;
+  padding: 1.5rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  color: #333;
+}
+
+.answer-button:hover {
+  border-color: #388e3c;
+  background: #f8f9ff;
+}
+
+.answer-button.selected {
+  border-color: #388e3c;
+  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+  color: white;
+}
+
+.question-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.nav-button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.prev-button {
+  background: #f8f9fa;
+  color: #666;
+}
+
+.prev-button:hover:not(:disabled) {
+  background: #e9ecef;
+}
+
+.prev-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.next-button {
+  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+  color: white;
+}
+
+.next-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.next-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quiz-results {
+  text-align: center;
+  background: white;
+  border-radius: 16px;
+  padding: 3rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.results-header h2 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 2rem;
+}
+
+.results-header p {
+  color: #666;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.results-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.view-recommendations-button {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.view-recommendations-button:hover {
+  transform: translateY(-2px);
+}
+
+.retake-button {
+  background: transparent;
+  color: #388e3c;
+  border: 2px solid #667eea;
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.retake-button:hover {
+  background: #667eea;
+  color: white;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e9ecef;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-overlay p {
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.loading-match {
+  text-align: center;
+  padding: 2rem;
+}
+
+.loading-match .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e9ecef;
+  border-top: 3px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem auto;
+}
+
+.hobby-recommendation {
+  text-align: center;
+}
+
+.hobby-match-card {
+  background: linear-gradient(135deg, #f8f9ff, #ffffff);
+  border: 2px solid #667eea;
+  border-radius: 16px;
+  padding: 2rem;
+  margin: 1rem 0;
+}
+
+.hobby-match-card h4 {
+  font-size: 1.8rem;
+  color: #667eea;
+  margin: 0 0 1rem 0;
+  font-weight: 600;
+}
+
+.hobby-match-card p {
+  color: #666;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.add-hobby-btn {
+  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.add-hobby-btn:hover {
+  transform: translateY(-2px);
+}
+
+.retake-btn {
+  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.retake-btn:hover {
+  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+  color: white;
+}
+
+.no-match {
+  text-align: center;
+  padding: 2rem;
+}
+
+.no-match p {
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .quiz-view {
+    padding: 1rem;
+  }
+
+  .intro-card,
+  .question-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .quiz-header h1 {
+    font-size: 2rem;
+  }
+
+  .question-actions {
+    flex-direction: column;
+  }
+
+  .results-actions {
+    flex-direction: column;
+  }
+}
+</style>

@@ -1,0 +1,269 @@
+<template>
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="logo-section">
+        <img src="/HobbySproutLogo.png" alt="HobbySprout" class="logo" />
+        <h1>HobbySprout</h1>
+      </div>
+
+      <div class="header-actions">
+        <div class="user-menu">
+          <button ref="userButtonRef" @click="toggleUserMenu" class="user-button">
+            <div class="user-avatar">
+              {{ getUserInitials() }}
+            </div>
+            <span>{{ displayName }}</span>
+            <svg
+              class="chevron"
+              :class="{ open: showUserMenu }"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+
+          <Teleport to="body">
+            <div v-if="showUserMenu" class="user-dropdown" :style="dropdownStyle">
+              <button @click="handleLogout">Logout</button>
+            </div>
+          </Teleport>
+        </div>
+      </div>
+    </div>
+  </header>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { Teleport } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { useProfileStore } from '@/stores/profile'
+
+const router = useRouter()
+const authStore = useAuthStore()
+const profileStore = useProfileStore()
+
+const user = computed(() => authStore.user)
+const displayName = computed(() => {
+  // Use profile name if available, otherwise fall back to username
+  return profileStore.profile?.name || user.value?.username || 'User'
+})
+const showUserMenu = ref(false)
+const userButtonRef = ref<HTMLElement>()
+
+const dropdownStyle = ref({
+  position: 'fixed',
+  top: '80px',
+  right: '2rem',
+  zIndex: 1000,
+})
+
+const getUserInitials = () => {
+  const name = displayName.value
+  if (!name || name === 'User') return 'U'
+  return name
+    .split(' ')
+    .map((word) => word.charAt(0))
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+}
+
+const toggleUserMenu = () => {
+  showUserMenu.value = !showUserMenu.value
+  if (showUserMenu.value && userButtonRef.value) {
+    const rect = userButtonRef.value.getBoundingClientRect()
+    dropdownStyle.value = {
+      position: 'fixed',
+      top: `${rect.bottom + 8}px`,
+      right: '2rem',
+      zIndex: 1000,
+    }
+  }
+}
+
+const handleLogout = () => {
+  authStore.logout()
+  router.push('/login')
+}
+
+// Close menu when clicking outside
+const handleClickOutside = (e: Event) => {
+  if (
+    showUserMenu.value &&
+    userButtonRef.value &&
+    !(e.target as Element).closest('.user-menu') &&
+    !userButtonRef.value.contains(e.target as Node)
+  ) {
+    showUserMenu.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+
+  // Load profile if user is authenticated
+  if (user.value?.id) {
+    profileStore.loadProfile(user.value.id)
+  }
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+</script>
+
+<style scoped>
+.dashboard-header {
+  background: white;
+  border-bottom: 1px solid #e9ecef;
+  height: 80px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  overflow: visible;
+}
+
+.header-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  overflow: visible;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+}
+
+.logo-section h1 {
+  margin: 0;
+  color: #333;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-menu {
+  position: relative;
+  overflow: visible;
+}
+
+.user-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  background: #a5d6a7;
+  border-color: #388e3c;
+
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .user-button span {
+    color: #333;
+    font-weight: 500;
+  }
+
+  .chevron {
+    width: 16px;
+    height: 16px;
+    color: #666;
+    transition: transform 0.2s;
+  }
+
+  .chevron.open {
+    transform: rotate(180deg);
+  }
+
+  .user-dropdown {
+    position: fixed;
+    top: 80px;
+    right: 2rem;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 160px;
+    z-index: 1000;
+    overflow: visible;
+  }
+
+  .user-dropdown a,
+  .user-dropdown button {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: none;
+    text-align: left;
+    text-decoration: none;
+    color: #333;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  background: #eafbe7;
+}
+
+.user-dropdown a:first-child {
+  border-radius: 8px 8px 0 0;
+}
+
+.user-dropdown button:last-child {
+  border-radius: 0 0 8px 8px;
+  border-top: 1px solid #e9ecef;
+  color: #dc3545;
+}
+
+@media (max-width: 768px) {
+  .header-content {
+    padding: 0 1rem;
+  }
+
+  .logo-section h1 {
+    display: none;
+  }
+
+  .user-button span {
+    display: none;
+  }
+}
+</style>
