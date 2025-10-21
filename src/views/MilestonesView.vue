@@ -5,7 +5,6 @@
       <p class="page-description">Track your progress and achieve your hobby goals step by step</p>
     </div>
 
-    <!-- No Active Goal State -->
     <div v-if="!currentGoal && !loading" class="no-goal-state">
       <div class="no-goal-content">
         <div class="no-goal-icon">🎯</div>
@@ -24,12 +23,7 @@
               {{ hobby }}
             </button>
           </div>
-          <p class="or-divider">or</p>
         </div>
-
-        <button @click="showCreateGoal = true" class="create-goal-button">
-          Create Your First Goal
-        </button>
 
         <div class="get-started-tips">
           <p>
@@ -40,8 +34,8 @@
       </div>
     </div>
 
-    <!-- Active Goal State -->
-    <div v-else-if="currentGoal" class="active-goal-section">
+    <!-- Active Goal State: only show if currentGoal is active -->
+    <div v-else-if="currentGoal && currentGoal.isActive" class="active-goal-section">
       <div class="goal-header">
         <div class="goal-info">
           <h2>{{ currentGoal.description }}</h2>
@@ -50,9 +44,6 @@
             <span class="step-count">{{ totalSteps }} steps</span>
           </div>
         </div>
-        <!-- <div class="goal-actions">
-          <button @click="showCreateGoal = true" class="new-goal-button">+ New Goal</button>
-        </div> -->
       </div>
 
       <!-- Progress Overview -->
@@ -101,6 +92,11 @@
         <div v-else-if="currentGoalSteps.length === 0" class="no-steps">
           <p>No steps yet. Generate AI-powered steps or add your own!</p>
           <button @click="showAddStep = true" class="add-step-button">+ Add Manual Step</button>
+          <AddStepModal
+            v-if="showAddStep"
+            @close="showAddStep = false"
+            @stepAdded="handleStepAdded"
+          />
         </div>
 
         <div v-else class="steps-list">
@@ -145,9 +141,7 @@
           <p>
             You've completed your goal: <strong>{{ currentGoal.description }}</strong>
           </p>
-          <button @click="showCreateGoal = true" class="next-goal-button">
-            🎯 Set Your Next Goal
-          </button>*/
+          <button @click="resetForNewGoal" class="next-goal-button">🎯 Set Your Next Goal</button>
         </div>
       </div>
     </div>
@@ -171,12 +165,29 @@
 </template>
 
 <script setup lang="ts">
+// Reset page and allow user to pick a new hobby for next goal
+const resetForNewGoal = async () => {
+  // Mark the current goal as inactive and completed, and update backend
+  if (milestoneStore.currentGoal) {
+    milestoneStore.currentGoal.isActive = false
+    milestoneStore.currentGoal.completed = true
+    await milestoneStore.deleteGoal(milestoneStore.currentGoal.id)
+  }
+  milestoneStore.clearCurrentGoal()
+  milestoneStore.currentGoal = null
+  showCreateGoal.value = false
+  selectedHobbyForGoal.value = undefined
+  if (authStore.user) {
+    await milestoneStore.loadUserGoals(authStore.user.id)
+  }
+}
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
 import { useMilestoneStore } from '@/stores/milestone'
 import GoalCreationModal from '@/components/modals/GoalCreationModal.vue'
+import AddStepModal from '@/components/modals/AddStepModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -224,6 +235,11 @@ const generateStepsForCurrentGoal = async () => {
 const completeStep = async (stepId: string) => {
   try {
     await milestoneStore.completeStep(stepId)
+    // If all steps are now complete, reload goal state to trigger achievement section
+    if (currentGoal.value && goalProgress.value === 100 && authStore.user) {
+      await milestoneStore.loadUserGoals(authStore.user.id)
+      await milestoneStore.loadGoalSteps(currentGoal.value.id)
+    }
   } catch (error) {
     console.error('Failed to complete step:', error)
     alert('Failed to complete step. Please try again.')
@@ -246,20 +262,41 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString()
 }
 
-const handleGoalCreated = (goalId: string) => {
+const handleGoalCreated = async (goalData: {
+  description: string
+  steps: string[]
+  hobby: string
+}) => {
   showCreateGoal.value = false
   selectedHobbyForGoal.value = undefined
-  // Refresh the data
+  // Create the goal and immediately show the steps view
   if (authStore.user) {
-    milestoneStore.loadUserGoals(authStore.user.id)
+    const newGoal = await milestoneStore.createGoal(
+      authStore.user.id,
+      goalData.description,
+      goalData.hobby,
+    )
+    // Optionally, add steps if provided
+    if (goalData.steps && goalData.steps.length > 0) {
+      for (const step of goalData.steps) {
+        await milestoneStore.addStep(newGoal.id, step)
+      }
+      await milestoneStore.loadGoalSteps(newGoal.id)
+    }
   }
 }
 
-const handleStepAdded = () => {
+const handleStepAdded = async (stepDescriptions: string[] | string) => {
   showAddStep.value = false
-  // Refresh steps
   if (currentGoal.value) {
-    milestoneStore.loadGoalSteps(currentGoal.value.id)
+    if (Array.isArray(stepDescriptions)) {
+      for (const desc of stepDescriptions) {
+        await milestoneStore.addStep(currentGoal.value.id, desc)
+      }
+    } else {
+      await milestoneStore.addStep(currentGoal.value.id, stepDescriptions)
+    }
+    await milestoneStore.loadGoalSteps(currentGoal.value.id)
   }
 }
 
@@ -297,6 +334,7 @@ onMounted(async () => {
   font-size: 2.5rem;
   background: linear-gradient(135deg, #81c784, #388e3c);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -360,7 +398,7 @@ onMounted(async () => {
 .hobby-button {
   background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
   border: 2px solid #388e3c;
-  color: #388e3c;
+  color: #ffffff;
   padding: 0.5rem 1rem;
   border-radius: 20px;
   cursor: pointer;

@@ -1,6 +1,3 @@
-const loading = ref(false)
-const error = ref<string | null>(null)
-
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { ApiService } from '@/services/api'
@@ -68,10 +65,12 @@ export const useMilestoneStore = defineStore('milestone', () => {
         goals.value = response.map((g) => ({
           ...g,
           completed: g.completed ?? false,
+          isActive: g.completed ? false : g.isActive,
           createdAt: g.createdAt ?? new Date().toISOString(),
         }))
-        // Set current goal to the active one
-        currentGoal.value = goals.value.find((g) => g.isActive) || null
+        // Only set currentGoal to an active goal (not completed)
+        const activeGoal = goals.value.find((g) => g.isActive && !g.completed)
+        currentGoal.value = activeGoal || null
       }
     } catch (err: any) {
       error.value = err.message || 'Failed to load goals'
@@ -198,11 +197,13 @@ export const useMilestoneStore = defineStore('milestone', () => {
     error.value = null
 
     try {
+      console.log('API addStep called:', goalId, description)
       const response = await ApiService.callConceptAction<{ step: string } | { error: string }>(
         'MilestoneTracker',
         'addStep',
         { goal: goalId, description },
       )
+      console.log('API addStep response:', response)
 
       if ('error' in response) {
         throw new Error(response.error)
@@ -217,6 +218,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
       }
 
       steps.value.push(newStep)
+      console.log('Steps after push:', steps.value)
     } catch (err: any) {
       error.value = err.message || 'Failed to add step'
       throw err

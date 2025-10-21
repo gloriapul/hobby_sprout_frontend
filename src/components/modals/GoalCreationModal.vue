@@ -39,14 +39,35 @@
             <h3>Generating Steps...</h3>
           </div>
           <div v-else>
-            <h3>Review Generated Steps</h3>
+            <h3>Review & Approve Steps</h3>
             <ul class="steps-list">
               <li v-for="(step, idx) in steps" :key="idx">
                 {{ step }}
                 <button @click="removeStep(idx)" class="delete-step">Delete</button>
               </li>
             </ul>
-            <button @click="step = 3" class="next-button">Continue</button>
+            <div class="form-actions">
+              <label for="manualStepGen" class="form-label">Add Step</label>
+              <textarea
+                id="manualStepGen"
+                v-model="manualStepInput"
+                class="form-textarea"
+                placeholder="Describe what needs to be done for this step..."
+                rows="3"
+              ></textarea>
+              <span v-if="manualStepError" class="error-message">{{ manualStepError }}</span>
+              <button
+                type="button"
+                @click="handleAddStep"
+                :disabled="generating || !manualStepInput.trim()"
+                class="next-button"
+              >
+                Add Manual Step
+              </button>
+            </div>
+            <button @click="saveGoal" :disabled="steps.length === 0" class="primary-button">
+              Save Goal & Steps
+            </button>
             <button @click="regenerateSteps" class="secondary-button">Regenerate Steps</button>
           </div>
         </div>
@@ -66,7 +87,9 @@
               <span v-if="manualStepError" class="error-message">{{ manualStepError }}</span>
             </div>
             <div class="form-actions">
-              <button type="submit" class="next-button">Add Step</button>
+              <button type="button" @click="handleAddStep" class="next-button">
+                Add Manual Step
+              </button>
             </div>
           </form>
           <ul class="steps-list">
@@ -75,8 +98,8 @@
               <button @click="removeStep(idx)" class="delete-step">Delete</button>
             </li>
           </ul>
-          <button @click="step = 3" :disabled="steps.length === 0" class="next-button">
-            Continue
+          <button @click="saveGoal" :disabled="steps.length === 0" class="primary-button">
+            Save Goal & Steps
           </button>
         </div>
         <div v-else-if="step === 3" class="step-content">
@@ -90,9 +113,7 @@
           <button @click="saveGoal" class="primary-button">Save Goal & Steps</button>
         </div>
       </div>
-      <div class="modal-footer">
-        <button @click="$emit('close')" class="cancel-button">Cancel</button>
-      </div>
+      <!-- Removed redundant cancel button from footer -->
     </div>
   </div>
 </template>
@@ -129,6 +150,7 @@ function generateSteps() {
       'Track progress and adjust as needed',
     ]
     generating.value = false
+    // Do NOT auto-save or close modal here; user must review and click Save
   }, 1200)
 }
 
@@ -151,8 +173,11 @@ function validateManualStep() {
 
 function handleAddStep() {
   if (!validateManualStep()) return
-  steps.value.push(manualStepInput.value.trim())
+  const stepText = manualStepInput.value.trim()
+  steps.value.push(stepText)
+  console.log('Added step:', stepText, 'Current steps:', steps.value)
   manualStepInput.value = ''
+  manualStepError.value = ''
 }
 
 function removeStep(idx: number) {

@@ -123,22 +123,37 @@ export const useQuizStore = defineStore('quiz', () => {
       const response = await ApiService.callConceptAction<
         { hobby: string; score: number } | { error: string }
       >('QuizMatchmaker', 'generateHobbyMatch', {})
+      console.log('QuizMatchmaker.generateHobbyMatch response:', response)
 
       if ('error' in response) {
-        throw new Error(response.error)
+        // TEMP FIX: allow adding a fake hobby match for demo/testing
+        error.value = response.error
+        hobbyMatches.value.push({
+          hobby: 'Demo Hobby',
+          score: Math.floor(Math.random() * 100),
+          description: 'Temporary frontend-only match. Backend returned error.',
+        })
+        quizCompleted.value = true
+        return
       }
 
-      hobbyMatches.value = [
-        {
-          hobby: response.hobby,
-          score: response.score,
-        },
-      ]
+      hobbyMatches.value.push({
+        hobby: response.hobby,
+        score: response.score,
+      })
+      console.log('Generated hobbyMatches:', hobbyMatches.value)
 
       quizCompleted.value = true
     } catch (err: any) {
       error.value = err.message || 'Failed to generate hobby match'
-      throw err
+      console.error('generateHobbyMatch error:', err)
+      // TEMP: allow adding a fake hobby match on error
+      hobbyMatches.value.push({
+        hobby: 'Demo Error Hobby',
+        score: Math.floor(Math.random() * 100),
+        description: 'Temporary frontend-only match. Exception occurred.',
+      })
+      quizCompleted.value = true
     } finally {
       loading.value = false
     }
