@@ -69,15 +69,25 @@
           v-for="goal in recentGoals"
           :key="goal.id"
           class="goal-item"
-          @click="$router.push(`/dashboard/goals/${goal.id}`)"
+          @click="$router.push('/dashboard/milestones')"
         >
           <div class="goal-info">
             <h4>{{ goal.description }}</h4>
-            <p>{{ formatDate(goal.createdAt) }}</p>
+            <p>Date started: {{ goal.createdAt ? formatDate(goal.createdAt) : 'No Date' }}</p>
+            <p style="color: #888; font-size: 0.85em">
+              <strong>Debug:</strong>
+              isActive={{ goal.isActive ? 'true' : 'false' }}, completed={{
+                goal.completed ? 'true' : 'false'
+              }}
+            </p>
           </div>
           <div class="goal-status">
-            <span class="status-badge" :class="{ completed: goal.completed }">
-              {{ goal.completed ? 'Completed' : 'In Progress' }}
+            <span
+              class="status-badge"
+              :class="{ completed: !goal.isActive, active: goal.isActive }"
+            >
+              <template v-if="!goal.isActive">Completed</template>
+              <template v-else>In Progress</template>
             </span>
           </div>
         </div>
@@ -87,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
 import { useMilestoneStore } from '@/stores/milestone'
@@ -107,16 +117,29 @@ const displayName = computed(() => {
 })
 
 const completedGoalsCount = computed(() => {
-  return goals.value.filter((goal) => goal.completed).length
+  return goals.value.filter((goal) => !goal.isActive).length
 })
 
 const streakDays = computed(() => {
-  // Mock streak calculation - in real app, this would be based on activity
-  return Math.floor(Math.random() * 30) + 1
+  // Calculate streak as the number of days since the most recent goal started
+  if (!goals.value.length) return 0
+  // Find the most recent goal by createdAt
+  const sortedGoals = [...goals.value].sort((a, b) => {
+    return new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()
+  })
+  const mostRecentGoal = sortedGoals[0]
+  if (!mostRecentGoal || !mostRecentGoal.createdAt) return 0
+  const startDate = new Date(mostRecentGoal.createdAt)
+  const now = new Date()
+  // Calculate difference in days
+  const diffTime = now.getTime() - startDate.getTime()
+  const diffDays = Math.max(1, Math.floor(diffTime / (1000 * 60 * 60 * 24)))
+  return diffDays
 })
 
 const recentGoals = computed(() => {
-  return goals.value.slice(0, 3) // Show last 3 goals
+  // Show last 3 goals, including completed (inactive) and active
+  return goals.value.slice(0, 3)
 })
 
 onMounted(async () => {
@@ -127,6 +150,17 @@ onMounted(async () => {
     ])
   }
 })
+
+// Watch for changes in milestoneStore.goals and reload from backend if a goal is completed
+watch(
+  () => milestoneStore.goals.map((g) => g.completed),
+  async (newCompleted, oldCompleted) => {
+    if (user.value && newCompleted.some((c, i) => c && !oldCompleted[i])) {
+      // A goal was just completed, reload goals from backend
+      await milestoneStore.loadUserGoals(user.value.id)
+    }
+  },
+)
 </script>
 
 <style scoped>
@@ -276,18 +310,23 @@ onMounted(async () => {
 }
 
 .status-badge {
-  background: #ffc107;
-  color: white;
+  background: #eee;
+  color: #666;
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .status-badge.completed {
-  background: #28a745;
+  background: #43a047;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(67, 160, 71, 0.15);
 }
 
 @media (max-width: 768px) {

@@ -6,6 +6,9 @@ interface Goal {
   id: string
   description: string
   isActive: boolean
+  hobby: string
+  completed?: boolean
+  createdAt?: string
 }
 
 interface Step {
@@ -53,9 +56,14 @@ export const useMilestoneStore = defineStore('milestone', () => {
       }
 
       if (Array.isArray(response)) {
-        goals.value = response
+        // Ensure completed and createdAt properties are present and defaulted
+        goals.value = response.map((g) => ({
+          ...g,
+          completed: g.completed ?? false,
+          createdAt: g.createdAt ?? new Date().toISOString(),
+        }))
         // Set current goal to the active one
-        currentGoal.value = response.find((g) => g.isActive) || null
+        currentGoal.value = goals.value.find((g) => g.isActive) || null
       }
     } catch (err: any) {
       error.value = err.message || 'Failed to load goals'
@@ -65,7 +73,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
     }
   }
 
-  const createGoal = async (userId: string, description: string) => {
+  const createGoal = async (userId: string, description: string, hobby: string) => {
     loading.value = true
     error.value = null
 
@@ -73,18 +81,25 @@ export const useMilestoneStore = defineStore('milestone', () => {
       const response = await ApiService.callConceptAction<{ goal: string } | { error: string }>(
         'MilestoneTracker',
         'createGoal',
-        { user: userId, description },
+        { user: userId, description, hobby },
       )
 
       if ('error' in response) {
         throw new Error(response.error)
       }
 
+      // Mark all other completed goals as not active
+      goals.value.forEach((g) => {
+        if (g.completed) g.isActive = false
+      })
       // Add the new goal to our list
       const newGoal: Goal = {
         id: response.goal,
         description,
         isActive: true,
+        hobby,
+        completed: false,
+        createdAt: new Date().toISOString(),
       }
 
       goals.value.push(newGoal)
@@ -133,6 +148,10 @@ export const useMilestoneStore = defineStore('milestone', () => {
 
       if (Array.isArray(response)) {
         steps.value = response
+        // Check if all steps for this goal are complete and update completed status
+        const allComplete = steps.value.length > 0 && steps.value.every((s) => s.isComplete)
+        const goal = goals.value.find((g) => g.id === goalId)
+        if (goal) goal.completed = allComplete
       }
     } catch (err: any) {
       console.error('Failed to load steps:', err)
@@ -216,6 +235,24 @@ export const useMilestoneStore = defineStore('milestone', () => {
       if (step) {
         step.isComplete = true
         step.completion = new Date().toISOString()
+      }
+      // If all steps for the current goal are complete, mark the goal as completed
+      if (currentGoal.value) {
+        // Use currentGoalSteps to get all steps for the current goal
+        const allComplete = currentGoalSteps.value.length > 0 && currentGoalSteps.value.every((s) => s.isComplete)
+        const goal = goals.value.find((g) => g.id === currentGoal.value?.id)
+        if (goal && allComplete) {
+          goal.completed = true
+          goal.isActive = false // Mark goal as inactive when completed
+          // Mark hobby as inactive when all steps for the goal are complete
+          try {
+            const { useProfileStore } = await import('@/stores/profile')
+            const profileStore = useProfileStore()
+            await profileStore.setHobbyInactive(goal.hobby)
+          } catch (e) {
+            console.error('Failed to mark hobby inactive:', e)
+          }
+        }
       }
     } catch (err: any) {
       error.value = err.message || 'Failed to complete step'

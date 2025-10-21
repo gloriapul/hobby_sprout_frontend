@@ -28,7 +28,7 @@
           </button>
 
           <Teleport to="body">
-            <div v-if="showUserMenu" class="user-dropdown" :style="dropdownStyle">
+            <div v-if="showUserMenu" class="user-dropdown" :style="dropdownStyle as CSSProperties">
               <button @click="handleLogout">Logout</button>
             </div>
           </Teleport>
@@ -39,6 +39,7 @@
 </template>
 
 <script setup lang="ts">
+import type { CSSProperties } from 'vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Teleport } from 'vue'
 import { useRouter } from 'vue-router'
@@ -61,7 +62,7 @@ const dropdownStyle = ref({
   position: 'fixed',
   top: '80px',
   right: '2rem',
-  zIndex: 1000,
+  zIndex: '1000',
 })
 
 const getUserInitials = () => {
@@ -83,7 +84,7 @@ const toggleUserMenu = () => {
       position: 'fixed',
       top: `${rect.bottom + 8}px`,
       right: '2rem',
-      zIndex: 1000,
+      zIndex: '1000',
     }
   }
 }

@@ -13,14 +13,8 @@
         <h2>Ready to find your perfect hobby?</h2>
         <p>
           This quiz will ask you about your preferences, interests, and personality traits to
-          recommend hobbies that suit you best.
+          recommend a hobby that best suits you.
         </p>
-        <ul class="quiz-features">
-          <li>✨ Personalized recommendations</li>
-          <li>🎯 Based on your unique preferences</li>
-          <li>⏱️ Takes about 5 minutes</li>
-          <li>🔄 Retake anytime</li>
-        </ul>
         <button @click="startQuiz" class="start-quiz-button">Start Quiz</button>
       </div>
     </div>
@@ -83,7 +77,15 @@
           </div>
         </div>
         <div v-else class="no-match">
-          <p>Unable to generate a hobby match. Please try again.</p>
+          <p>
+            Unable to generate a hobby match.<br>
+            <span style="color:#c00;font-weight:500;">Possible reasons:</span>
+            <ul style="text-align:left;margin:0.5em 0 0 1em;">
+              <li>You may have skipped a question or not answered all quiz questions.</li>
+              <li>There may be a temporary server issue.</li>
+            </ul>
+            Please review your answers and try again.
+          </p>
           <button @click="retakeQuiz" class="retake-btn">Retake Quiz</button>
         </div>
       </div>
@@ -117,56 +119,56 @@ const selectedAnswer = ref<any>(null)
 const answers = ref<any[]>([])
 const hobbyMatch = ref<string | null>(null)
 
-// Sample quiz questions (in a real app, these would come from the QuizMatchmaker concept)
+// Official quiz questions from backend spec, with custom answer choices
 const quizQuestions = ref([
   {
-    id: 1,
-    text: 'How do you prefer to spend your free time?',
+    id: 'q_1',
+    text: 'Do you prefer spending your free time indoors or outdoors?',
     answers: [
-      { id: 1, text: 'Outdoors and active', value: 'outdoor_active' },
-      { id: 2, text: 'Indoors and creative', value: 'indoor_creative' },
-      { id: 3, text: 'Learning new skills', value: 'learning' },
-      { id: 4, text: 'Socializing with others', value: 'social' },
+      { id: 1, text: 'Indoors', value: 'indoors' },
+      { id: 2, text: 'Outdoors', value: 'outdoors' },
+      { id: 3, text: 'A mix of both', value: 'mix' },
+      { id: 4, text: 'Depends on the season', value: 'seasonal' },
     ],
   },
   {
-    id: 2,
-    text: 'What type of activities energize you most?',
+    id: 'q_2',
+    text: 'Are you more drawn to creative activities or analytical challenges?',
     answers: [
-      { id: 1, text: 'Physical challenges', value: 'physical' },
-      { id: 2, text: 'Mental puzzles', value: 'mental' },
-      { id: 3, text: 'Artistic expression', value: 'artistic' },
-      { id: 4, text: 'Helping others', value: 'helping' },
+      { id: 1, text: 'Creative activities', value: 'creative' },
+      { id: 2, text: 'Analytical challenges', value: 'analytical' },
+      { id: 3, text: 'Both equally', value: 'both' },
+      { id: 4, text: 'Depends on my mood', value: 'mood' },
     ],
   },
   {
-    id: 3,
-    text: 'How do you like to learn new things?',
+    id: 'q_3',
+    text: 'How important is social interaction in your ideal hobby?',
     answers: [
-      { id: 1, text: 'Hands-on practice', value: 'hands_on' },
-      { id: 2, text: 'Reading and research', value: 'reading' },
-      { id: 3, text: 'Watching tutorials', value: 'visual' },
-      { id: 4, text: 'Group classes', value: 'group' },
+      { id: 1, text: 'Very important', value: 'very_important' },
+      { id: 2, text: 'Somewhat important', value: 'somewhat_important' },
+      { id: 3, text: 'Not important', value: 'not_important' },
+      { id: 4, text: 'I prefer solo hobbies', value: 'solo' },
     ],
   },
   {
-    id: 4,
-    text: "What's your ideal weekend activity?",
+    id: 'q_4',
+    text: 'Do you enjoy learning new skills, or perfecting existing ones?',
     answers: [
-      { id: 1, text: 'Hiking or sports', value: 'outdoor_sports' },
-      { id: 2, text: 'Crafting or building', value: 'crafting' },
-      { id: 3, text: 'Reading or writing', value: 'intellectual' },
-      { id: 4, text: 'Cooking or gardening', value: 'practical' },
+      { id: 1, text: 'Learning new skills', value: 'learning' },
+      { id: 2, text: 'Perfecting existing skills', value: 'perfecting' },
+      { id: 3, text: 'A balance of both', value: 'balance' },
+      { id: 4, text: 'Depends on the hobby', value: 'depends' },
     ],
   },
   {
-    id: 5,
-    text: 'How important is social interaction in your hobbies?',
+    id: 'q_5',
+    text: 'What kind of physical exertion are you comfortable with for a hobby?',
     answers: [
-      { id: 1, text: 'I prefer solo activities', value: 'solo' },
-      { id: 2, text: 'Small groups are perfect', value: 'small_group' },
-      { id: 3, text: 'The more people, the better', value: 'large_group' },
-      { id: 4, text: 'Depends on my mood', value: 'flexible' },
+      { id: 1, text: 'High exertion (sports, hiking)', value: 'high' },
+      { id: 2, text: 'Moderate exertion (gardening, dancing)', value: 'moderate' },
+      { id: 3, text: 'Low exertion (crafting, reading)', value: 'low' },
+      { id: 4, text: 'No exertion (chess, writing)', value: 'none' },
     ],
   },
 ])
@@ -205,11 +207,13 @@ const nextQuestion = async () => {
   // Submit response to API
   if (authStore.user) {
     try {
-      await ApiService.callConceptAction('QuizMatchmaker', 'submitResponse', {
-        user: authStore.user.id,
-        question: currentQuestion.value.id.toString(),
-        response: selectedAnswer.value.value,
-      })
+      if (currentQuestion.value) {
+        await ApiService.callConceptAction('QuizMatchmaker', 'submitResponse', {
+          user: authStore.user.id,
+          question: currentQuestion.value.id.toString(),
+          response: selectedAnswer.value.value,
+        })
+      }
     } catch (error) {
       console.error('Failed to submit quiz response:', error)
     }
@@ -343,6 +347,7 @@ onMounted(() => {
   font-size: 2.5rem;
   background: linear-gradient(135deg, #81c784, #388e3c);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 

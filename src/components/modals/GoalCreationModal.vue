@@ -99,6 +99,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+const props = defineProps<{ hobby: string }>()
 
 const emit = defineEmits(['close', 'goalCreated'])
 const step = ref(1)
@@ -162,6 +163,7 @@ function saveGoal() {
   emit('goalCreated', {
     description: goalDescription.value,
     steps: steps.value.filter((s) => s.trim()),
+    hobby: props.hobby,
   })
   emit('close')
 }

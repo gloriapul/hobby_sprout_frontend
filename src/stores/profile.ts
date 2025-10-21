@@ -11,6 +11,7 @@ export const useProfileStore = defineStore('profile', () => {
   // State
   const profile = ref<Profile | null>(null)
   const hobbies = ref<string[]>([])
+  const activeHobbies = ref<string[]>([])
   const currentUserId = ref<string | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -19,6 +20,42 @@ export const useProfileStore = defineStore('profile', () => {
   const hasProfile = computed(() => profile.value !== null)
 
   // Actions
+  // Toggle hobby active/inactive
+  async function setHobbyActive(hobby: string) {
+    if (!currentUserId.value) throw new Error('No user ID available')
+    loading.value = true
+    error.value = null
+    try {
+      await ApiService.callConceptAction('UserProfile', 'setHobby', {
+        user: currentUserId.value,
+        hobby,
+      })
+      await loadProfile(currentUserId.value)
+    } catch (err: any) {
+      error.value = err.message || 'Failed to activate hobby'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function setHobbyInactive(hobby: string) {
+    if (!currentUserId.value) throw new Error('No user ID available')
+    loading.value = true
+    error.value = null
+    try {
+      await ApiService.callConceptAction('UserProfile', 'closeHobby', {
+        user: currentUserId.value,
+        hobby,
+      })
+      await loadProfile(currentUserId.value)
+    } catch (err: any) {
+      error.value = err.message || 'Failed to deactivate hobby'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
   const loadProfile = async (userId: string) => {
     loading.value = true
     error.value = null
@@ -36,11 +73,99 @@ export const useProfileStore = defineStore('profile', () => {
           name: profileData.displayname || '',
           image: profileData.profile || '',
         }
+        // Load all hobbies (active and inactive) after profile loads
+        try {
+          const hobbyResponse = await ApiService.callConceptAction<any[]>(
+            'UserProfile',
+            '_getUserHobbies',
+            { user: userId },
+          )
+          console.log('Raw hobbyResponse from backend:', hobbyResponse)
+          if (Array.isArray(hobbyResponse)) {
+            hobbies.value = hobbyResponse.map((h) => h.hobby)
+            activeHobbies.value = hobbyResponse.filter((h) => h.active).map((h) => h.hobby)
+          }
+          // Toggle hobby active/inactive
+          const setHobbyActive = async (hobby: string) => {
+            if (!currentUserId.value) throw new Error('No user ID available')
+            loading.value = true
+            error.value = null
+            try {
+              await ApiService.callConceptAction('UserProfile', 'setHobbyActive', {
+                user: currentUserId.value,
+                hobby,
+              })
+              await loadProfile(currentUserId.value)
+            } catch (err: any) {
+              error.value = err.message || 'Failed to activate hobby'
+              throw err
+            } finally {
+              loading.value = false
+            }
+          }
+
+          const setHobbyInactive = async (hobby: string) => {
+            if (!currentUserId.value) throw new Error('No user ID available')
+            loading.value = true
+            error.value = null
+            try {
+              await ApiService.callConceptAction('UserProfile', 'setHobbyInactive', {
+                user: currentUserId.value,
+                hobby,
+              })
+              await loadProfile(currentUserId.value)
+            } catch (err: any) {
+              error.value = err.message || 'Failed to deactivate hobby'
+              throw err
+            } finally {
+              loading.value = false
+            }
+          }
+        } catch (hobbyError) {
+          async function setHobbyActive(hobby: string) {
+            if (!currentUserId.value) throw new Error('No user ID available')
+            loading.value = true
+            error.value = null
+            try {
+              await ApiService.callConceptAction('UserProfile', 'setHobbyActive', {
+                user: currentUserId.value,
+                hobby,
+              })
+              await loadProfile(currentUserId.value)
+            } catch (err: any) {
+              error.value = err.message || 'Failed to activate hobby'
+              throw err
+            } finally {
+              loading.value = false
+            }
+          }
+
+          async function setHobbyInactive(hobby: string) {
+            if (!currentUserId.value) throw new Error('No user ID available')
+            loading.value = true
+            error.value = null
+            try {
+              await ApiService.callConceptAction('UserProfile', 'setHobbyInactive', {
+                user: currentUserId.value,
+                hobby,
+              })
+              await loadProfile(currentUserId.value)
+            } catch (err: any) {
+              error.value = err.message || 'Failed to deactivate hobby'
+              throw err
+            } finally {
+              loading.value = false
+            }
+          }
+          console.error('Failed to load active hobbies:', hobbyError)
+          hobbies.value = []
+        }
       } else {
         console.log('Profile not found, trying to create one...')
         // Profile doesn't exist yet, try to create one
         try {
           await createProfile()
+          console.log('Loaded hobbies:', hobbies.value)
         } catch (createError: any) {
           // If creation fails because profile already exists, that's ok
           if (!createError.message?.includes('already exists')) {
@@ -194,8 +319,26 @@ export const useProfileStore = defineStore('profile', () => {
         throw new Error(response.error)
       }
 
-      if (!hobbies.value.includes(hobby)) {
-        hobbies.value.push(hobby)
+      // Always reload active hobbies from backend after adding
+      try {
+        const hobbyResponse = await ApiService.callConceptAction<any[]>(
+          'UserProfile',
+          '_getActiveHobbies',
+          { user: currentUserId.value },
+        )
+        if (Array.isArray(hobbyResponse)) {
+          if (
+            hobbyResponse.length > 0 &&
+            typeof hobbyResponse[0] === 'object' &&
+            'hobby' in hobbyResponse[0]
+          ) {
+            hobbies.value = hobbyResponse.filter((h) => h.active).map((h) => h.hobby)
+          } else {
+            hobbies.value = hobbyResponse.filter((h) => typeof h === 'string')
+          }
+        }
+      } catch (hobbyError) {
+        console.error('Failed to reload active hobbies:', hobbyError)
       }
     } catch (err: any) {
       error.value = err.message || 'Failed to set hobby'
@@ -244,6 +387,7 @@ export const useProfileStore = defineStore('profile', () => {
     // State
     profile,
     hobbies,
+    activeHobbies,
     currentUserId,
     loading,
     error,
@@ -259,5 +403,7 @@ export const useProfileStore = defineStore('profile', () => {
     setHobby,
     closeHobby,
     clearProfile,
+    setHobbyActive,
+    setHobbyInactive,
   }
 })

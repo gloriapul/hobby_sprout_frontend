@@ -24,8 +24,6 @@
   --vt-c-text-dark-2: rgba(235, 255, 235, 0.64);
 }
 
-/* semantic color variables for this project */
-
 :root {
   --color-background: var(--vt-c-moss);
   --color-background-soft: var(--vt-c-white-soft);

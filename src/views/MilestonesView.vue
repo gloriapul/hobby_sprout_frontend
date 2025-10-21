@@ -50,9 +50,6 @@
             <span class="step-count">{{ totalSteps }} steps</span>
           </div>
         </div>
-        <div class="goal-actions">
-          <button @click="showCreateGoal = true" class="new-goal-button">+ New Goal</button>
-        </div>
       </div>
 
       <!-- Progress Overview -->
@@ -163,7 +160,7 @@
       v-if="showCreateGoal"
       @close="showCreateGoal = false"
       @goalCreated="handleGoalCreated"
-      :suggestedHobby="selectedHobbyForGoal"
+      :hobby="selectedHobbyForGoal || ''"
     />
 
     <!-- Add Step Modal removed: now handled in GoalCreationModal -->
@@ -189,7 +186,10 @@ const selectedHobbyForGoal = ref<string | undefined>(undefined)
 const generatingSteps = ref(false)
 
 // Computed properties
-const currentGoal = computed(() => milestoneStore.currentGoal)
+const currentGoal = computed(() => {
+  const goal = milestoneStore.currentGoal
+  return goal && goal.isActive ? goal : null
+})
 const currentGoalSteps = computed(() => milestoneStore.currentGoalSteps)
 const loading = computed(() => milestoneStore.loading)
 const userHobbies = computed(() => profileStore.hobbies || [])
@@ -234,7 +234,7 @@ const isNextStep = (index: number) => {
   // The next step is the first incomplete step
   const steps = currentGoalSteps.value
   for (let i = 0; i < steps.length; i++) {
-    if (!steps[i].isComplete) {
+    if (steps[i]?.isComplete === false) {
       return i === index
     }
   }
@@ -296,6 +296,7 @@ onMounted(async () => {
   font-size: 2.5rem;
   background: linear-gradient(135deg, #81c784, #388e3c);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 

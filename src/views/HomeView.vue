@@ -3,6 +3,9 @@
     <div class="hero-section">
       <div class="hero-content">
         <div class="hero-text">
+          <div class="logo-container">
+            <img src="/HobbySproutLogo.png" alt="HobbySprout Logo" class="hero-logo" />
+          </div>
           <h1 class="hero-title">
             <span class="title-main">Hobby</span>
             <span class="title-accent">Sprout</span>
@@ -39,20 +42,19 @@
             <div class="feature-icon">🎯</div>
             <h3>Personalized Recommendations</h3>
             <p>
-              Take our personality quiz to discover hobbies that match your interests and lifestyle.
+              Take our personality quiz to discover a hobby that matches your interests and
+              lifestyle.
             </p>
           </div>
           <div class="feature-card">
             <div class="feature-icon">📊</div>
             <h3>Track Your Progress</h3>
-            <p>Set goals, create milestones, and track your journey as you develop new skills.</p>
+            <p>Set goals, create milestones, and track your journey as you work on your hobbies.</p>
           </div>
           <div class="feature-card">
             <div class="feature-icon">👤</div>
             <h3>Personal Dashboard</h3>
-            <p>
-              Manage all your hobbies, goals, and achievements in one beautiful, organized space.
-            </p>
+            <p>Manage all your hobbies, goals, and achievements in an organized space.</p>
           </div>
           <div class="feature-card">
             <div class="feature-icon">🚀</div>
@@ -74,8 +76,8 @@
           </div>
           <div class="step-item">
             <div class="step-number">2</div>
-            <h3>Get Recommendations</h3>
-            <p>Receive personalized hobby suggestions tailored to your unique profile.</p>
+            <h3>Get a Recommendation</h3>
+            <p>Receive a personalized hobby suggestion tailored to your unique profile.</p>
           </div>
           <div class="step-item">
             <div class="step-number">3</div>
@@ -95,8 +97,11 @@
       <div class="container">
         <div class="cta-content">
           <h2>Ready to discover your next passion?</h2>
-          <p>Join thousands of hobby enthusiasts who are already growing with Hobby Sprout.</p>
-          <button @click="goToRegister" class="cta-button primary large">
+          <p>
+            Whether you are already certain of the hobby you want to work on or are looking for a
+            suggestion from our quiz, you will find the perfect path to growth here.
+          </p>
+          <button @click="scrollToTop" class="cta-button primary large">
             Start Your Journey Today
           </button>
         </div>
@@ -121,6 +126,10 @@ const goToRegister = () => {
   router.push('/register')
 }
 
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
 // If user is already logged in, redirect to dashboard
 onMounted(() => {
   if (authStore.isAuthenticated) {
@@ -133,10 +142,24 @@ onMounted(() => {
 .home-view {
   min-height: 100vh;
 }
+/* Logo styles */
+.logo-container {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.hero-logo {
+  height: 150px;
+  width: auto;
+  margin-right: 1rem;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(56, 142, 60, 0.12);
+}
 
 .hero-section {
   background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 60%, #a5d6a7 100%);
-  color: #388e3c;
+  color: #187c1d;
   padding: 4rem 2rem;
   min-height: 80vh;
   display: flex;
@@ -165,13 +188,16 @@ onMounted(() => {
 
 .title-main {
   display: block;
+  font-weight: 900;
 }
 
 .title-accent {
   background: linear-gradient(45deg, #a5d6a7, #388e3c);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   display: block;
+  font-weight: 900;
 }
 
 .hero-subtitle {
