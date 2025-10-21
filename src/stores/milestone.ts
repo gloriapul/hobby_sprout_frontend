@@ -1,3 +1,6 @@
+const loading = ref(false)
+const error = ref<string | null>(null)
+
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { ApiService } from '@/services/api'
@@ -20,6 +23,11 @@ interface Step {
 }
 
 export const useMilestoneStore = defineStore('milestone', () => {
+  // Clear current goal and steps
+  const clearCurrentGoal = () => {
+    currentGoal.value = null
+    steps.value = []
+  }
   // State
   const goals = ref<Goal[]>([])
   const currentGoal = ref<Goal | null>(null)
@@ -92,7 +100,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
       goals.value.forEach((g) => {
         if (g.completed) g.isActive = false
       })
-      // Add the new goal to our list
+      // Add the new goal to our list (local optimistic update)
       const newGoal: Goal = {
         id: response.goal,
         description,
@@ -104,6 +112,8 @@ export const useMilestoneStore = defineStore('milestone', () => {
 
       goals.value.push(newGoal)
       currentGoal.value = newGoal
+      // Reload all goals from backend to ensure state is up to date
+      await loadUserGoals(userId)
       return newGoal
     } catch (err: any) {
       error.value = err.message || 'Failed to create goal'
@@ -239,7 +249,8 @@ export const useMilestoneStore = defineStore('milestone', () => {
       // If all steps for the current goal are complete, mark the goal as completed
       if (currentGoal.value) {
         // Use currentGoalSteps to get all steps for the current goal
-        const allComplete = currentGoalSteps.value.length > 0 && currentGoalSteps.value.every((s) => s.isComplete)
+        const allComplete =
+          currentGoalSteps.value.length > 0 && currentGoalSteps.value.every((s) => s.isComplete)
         const goal = goals.value.find((g) => g.id === currentGoal.value?.id)
         if (goal && allComplete) {
           goal.completed = true
@@ -355,5 +366,6 @@ export const useMilestoneStore = defineStore('milestone', () => {
     closeGoal,
     deleteGoal,
     clearMilestones,
+    clearCurrentGoal,
   }
 })

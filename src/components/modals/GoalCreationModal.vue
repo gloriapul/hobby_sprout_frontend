@@ -167,6 +167,16 @@ function saveGoal() {
   })
   emit('close')
 }
+
+// In the parent component (example):
+// <GoalCreationModal :hobby="selectedHobby" @goalCreated="handleGoalCreated" />
+//
+// methods: {
+//   async handleGoalCreated(goalData) {
+//     await milestoneStore.createGoal(userId, goalData.description, goalData.hobby)
+//     // Optionally, add steps to the goal here
+//   }
+// }
 </script>
 
 <style scoped>

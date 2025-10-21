@@ -50,6 +50,9 @@
             <span class="step-count">{{ totalSteps }} steps</span>
           </div>
         </div>
+        <!-- <div class="goal-actions">
+          <button @click="showCreateGoal = true" class="new-goal-button">+ New Goal</button>
+        </div> -->
       </div>
 
       <!-- Progress Overview -->
@@ -144,7 +147,7 @@
           </p>
           <button @click="showCreateGoal = true" class="next-goal-button">
             🎯 Set Your Next Goal
-          </button>
+          </button>*/
         </div>
       </div>
     </div>
@@ -186,10 +189,7 @@ const selectedHobbyForGoal = ref<string | undefined>(undefined)
 const generatingSteps = ref(false)
 
 // Computed properties
-const currentGoal = computed(() => {
-  const goal = milestoneStore.currentGoal
-  return goal && goal.isActive ? goal : null
-})
+const currentGoal = computed(() => milestoneStore.currentGoal)
 const currentGoalSteps = computed(() => milestoneStore.currentGoalSteps)
 const loading = computed(() => milestoneStore.loading)
 const userHobbies = computed(() => profileStore.hobbies || [])
@@ -234,7 +234,8 @@ const isNextStep = (index: number) => {
   // The next step is the first incomplete step
   const steps = currentGoalSteps.value
   for (let i = 0; i < steps.length; i++) {
-    if (steps[i]?.isComplete === false) {
+    const step = steps[i]
+    if (step && step.isComplete === false) {
       return i === index
     }
   }
@@ -296,7 +297,6 @@ onMounted(async () => {
   font-size: 2.5rem;
   background: linear-gradient(135deg, #81c784, #388e3c);
   -webkit-background-clip: text;
-  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -671,10 +671,9 @@ onMounted(async () => {
   margin: 0 0 0.5rem 0;
   color: #333;
   font-size: 1.1rem;
-}
-
-.step-meta {
-  display: flex;
+  background: linear-gradient(135deg, #81c784, #388e3c);
+  -webkit-background-clip: text;
+  background-clip: text;
   gap: 1rem;
   font-size: 0.9rem;
   color: #666;

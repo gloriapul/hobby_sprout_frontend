@@ -22,6 +22,7 @@
         </div>
       </div>
 
+      <!--
       <div class="stat-card">
         <div class="stat-icon">📈</div>
         <div class="stat-content">
@@ -29,6 +30,7 @@
           <p>Completed Goals</p>
         </div>
       </div>
+      -->
 
       <div class="stat-card">
         <div class="stat-icon">🔥</div>
@@ -74,13 +76,16 @@
           <div class="goal-info">
             <h4>{{ goal.description }}</h4>
             <p>Date started: {{ goal.createdAt ? formatDate(goal.createdAt) : 'No Date' }}</p>
+            <!--
             <p style="color: #888; font-size: 0.85em">
               <strong>Debug:</strong>
               isActive={{ goal.isActive ? 'true' : 'false' }}, completed={{
                 goal.completed ? 'true' : 'false'
               }}
             </p>
+            -->
           </div>
+          <!--
           <div class="goal-status">
             <span
               class="status-badge"
@@ -90,6 +95,7 @@
               <template v-else>In Progress</template>
             </span>
           </div>
+          -->
         </div>
       </div>
     </div>
@@ -116,9 +122,9 @@ const displayName = computed(() => {
   return profileStore.profile?.name || user.value?.username || 'User'
 })
 
-const completedGoalsCount = computed(() => {
-  return goals.value.filter((goal) => !goal.isActive).length
-})
+// const completedGoalsCount = computed(() => {
+//   return goals.value.filter((goal) => !goal.isActive).length
+// })
 
 const streakDays = computed(() => {
   // Calculate streak as the number of days since the most recent goal started

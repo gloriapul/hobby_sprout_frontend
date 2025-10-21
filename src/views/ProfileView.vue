@@ -66,18 +66,7 @@
         </div>
 
         <div v-else class="hobbies-grid">
-          <div v-for="hobby in hobbies" :key="hobby" class="hobby-toggle-row">
-            <HobbyCard :hobby="hobby" />
-            <label class="toggle-switch">
-              <input
-                type="checkbox"
-                :checked="isHobbyActive(hobby)"
-                @change="toggleHobbyActive(hobby)"
-              />
-              <span class="slider"></span>
-              <span class="toggle-label">{{ isHobbyActive(hobby) ? 'Active' : 'Inactive' }}</span>
-            </label>
-          </div>
+          <HobbyCard v-for="hobby in hobbies" :key="hobby" :hobby="hobby" @remove="removeHobby" />
         </div>
       </div>
     </div>
@@ -91,7 +80,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
-import HobbyModal from '../components/modals/HobbyModal.vue'
 import HobbyCard from '@/components/shared/HobbyCard.vue'
 
 const authStore = useAuthStore()
@@ -101,7 +89,6 @@ const user = computed(() => authStore.user)
 const profile = computed(() => profileStore.profile)
 const hobbies = computed(() => profileStore.hobbies)
 const loading = computed(() => profileStore.loading)
-const activeHobbies = computed(() => profileStore.activeHobbies)
 
 const isEditing = ref(false)
 const showAddHobby = ref(false)
@@ -159,21 +146,6 @@ onMounted(async () => {
     await profileStore.loadProfile(user.value.id)
   }
 })
-
-function isHobbyActive(hobby: string) {
-  if (activeHobbies.value.length) {
-    return activeHobbies.value.includes(hobby)
-  }
-  return true
-}
-
-async function toggleHobbyActive(hobby: string) {
-  if (isHobbyActive(hobby)) {
-    await profileStore.setHobbyInactive(hobby)
-  } else {
-    await profileStore.setHobbyActive(hobby)
-  }
-}
 </script>
 
 <style scoped>
