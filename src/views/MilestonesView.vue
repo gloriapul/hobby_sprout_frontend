@@ -96,11 +96,6 @@
         <div v-else-if="currentGoalSteps.length === 0" class="no-steps">
           <p>No steps yet. Generate AI-powered steps or add your own!</p>
           <button @click="showAddStep = true" class="add-step-button">+ Add Manual Step</button>
-          <AddStepModal
-            v-if="showAddStep"
-            @close="showAddStep = false"
-            @stepAdded="handleStepAdded"
-          />
         </div>
 
         <div v-else class="steps-list">

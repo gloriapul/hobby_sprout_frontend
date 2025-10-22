@@ -69,9 +69,6 @@
     </div>
 
     <div v-else class="error-state">Goal not found</div>
-
-    <!-- Add Step Modal -->
-    <AddStepModal v-if="showAddStep" @close="showAddStep = false" @add="addStep" />
   </div>
 </template>
 

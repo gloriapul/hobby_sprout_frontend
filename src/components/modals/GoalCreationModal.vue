@@ -46,6 +46,7 @@
                 <button @click="removeStep(idx)" class="delete-step">Delete</button>
               </li>
             </ul>
+            <!-- will fix manual step adding after generating for assignment-->
             <div class="form-actions">
               <label for="manualStepGen" class="form-label">Add Step</label>
               <textarea
@@ -87,9 +88,7 @@
               <span v-if="manualStepError" class="error-message">{{ manualStepError }}</span>
             </div>
             <div class="form-actions">
-              <button type="button" @click="handleAddStep" class="next-button">
-                Add Manual Step
-              </button>
+              <button type="submit" class="next-button">Add Manual Step</button>
             </div>
           </form>
           <ul class="steps-list">
@@ -190,13 +189,19 @@ function generateSteps() {
       },
     )
     if (allStepsResult && Array.isArray(allStepsResult)) {
-      // Only set steps if not already set (prevents overwriting user edits)
-      if (steps.value.length === 0) {
-        steps.value = allStepsResult.map((s: any) => s.description)
+      // Only set steps from backend if method is 'generate'
+      if (method.value === 'generate') {
+        // Only add steps that are not already present
+        const generatedDescriptions = allStepsResult.map((s: any) => s.description)
+        for (const desc of generatedDescriptions) {
+          if (!steps.value.includes(desc)) {
+            steps.value.push(desc)
+          }
+        }
       }
       manualStepError.value = ''
     } else {
-      if (steps.value.length === 0) {
+      if (method.value === 'generate') {
         steps.value = []
       }
       manualStepError.value = 'Failed to fetch step descriptions.'
@@ -296,7 +301,6 @@ function saveGoal() {
   generating.value = false
   emit('close')
 }
-
 </script>
 
 <style scoped>
