@@ -1,8 +1,5 @@
 <template>
   <div class="profile-view">
-    <!-- Debug Component - Remove this after testing -->
-    <ProfileDebugTest />
-
     <div class="profile-header">
       <h1>My Profile</h1>
       <button @click="toggleEditMode" class="edit-button">
@@ -71,7 +68,6 @@
       </div>
     </div>
 
-    <!-- Add Hobby Modal -->
     <HobbyModal v-if="showAddHobby" @close="showAddHobby = false" @add="addHobby" />
   </div>
 </template>

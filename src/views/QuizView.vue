@@ -573,7 +573,7 @@ onMounted(() => {
 .retake-button {
   background: transparent;
   color: #388e3c;
-  border: 2px solid #667eea;
+  border: 2px solid #388e3c;
   padding: 1rem 2rem;
   border-radius: 50px;
   font-size: 1rem;
@@ -583,7 +583,7 @@ onMounted(() => {
 }
 
 .retake-button:hover {
-  background: #667eea;
+  background: #388e3c;
   color: white;
 }
 
@@ -605,7 +605,7 @@ onMounted(() => {
   width: 50px;
   height: 50px;
   border: 4px solid #e9ecef;
-  border-top: 4px solid #667eea;
+  border-top: 4px solid #388e3c;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
@@ -634,7 +634,7 @@ onMounted(() => {
   width: 40px;
   height: 40px;
   border: 3px solid #e9ecef;
-  border-top: 3px solid #667eea;
+  border-top: 3px solid #388e3c;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem auto;

@@ -248,6 +248,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
         step.isComplete = true
         step.completion = new Date().toISOString()
       }
+      // Work in progress, will continue to iterate for rest of assignment
       // If all steps for the current goal are complete, mark the goal as completed
       if (currentGoal.value) {
         // Use currentGoalSteps to get all steps for the current goal

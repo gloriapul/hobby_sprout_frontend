@@ -20,7 +20,7 @@ export const useProfileStore = defineStore('profile', () => {
   const hasProfile = computed(() => profile.value !== null)
 
   // Actions
-  // Toggle hobby active/inactive
+  // Toggle hobby active/inactive, will work on for rest of assignment
   async function setHobbyActive(hobby: string) {
     if (!currentUserId.value) throw new Error('No user ID available')
     loading.value = true
@@ -85,78 +85,7 @@ export const useProfileStore = defineStore('profile', () => {
             hobbies.value = hobbyResponse.map((h) => h.hobby)
             activeHobbies.value = hobbyResponse.filter((h) => h.active).map((h) => h.hobby)
           }
-          // Toggle hobby active/inactive
-          const setHobbyActive = async (hobby: string) => {
-            if (!currentUserId.value) throw new Error('No user ID available')
-            loading.value = true
-            error.value = null
-            try {
-              await ApiService.callConceptAction('UserProfile', 'setHobbyActive', {
-                user: currentUserId.value,
-                hobby,
-              })
-              await loadProfile(currentUserId.value)
-            } catch (err: any) {
-              error.value = err.message || 'Failed to activate hobby'
-              throw err
-            } finally {
-              loading.value = false
-            }
-          }
-
-          const setHobbyInactive = async (hobby: string) => {
-            if (!currentUserId.value) throw new Error('No user ID available')
-            loading.value = true
-            error.value = null
-            try {
-              await ApiService.callConceptAction('UserProfile', 'setHobbyInactive', {
-                user: currentUserId.value,
-                hobby,
-              })
-              await loadProfile(currentUserId.value)
-            } catch (err: any) {
-              error.value = err.message || 'Failed to deactivate hobby'
-              throw err
-            } finally {
-              loading.value = false
-            }
-          }
         } catch (hobbyError) {
-          async function setHobbyActive(hobby: string) {
-            if (!currentUserId.value) throw new Error('No user ID available')
-            loading.value = true
-            error.value = null
-            try {
-              await ApiService.callConceptAction('UserProfile', 'setHobbyActive', {
-                user: currentUserId.value,
-                hobby,
-              })
-              await loadProfile(currentUserId.value)
-            } catch (err: any) {
-              error.value = err.message || 'Failed to activate hobby'
-              throw err
-            } finally {
-              loading.value = false
-            }
-          }
-
-          async function setHobbyInactive(hobby: string) {
-            if (!currentUserId.value) throw new Error('No user ID available')
-            loading.value = true
-            error.value = null
-            try {
-              await ApiService.callConceptAction('UserProfile', 'setHobbyInactive', {
-                user: currentUserId.value,
-                hobby,
-              })
-              await loadProfile(currentUserId.value)
-            } catch (err: any) {
-              error.value = err.message || 'Failed to deactivate hobby'
-              throw err
-            } finally {
-              loading.value = false
-            }
-          }
           console.error('Failed to load active hobbies:', hobbyError)
           hobbies.value = []
         }

@@ -126,13 +126,7 @@ export const useQuizStore = defineStore('quiz', () => {
       console.log('QuizMatchmaker.generateHobbyMatch response:', response)
 
       if ('error' in response) {
-        // TEMP FIX: allow adding a fake hobby match for demo/testing
         error.value = response.error
-        hobbyMatches.value.push({
-          hobby: 'Demo Hobby',
-          score: Math.floor(Math.random() * 100),
-          description: 'Temporary frontend-only match. Backend returned error.',
-        })
         quizCompleted.value = true
         return
       }
@@ -147,12 +141,6 @@ export const useQuizStore = defineStore('quiz', () => {
     } catch (err: any) {
       error.value = err.message || 'Failed to generate hobby match'
       console.error('generateHobbyMatch error:', err)
-      // TEMP: allow adding a fake hobby match on error
-      hobbyMatches.value.push({
-        hobby: 'Demo Error Hobby',
-        score: Math.floor(Math.random() * 100),
-        description: 'Temporary frontend-only match. Exception occurred.',
-      })
       quizCompleted.value = true
     } finally {
       loading.value = false

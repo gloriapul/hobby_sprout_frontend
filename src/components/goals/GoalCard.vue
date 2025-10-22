@@ -68,11 +68,8 @@ defineEmits<{
   delete: [goalId: string]
 }>()
 
-// For now, using a mock progress calculation
-// In a real app, this would come from the goal's steps
 const progress = computed(() => {
   if (props.goal.completed) return 100
-  return Math.floor(Math.random() * 80) // Mock progress
 })
 </script>
 
@@ -127,12 +124,12 @@ const progress = computed(() => {
 }
 
 .view-button {
-  color: #667eea;
-  border-color: #667eea;
+  color: #388e3c;
+  border-color: #388e3c;
 }
 
 .view-button:hover {
-  background: #667eea;
+  background: #388e3c;
   color: white;
 }
 
@@ -203,7 +200,7 @@ const progress = computed(() => {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background: linear-gradient(90deg, #388e3c, #28a745);
   border-radius: 4px;
   transition: width 0.3s ease;
 }

@@ -49,12 +49,12 @@ body {
 }
 
 .btn-primary {
-  background-color: #667eea;
+  background-color: #81c784;
   color: white;
 }
 
 .btn-primary:hover {
-  background-color: #5a6fd8;
+  background-color: #388e3c;
 }
 
 .btn-secondary {

@@ -11,11 +11,6 @@ const router = createRouter({
       component: HomeView,
     },
     {
-      path: '/about',
-      name: 'about',
-      component: () => import('../views/AboutView.vue'),
-    },
-    {
       path: '/login',
       name: 'login',
       component: () => import('../views/LoginView.vue'),
@@ -61,16 +56,24 @@ const router = createRouter({
   ],
 })
 
-// Navigation guard for authentication - TEMPORARILY DISABLED
+// Navigation guard for authentication
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
-
-  // Check authentication status
   authStore.checkAuth()
 
-  // TEMPORARILY ALLOW ALL ROUTES - REMOVE THIS FOR PRODUCTION
+  const isLoggedIn = !!authStore.user
+
+  if (to.meta.requiresAuth && !isLoggedIn) {
+    next({ name: 'login' })
+    return
+  }
+
+  if (to.meta.requiresGuest && isLoggedIn) {
+    next({ name: 'dashboard' })
+    return
+  }
+
   next()
-  return
 })
 
 export default router

@@ -46,6 +46,10 @@
         </div>
       </div>
 
+      <div class="close-goal-actions" style="margin-bottom: 2rem">
+        <button @click="closeActiveGoal" class="close-goal-button">Close Goal</button>
+      </div>
+
       <!-- Progress Overview -->
       <div class="progress-overview">
         <div class="progress-stats">
@@ -163,6 +167,17 @@
 </template>
 
 <script setup lang="ts">
+const closeActiveGoal = async () => {
+  if (currentGoal.value) {
+    await milestoneStore.deleteGoal(currentGoal.value.id)
+    milestoneStore.clearCurrentGoal()
+    showCreateGoal.value = false
+    selectedHobbyForGoal.value = undefined
+    if (authStore.user) {
+      await milestoneStore.loadUserGoals(authStore.user.id)
+    }
+  }
+}
 // Reset page and allow user to pick a new hobby for next goal
 const resetForNewGoal = async () => {
   // Mark the current goal as inactive and completed, and update backend
@@ -180,13 +195,11 @@ const resetForNewGoal = async () => {
   }
 }
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
 import { useMilestoneStore } from '@/stores/milestone'
 import GoalCreationModal from '@/components/modals/GoalCreationModal.vue'
 
-const router = useRouter()
 const authStore = useAuthStore()
 const profileStore = useProfileStore()
 const milestoneStore = useMilestoneStore()
@@ -499,7 +512,7 @@ onMounted(async () => {
 .new-goal-button {
   background: transparent;
   color: #667eea;
-  border: 2px solid #667eea;
+  border: 2px solid #388e3c;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   cursor: pointer;
@@ -507,7 +520,7 @@ onMounted(async () => {
 }
 
 .new-goal-button:hover {
-  background: #667eea;
+  background: #388e3c;
   color: white;
 }
 
@@ -533,7 +546,7 @@ onMounted(async () => {
 .stat-number {
   font-size: 2rem;
   font-weight: bold;
-  color: #667eea;
+  color: #388e3c;
   margin-bottom: 0.25rem;
 }
 
@@ -610,7 +623,7 @@ onMounted(async () => {
   width: 40px;
   height: 40px;
   border: 3px solid #e9ecef;
-  border-top: 3px solid #667eea;
+  border-top: 3px solid #388e3c;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem auto;
@@ -642,8 +655,8 @@ onMounted(async () => {
 
 .add-step-button {
   background: transparent;
-  color: #667eea;
-  border: 2px solid #667eea;
+  color: #388e3c;
+  border: 2px solid #388e3c;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   cursor: pointer;
@@ -651,7 +664,7 @@ onMounted(async () => {
 }
 
 .add-step-button:hover {
-  background: #667eea;
+  background: #388e3c;
   color: white;
 }
 
@@ -677,14 +690,14 @@ onMounted(async () => {
 }
 
 .step-item.next-step {
-  border-color: #667eea;
+  border-color: #388e3c;
   background: linear-gradient(135deg, #ffffff, #f8f9ff);
 }
 
 .step-number {
   width: 40px;
   height: 40px;
-  background: #667eea;
+  background: #388e3c;
   color: white;
   border-radius: 50%;
   display: flex;

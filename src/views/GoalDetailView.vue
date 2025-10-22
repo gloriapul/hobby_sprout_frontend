@@ -12,17 +12,17 @@
         <div class="goal-meta">
           <div class="meta-item">
             <span class="label">Created:</span>
-            <span class="value">{{ formatDate(goal.createdAt) }}</span>
+            <span class="value">{{ goal?.createdAt ? formatDate(goal.createdAt) : '' }}</span>
           </div>
           <div class="meta-item">
             <span class="label">Status:</span>
-            <span class="status-badge" :class="{ completed: goal.completed }">
-              {{ goal.completed ? 'Completed' : 'In Progress' }}
+            <span class="status-badge" :class="{ completed: goal?.completed }">
+              {{ goal?.completed ? 'Completed' : 'In Progress' }}
             </span>
           </div>
           <div class="meta-item">
             <span class="label">Progress:</span>
-            <span class="value">{{ goalProgress }}%</span>
+            <span class="value">{{ goalProgress ?? 0 }}%</span>
           </div>
         </div>
 
@@ -49,14 +49,14 @@
         <div v-else class="steps-list">
           <div
             v-for="step in currentGoalSteps"
-            :key="step.id"
+            :key="step?.id"
             class="step-item"
-            :class="{ completed: step.completed }"
+            :class="{ completed: step?.isComplete }"
           >
             <button
               @click="toggleStep(step)"
               class="step-checkbox"
-              :class="{ checked: step.completed }"
+              :class="{ checked: step?.isComplete }"
             >
               ✓
             </button>
@@ -80,7 +80,6 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMilestoneStore } from '@/stores/milestone'
 import { formatDate } from '@/utils'
-import AddStepModal from '@/components/modals/AddStepModal.vue'
 
 const route = useRoute()
 const milestoneStore = useMilestoneStore()
@@ -130,7 +129,7 @@ onMounted(async () => {
 .back-button {
   background: none;
   border: 1px solid #e9ecef;
-  color: #667eea;
+  color: #28a745;
   padding: 0.5rem 1rem;
   border-radius: 6px;
   cursor: pointer;
@@ -254,7 +253,7 @@ onMounted(async () => {
 }
 
 .generate-button:hover:not(:disabled) {
-  background: #5a6fd8;
+  background: #28a745;
 }
 
 .add-step-button {

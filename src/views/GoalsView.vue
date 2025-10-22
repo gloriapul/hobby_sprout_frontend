@@ -104,7 +104,6 @@ const filteredGoals = computed(() => {
 })
 
 function viewGoal(goalId: string) {
-  // For demo, just alert the goal description and steps
   const goal = localGoals.value.find((g) => g.id === goalId)
   if (goal) alert(`Goal: ${goal.description}\nSteps: ${goal.steps.join(', ')}`)
 }
@@ -239,7 +238,7 @@ onMounted(async () => {
 }
 
 .empty-action-button {
-  background: #667eea;
+  background: #388e3c;
   color: white;
   border: none;
   padding: 1rem 2rem;
@@ -250,7 +249,7 @@ onMounted(async () => {
 }
 
 .empty-action-button:hover {
-  background: #5a6fd8;
+  background: #388e3c;
 }
 
 .goals-grid {
