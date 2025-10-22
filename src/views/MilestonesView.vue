@@ -159,8 +159,6 @@
       @goalCreated="handleGoalCreated"
       :hobby="selectedHobbyForGoal || ''"
     />
-
-    <!-- Add Step Modal removed: now handled in GoalCreationModal -->
   </div>
 </template>
 
@@ -187,7 +185,6 @@ import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
 import { useMilestoneStore } from '@/stores/milestone'
 import GoalCreationModal from '@/components/modals/GoalCreationModal.vue'
-import AddStepModal from '@/components/modals/AddStepModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()

@@ -56,11 +56,6 @@ const router = createRouter({
           name: 'quiz',
           component: () => import('../views/QuizView.vue'),
         },
-        {
-          path: 'api-test',
-          name: 'api-test',
-          component: () => import('../components/ApiTestDashboard.vue'),
-        },
       ],
     },
   ],
