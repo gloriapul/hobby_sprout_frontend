@@ -14,7 +14,14 @@ A college senior, unsure about dedicating time to a new hobby, discovers HobbySp
 
 ### Screen Recording
 
-[Google Drive Link](https://drive.google.com/file/d/1C2_7B3RHrQhVvFLfHhBG9iiOOmLbsRd5/view?usp=sharing)
+#### Check In 
+[Check In Google Drive Link](https://drive.google.com/file/d/1C2_7B3RHrQhVvFLfHhBG9iiOOmLbsRd5/view?usp=sharing)
+
+### Visual Design Study
+
+[Check In Google Slides Link](https://docs.google.com/presentation/d/11KOza0QxJegwlJRS2OytLb8BY-9jOD2HVAjNbZ9Te7g/edit?usp=sharing)
+
+This study includes my thought process behind the design process for my app.
 
 ## Setup
 
