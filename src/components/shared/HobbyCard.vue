@@ -1,5 +1,5 @@
 <template>
-  <div class="hobby-card">
+  <div class="hobby-card" @click="$emit('click', hobby)">
     <span class="hobby-name">{{ hobby }}</span>
   </div>
 </template>

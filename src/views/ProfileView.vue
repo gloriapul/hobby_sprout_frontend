@@ -53,18 +53,38 @@
       <div class="hobbies-section">
         <div class="section-header">
           <h3>My Hobbies</h3>
+          <select v-model="hobbyFilter" class="hobby-filter">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="all">All</option>
+          </select>
           <button @click="showAddHobby = true" class="add-button">+ Add Hobby</button>
         </div>
 
         <div v-if="loading" class="loading-state">Loading hobbies...</div>
 
-        <div v-else-if="hobbies.length === 0" class="empty-state">
-          <p>No hobbies added yet. Add your first hobby to get started!</p>
+        <div v-else-if="filteredHobbies.length === 0" class="empty-state">
+          <p>No hobbies to show for this filter.</p>
         </div>
 
         <div v-else class="hobbies-grid">
-          <HobbyCard v-for="hobby in hobbies" :key="hobby" :hobby="hobby" @remove="removeHobby" />
+          <HobbyCard
+            v-for="hobby in filteredHobbies"
+            :key="hobby"
+            :hobby="hobby"
+            @click="handleHobbyClick(hobby)"
+          />
         </div>
+
+        <HobbyDetailModal
+          v-if="showHobbyDetail && selectedHobby"
+          :hobby="selectedHobby"
+          :isActive="selectedHobbyIsActive"
+          :goals="selectedHobbyGoals"
+          @close="showHobbyDetail = false"
+          @markInactive="markHobbyInactive"
+          @markActive="markHobbyActive"
+        />
       </div>
     </div>
 
@@ -76,11 +96,14 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
+import { useMilestoneStore } from '@/stores/milestone'
 import HobbyCard from '@/components/shared/HobbyCard.vue'
 import HobbyModal from '@/components/modals/HobbyModal.vue'
+import HobbyDetailModal from '@/components/shared/HobbyDetailModal.vue'
 
 const authStore = useAuthStore()
 const profileStore = useProfileStore()
+const milestoneStore = useMilestoneStore()
 
 const user = computed(() => authStore.user)
 const profile = computed(() => profileStore.profile)
@@ -89,10 +112,23 @@ const loading = computed(() => profileStore.loading)
 
 const isEditing = ref(false)
 const showAddHobby = ref(false)
+const showHobbyDetail = ref(false)
 
 const editForm = ref({
   name: '',
   image: '',
+})
+
+const hobbyFilter = ref('active')
+const allHobbies = computed(() => profileStore.hobbies)
+const activeHobbies = computed(() => profileStore.activeHobbies)
+const inactiveHobbies = computed(() =>
+  allHobbies.value.filter((h) => !activeHobbies.value.includes(h)),
+)
+const filteredHobbies = computed(() => {
+  if (hobbyFilter.value === 'active') return activeHobbies.value
+  if (hobbyFilter.value === 'inactive') return inactiveHobbies.value
+  return allHobbies.value
 })
 
 const getInitials = (name: string) => {
@@ -131,11 +167,54 @@ const toggleEditMode = async () => {
 
 const addHobby = async (hobbyName: string) => {
   await profileStore.setHobby(hobbyName)
+  if (user.value) {
+    await profileStore.loadProfile(user.value.id)
+  }
   showAddHobby.value = false
 }
 
 const removeHobby = async (hobbyName: string) => {
   await profileStore.closeHobby(hobbyName)
+}
+
+const selectedHobby = ref<string | null>(null)
+const selectedHobbyGoals = ref<any[]>([])
+const selectedHobbyIsActive = ref(false)
+
+import { ApiService } from '@/services/api'
+
+const handleHobbyClick = async (hobby: string) => {
+  selectedHobby.value = hobby
+  showHobbyDetail.value = true
+  selectedHobbyIsActive.value = activeHobbies.value.includes(hobby)
+  selectedHobbyGoals.value = []
+  if (!user.value) return
+  try {
+    // Fetch all goals for this user and hobby from backend (backend filters by hobby)
+    const result = await ApiService.callConceptAction('MilestoneTracker', '_getAllGoals', {
+      user: user.value.id,
+      hobby,
+    })
+    if (Array.isArray(result)) {
+      selectedHobbyGoals.value = result
+    } else {
+      selectedHobbyGoals.value = []
+    }
+  } catch (err) {
+    console.error('Failed to fetch all goals:', err)
+    selectedHobbyGoals.value = []
+  }
+}
+
+const markHobbyInactive = async (hobby: string) => {
+  await profileStore.setHobbyInactive(hobby)
+  if (user.value) await profileStore.loadProfile(user.value.id)
+  showHobbyDetail.value = false
+}
+const markHobbyActive = async (hobby: string) => {
+  await profileStore.setHobbyActive(hobby)
+  if (user.value) await profileStore.loadProfile(user.value.id)
+  showHobbyDetail.value = false
 }
 
 onMounted(async () => {
@@ -308,6 +387,33 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1rem;
+}
+
+.filter-dropdown {
+  margin-bottom: 1.5rem;
+}
+
+.filter-dropdown label {
+  font-weight: 500;
+  margin-right: 1rem;
+  color: #333;
+}
+
+.filter-dropdown select {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.hobby-filter {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-left: 1rem;
 }
 
 @media (max-width: 768px) {
