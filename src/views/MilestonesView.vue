@@ -7,7 +7,7 @@
 
     <div v-if="!currentGoal && !loading" class="no-goal-state">
       <div class="no-goal-content">
-        <div class="no-goal-icon">🎯</div>
+        <div class="no-goal-icon">🌱</div>
         <h2>Ready to start your hobby journey?</h2>
         <p>Create your first goal and we'll help you break it down into achievable steps.</p>
 
@@ -44,10 +44,6 @@
             <span class="step-count">{{ totalSteps }} steps</span>
           </div>
         </div>
-      </div>
-
-      <div class="close-goal-actions" style="margin-bottom: 2rem">
-        <button @click="closeActiveGoal" class="close-goal-button">Close Goal</button>
       </div>
 
       <!-- Progress Overview -->
@@ -145,6 +141,16 @@
       </div>
     </div>
 
+    <div
+      v-if="goalProgress < 100 && currentGoalSteps.length > 0"
+      class="close-goal-actions"
+      style="margin-bottom: 2rem"
+    >
+      <button @click="closeActiveGoal" class="close-goal-button stylish-close-goal">
+        <span>Abandon Goal</span>
+      </button>
+    </div>
+
     <!-- Loading State -->
     <div v-if="loading" class="loading-state">
       <div class="loading-spinner"></div>
@@ -221,7 +227,7 @@ const generatingSteps = ref(false)
 const currentGoal = computed(() => milestoneStore.currentGoal)
 const currentGoalSteps = computed(() => milestoneStore.currentGoalSteps)
 const loading = computed(() => milestoneStore.loading)
-const userHobbies = computed(() => profileStore.hobbies || [])
+const userHobbies = computed(() => profileStore.activeHobbies || [])
 
 const totalSteps = computed(() => currentGoalSteps.value.length)
 const completedSteps = computed(
@@ -857,5 +863,34 @@ onMounted(async () => {
     flex-direction: column;
     align-items: center;
   }
+}
+</style>
+<style scoped>
+/* Stylish Close Goal Button */
+.stylish-close-goal {
+  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  padding: 0.5rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 2px 8px rgba(56, 142, 60, 0.12);
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+.stylish-close-goal:hover {
+  background: linear-gradient(135deg, #388e3c 0%, #81c784 100%);
+  transform: translateY(-2px) scale(1.04);
+}
+.close-goal-icon {
+  font-size: 1.3em;
+  display: flex;
+  align-items: center;
 }
 </style>

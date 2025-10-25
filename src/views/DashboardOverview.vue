@@ -9,8 +9,11 @@
       <div class="stat-card">
         <div class="stat-icon">🎯</div>
         <div class="stat-content">
-          <h3>{{ goals.length }}</h3>
-          <p>Active Goals</p>
+          <h3>
+            <span v-if="allGoalsLoading" class="spinner"></span>
+            <span v-else>{{ allGoals.length === 0 ? '' : allGoals.length }}</span>
+          </h3>
+          <p>Total Goals</p>
         </div>
       </div>
 
@@ -19,24 +22,6 @@
         <div class="stat-content">
           <h3>{{ hobbies.length }}</h3>
           <p>Hobbies</p>
-        </div>
-      </div>
-
-      <!--
-      <div class="stat-card">
-        <div class="stat-icon">📈</div>
-        <div class="stat-content">
-          <h3>{{ completedGoalsCount }}</h3>
-          <p>Completed Goals</p>
-        </div>
-      </div>
-      -->
-
-      <div class="stat-card">
-        <div class="stat-icon">🔥</div>
-        <div class="stat-content">
-          <h3>{{ streakDays }}</h3>
-          <p>Day Streak</p>
         </div>
       </div>
     </div>
@@ -55,7 +40,6 @@
           <h3>Add Hobby</h3>
           <p>Discover and add new hobbies to explore</p>
         </router-link>
-
         <router-link to="/dashboard/quiz" class="action-card">
           <div class="action-icon">❓</div>
           <h3>Take Quiz</h3>
@@ -103,17 +87,43 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
 import { useMilestoneStore } from '@/stores/milestone'
+import { ApiService } from '@/services/api'
 import { formatDate } from '@/utils'
+const allGoals = ref<any[]>([])
+const allGoalsLoading = ref(true)
 
 const authStore = useAuthStore()
 const profileStore = useProfileStore()
 const milestoneStore = useMilestoneStore()
 
 const user = computed(() => authStore.user)
+
+// Try to get account creation date from profile (preferred) or user
+function getAccountCreatedAt(): string | null {
+  // If profileStore.profile has a createdAt, use it
+  if (
+    profileStore.profile &&
+    typeof profileStore.profile === 'object' &&
+    'createdAt' in profileStore.profile &&
+    typeof (profileStore.profile as any).createdAt === 'string'
+  ) {
+    return (profileStore.profile as any).createdAt
+  }
+  // Fallback: user.value.createdAt if present
+  if (
+    user.value &&
+    typeof user.value === 'object' &&
+    'createdAt' in user.value &&
+    typeof user.value.createdAt === 'string'
+  ) {
+    return user.value.createdAt
+  }
+  return null
+}
 const hobbies = computed(() => profileStore.hobbies)
 const goals = computed(() => milestoneStore.goals)
 
@@ -126,46 +136,49 @@ const displayName = computed(() => {
 //   return goals.value.filter((goal) => !goal.isActive).length
 // })
 
-const streakDays = computed(() => {
-  // Calculate streak as the number of days since the most recent goal started
-  if (!goals.value.length) return 0
-  // Find the most recent goal by createdAt
-  const sortedGoals = [...goals.value].sort((a, b) => {
-    return new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()
-  })
-  const mostRecentGoal = sortedGoals[0]
-  if (!mostRecentGoal || !mostRecentGoal.createdAt) return 0
-  const startDate = new Date(mostRecentGoal.createdAt)
-  const now = new Date()
-  // Calculate difference in days
-  const diffTime = now.getTime() - startDate.getTime()
-  const diffDays = Math.max(1, Math.floor(diffTime / (1000 * 60 * 60 * 24)))
-  return diffDays
-})
-
 const recentGoals = computed(() => {
   // Show last 3 goals, including completed (inactive) and active
   return goals.value.slice(0, 3)
 })
 
+async function reloadAllGoals() {
+  allGoalsLoading.value = true
+  if (user.value) {
+    try {
+      const response = await ApiService.callConceptAction<any[]>(
+        'MilestoneTracker',
+        '_getAllGoals',
+        { user: user.value.id },
+      )
+      if (Array.isArray(response)) {
+        allGoals.value = response
+      } else {
+        allGoals.value = []
+      }
+    } catch (err) {
+      allGoals.value = []
+    }
+  }
+  allGoalsLoading.value = false
+}
+
 onMounted(async () => {
   if (user.value) {
-    await Promise.all([
-      profileStore.loadProfile(user.value.id),
-      milestoneStore.loadUserGoals(user.value.id),
-    ])
+    // Load profile and goals
+    await profileStore.loadProfile(user.value.id)
+    await milestoneStore.loadUserGoals(user.value.id)
+    await reloadAllGoals()
   }
 })
 
 // Watch for changes in milestoneStore.goals and reload from backend if a goal is completed
+// Reload allGoals from backend whenever milestoneStore.goals changes
 watch(
-  () => milestoneStore.goals.map((g) => g.completed),
-  async (newCompleted, oldCompleted) => {
-    if (user.value && newCompleted.some((c, i) => c && !oldCompleted[i])) {
-      // A goal was just completed, reload goals from backend
-      await milestoneStore.loadUserGoals(user.value.id)
-    }
+  () => milestoneStore.goals,
+  async () => {
+    await reloadAllGoals()
   },
+  { deep: true },
 )
 </script>
 
@@ -333,6 +346,24 @@ watch(
   background: #43a047;
   color: #fff;
   box-shadow: 0 2px 8px rgba(67, 160, 71, 0.15);
+}
+.spinner {
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  border: 3px solid #e0e0e0;
+  border-top: 3px solid #43a047;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: middle;
+}
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {

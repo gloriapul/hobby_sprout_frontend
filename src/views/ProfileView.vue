@@ -80,7 +80,8 @@
           v-if="showHobbyDetail && selectedHobby"
           :hobby="selectedHobby"
           :isActive="selectedHobbyIsActive"
-          :goals="selectedHobbyGoals"
+          :goals="selectedHobbyGoals === null ? [] : selectedHobbyGoals"
+          :loading="selectedHobbyGoals === null"
           @close="showHobbyDetail = false"
           @markInactive="markHobbyInactive"
           @markActive="markHobbyActive"
@@ -93,6 +94,22 @@
 </template>
 
 <script setup lang="ts">
+// Add missing markHobbyInactive and markHobbyActive methods for HobbyDetailModal events
+const markHobbyInactive = async (hobbyName: string) => {
+  await profileStore.closeHobby(hobbyName)
+  if (user.value) {
+    await profileStore.loadProfile(user.value.id)
+  }
+  showHobbyDetail.value = false
+}
+
+const markHobbyActive = async (hobbyName: string) => {
+  await profileStore.setHobby(hobbyName)
+  if (user.value) {
+    await profileStore.loadProfile(user.value.id)
+  }
+  showHobbyDetail.value = false
+}
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
@@ -178,7 +195,7 @@ const removeHobby = async (hobbyName: string) => {
 }
 
 const selectedHobby = ref<string | null>(null)
-const selectedHobbyGoals = ref<any[]>([])
+const selectedHobbyGoals = ref<any[] | null>(null)
 const selectedHobbyIsActive = ref(false)
 
 import { ApiService } from '@/services/api'
@@ -187,7 +204,7 @@ const handleHobbyClick = async (hobby: string) => {
   selectedHobby.value = hobby
   showHobbyDetail.value = true
   selectedHobbyIsActive.value = activeHobbies.value.includes(hobby)
-  selectedHobbyGoals.value = []
+  selectedHobbyGoals.value = null // null means loading
   if (!user.value) return
   try {
     // Fetch all goals for this user and hobby from backend (backend filters by hobby)
@@ -204,17 +221,6 @@ const handleHobbyClick = async (hobby: string) => {
     console.error('Failed to fetch all goals:', err)
     selectedHobbyGoals.value = []
   }
-}
-
-const markHobbyInactive = async (hobby: string) => {
-  await profileStore.setHobbyInactive(hobby)
-  if (user.value) await profileStore.loadProfile(user.value.id)
-  showHobbyDetail.value = false
-}
-const markHobbyActive = async (hobby: string) => {
-  await profileStore.setHobbyActive(hobby)
-  if (user.value) await profileStore.loadProfile(user.value.id)
-  showHobbyDetail.value = false
 }
 
 onMounted(async () => {

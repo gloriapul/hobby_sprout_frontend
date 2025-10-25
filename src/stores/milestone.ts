@@ -258,14 +258,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
         if (goal && allComplete) {
           goal.completed = true
           goal.isActive = false // Mark goal as inactive when completed
-          // Mark hobby as inactive when all steps for the goal are complete
-          try {
-            const { useProfileStore } = await import('@/stores/profile')
-            const profileStore = useProfileStore()
-            await profileStore.setHobbyInactive(goal.hobby)
-          } catch (e) {
-            console.error('Failed to mark hobby inactive:', e)
-          }
+          // Do NOT mark hobby as inactive automatically
         }
       }
     } catch (err: any) {

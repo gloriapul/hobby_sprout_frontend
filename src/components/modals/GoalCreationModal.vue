@@ -244,6 +244,7 @@ async function saveGoal() {
     const goalResult = await ApiService.callConceptAction<any>('MilestoneTracker', 'createGoal', {
       user: userId,
       description: goalDescription.value,
+      hobby: props.hobby,
     })
     if (goalResult && typeof goalResult.error === 'string') {
       manualStepError.value = goalResult.error
