@@ -6,13 +6,22 @@ A Vue.js frontend application for HobbySprout, an application designed to suppor
 
 ## Checkin
 
-The fundamental functionality of the application has been implemented to demonstrate the user journey, I will do more work to refine and improve the application in time for Tuesday's due date.
+The base functionality of the application has been implemented to demonstrate the user journey, I will do more work to refine and add to the application in time for Tuesday's due date.
 
 ### User Journey
 
 A college senior, unsure about dedicating time to a new hobby, discovers HobbySprout and registers for an account. After setting up her profile, she takes the built-in quiz to help choose a hobby since she is still unsure of what she wants, and the app recommends knitting. She explores the home page and uses the milestone tracker to set a goal of wanting to learn how to knit a sweater. HobbySprout breaks these goals into manageable steps, such as watching tutorials and buying materials, making the process feel achievable. She reviews the generated steps and approves them, and later marks her first step as in progress. As she completes tasks and sees her milestones increase, she feels motivated to keep going and work toward her ultimate goal of making a sweater.
 
 ### Screen Recording
+
+#### Check In 
+[Check In Google Drive Link](https://drive.google.com/file/d/1C2_7B3RHrQhVvFLfHhBG9iiOOmLbsRd5/view?usp=sharing)
+
+### Visual Design Study
+
+[Check In Google Slides Link](https://docs.google.com/presentation/d/11KOza0QxJegwlJRS2OytLb8BY-9jOD2HVAjNbZ9Te7g/edit?usp=sharing)
+
+This study includes my thought process behind the design process for my app.
 
 ## Setup
 
