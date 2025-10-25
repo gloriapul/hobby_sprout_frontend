@@ -10,7 +10,13 @@
         <div class="user-menu">
           <button ref="userButtonRef" @click="toggleUserMenu" class="user-button">
             <div class="user-avatar">
-              {{ getUserInitials() }}
+              <img
+                v-if="profileStore.profile?.image"
+                :src="profileStore.profile.image"
+                :alt="displayName"
+                style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%"
+              />
+              <span v-else>{{ getUserInitials() }}</span>
             </div>
             <span>{{ displayName }}</span>
             <svg

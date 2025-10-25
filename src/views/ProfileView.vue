@@ -77,6 +77,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
 import HobbyCard from '@/components/shared/HobbyCard.vue'
+import HobbyModal from '@/components/modals/HobbyModal.vue'
 
 const authStore = useAuthStore()
 const profileStore = useProfileStore()

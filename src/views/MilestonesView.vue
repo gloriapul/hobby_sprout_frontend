@@ -166,11 +166,18 @@ const closeActiveGoal = async () => {
   if (currentGoal.value) {
     await milestoneStore.deleteGoal(currentGoal.value.id)
     milestoneStore.clearCurrentGoal()
+    milestoneStore.currentGoal = null
     showCreateGoal.value = false
     selectedHobbyForGoal.value = undefined
     if (authStore.user) {
       await milestoneStore.loadUserGoals(authStore.user.id)
+      // After reload, also reload steps for new currentGoal if any
+      const goal = milestoneStore.currentGoal as { id?: string } | null
+      if (goal && goal.id) {
+        await milestoneStore.loadGoalSteps(goal.id)
+      }
     }
+    await nextTick()
   }
 }
 // Reset page and allow user to pick a new hobby for next goal
@@ -187,13 +194,19 @@ const resetForNewGoal = async () => {
   selectedHobbyForGoal.value = undefined
   if (authStore.user) {
     await milestoneStore.loadUserGoals(authStore.user.id)
+    const goal = milestoneStore.currentGoal as { id?: string } | null
+    if (goal && goal.id) {
+      await milestoneStore.loadGoalSteps(goal.id)
+    }
   }
+  await nextTick()
 }
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
 import { useMilestoneStore } from '@/stores/milestone'
 import GoalCreationModal from '@/components/modals/GoalCreationModal.vue'
+import { useRouter } from 'vue-router'
 
 const authStore = useAuthStore()
 const profileStore = useProfileStore()
@@ -218,7 +231,19 @@ const remainingSteps = computed(() => totalSteps.value - completedSteps.value)
 const goalProgress = computed(() => milestoneStore.goalProgress)
 
 // Methods
-const createGoalForHobby = (hobby: string) => {
+const createGoalForHobby = async (hobby: string) => {
+  // Prevent opening modal until goals are loaded and no active goal exists
+  if (loading.value) return
+  if (authStore.user && authStore.user.id) {
+    await milestoneStore.loadUserGoals(authStore.user.id)
+    if (milestoneStore.currentGoal) {
+      await milestoneStore.loadGoalSteps(milestoneStore.currentGoal.id)
+    }
+  }
+  if (milestoneStore.currentGoal && milestoneStore.currentGoal.isActive) {
+    alert('You already have an active goal. Please complete or close it first.')
+    return
+  }
   selectedHobbyForGoal.value = hobby
   showCreateGoal.value = true
 }
@@ -267,6 +292,7 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString()
 }
 
+const router = useRouter()
 const handleGoalCreated = async (goalData: {
   description: string
   steps: string[]
@@ -274,20 +300,14 @@ const handleGoalCreated = async (goalData: {
 }) => {
   showCreateGoal.value = false
   selectedHobbyForGoal.value = undefined
-  // Create the goal and immediately show the steps view
   if (authStore.user) {
-    const newGoal = await milestoneStore.createGoal(
-      authStore.user.id,
-      goalData.description,
-      goalData.hobby,
-    )
-    // Optionally, add steps if provided
-    if (goalData.steps && goalData.steps.length > 0) {
-      for (const step of goalData.steps) {
-        await milestoneStore.addStep(newGoal.id, step)
-      }
-      await milestoneStore.loadGoalSteps(newGoal.id)
+    // Always reload user goals and steps after modal closes to ensure UI is up to date
+    await milestoneStore.loadUserGoals(authStore.user.id)
+    if (milestoneStore.currentGoal && milestoneStore.currentGoal.id) {
+      await milestoneStore.loadGoalSteps(milestoneStore.currentGoal.id)
     }
+    // Optionally, navigate to milestones/progress page
+    router.push('/dashboard/milestones')
   }
 }
 

@@ -77,15 +77,15 @@
           </div>
         </div>
         <div v-else class="no-match">
-          <p>
-            Unable to generate a hobby match.<br>
-            <span style="color:#c00;font-weight:500;">Possible reasons:</span>
-            <ul style="text-align:left;margin:0.5em 0 0 1em;">
+          <div>
+            Unable to generate a hobby match.<br />
+            <span style="color: #c00; font-weight: 500">Possible reasons:</span>
+            <ul style="text-align: left; margin: 0.5em 0 0 1em">
               <li>You may have skipped a question or not answered all quiz questions.</li>
               <li>There may be a temporary server issue.</li>
             </ul>
             Please review your answers and try again.
-          </p>
+          </div>
           <button @click="retakeQuiz" class="retake-btn">Retake Quiz</button>
         </div>
       </div>
