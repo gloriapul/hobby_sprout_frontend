@@ -292,9 +292,13 @@ const addHobbyToProfile = async () => {
       `${hobbyMatch.value} has been added to your hobbies! Now you can create goals for it in the Milestones section.`,
     )
     router.push('/dashboard/milestones')
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to add hobby to profile:', error)
-    alert('Failed to add hobby to profile. Please try again.')
+    if (typeof error?.message === 'string' && error.message.toLowerCase().includes('already')) {
+      alert('You already have this hobby in your list!')
+    } else {
+      alert('Failed to add hobby to profile. Please try again.')
+    }
   }
 }
 

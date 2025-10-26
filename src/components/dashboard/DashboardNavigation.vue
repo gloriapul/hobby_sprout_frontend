@@ -36,8 +36,6 @@
             <span>Quiz</span>
           </router-link>
         </div>
-      </div>
-
       <router-link to="/dashboard/profile" class="nav-item" active-class="active">
         <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
           <path
@@ -48,6 +46,7 @@
         </svg>
         <span>Profile</span>
       </router-link>
+    </div>
     </div>
   </nav>
 </template>

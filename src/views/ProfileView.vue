@@ -183,11 +183,20 @@ const toggleEditMode = async () => {
 }
 
 const addHobby = async (hobbyName: string) => {
-  await profileStore.setHobby(hobbyName)
-  if (user.value) {
-    await profileStore.loadProfile(user.value.id)
+  try {
+    await profileStore.setHobby(hobbyName)
+    if (user.value) {
+      await profileStore.loadProfile(user.value.id)
+    }
+    showAddHobby.value = false
+  } catch (err: any) {
+    let msg = err?.message || 'Failed to add hobby.'
+    if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('active')) {
+      alert('You already have this hobby in your list.')
+    } else {
+      alert(msg)
+    }
   }
-  showAddHobby.value = false
 }
 
 const removeHobby = async (hobbyName: string) => {
@@ -213,7 +222,20 @@ const handleHobbyClick = async (hobby: string) => {
       hobby,
     })
     if (Array.isArray(result)) {
-      selectedHobbyGoals.value = result
+      // For each goal, fetch its steps and attach as 'steps' property
+      const goalsWithSteps = await Promise.all(
+        result.map(async (goal) => {
+          try {
+            const steps = await ApiService.callConceptAction('MilestoneTracker', '_getSteps', {
+              goal: goal.id,
+            })
+            return { ...goal, steps: Array.isArray(steps) ? steps : [] }
+          } catch (e) {
+            return { ...goal, steps: [] }
+          }
+        }),
+      )
+      selectedHobbyGoals.value = goalsWithSteps
     } else {
       selectedHobbyGoals.value = []
     }
