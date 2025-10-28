@@ -253,12 +253,13 @@ onMounted(async () => {
 
 // Color pairs for step cards
 const stepColors = [
-  { background: '#e8f5e9', color: '#38778e' },
+  { background: '#f3e5f5', color: '#6a1b9a' },
+  { background: '#fbe9e7', color: '#d84315' },
   { background: '#e3f2fd', color: '#1565c0' },
   { background: '#fffde7', color: '#f9a825' },
   { background: '#fce4ec', color: '#ad1457' },
-  { background: '#f3e5f5', color: '#6a1b9a' },
-  { background: '#fbe9e7', color: '#d84315' },
+  { background: '#e8f5e9', color: '#388e3c' },
+  { background: '#d1f3ff', color: '#38778e' }
 ]
 </script>
 
