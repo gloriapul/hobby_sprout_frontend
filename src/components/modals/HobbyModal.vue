@@ -54,7 +54,6 @@ const submitHobby = () => {
   border-radius: 16px;
   padding: 2rem;
   min-width: 320px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
 }
 .modal-header h2 {
   margin: 0 0 1rem 0;
@@ -89,15 +88,22 @@ const submitHobby = () => {
   border-radius: 8px;
   cursor: pointer;
 }
+
 .add-btn {
-  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+  background: #388e3c;
   color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 500;
+  font-family: 'Poppins', sans-serif;
 }
+
+.add-btn:hover {
+  background: #256b28;
+}
+
 .add-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;

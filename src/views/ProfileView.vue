@@ -178,7 +178,6 @@ const milestoneStore = useMilestoneStore()
 
 const user = computed(() => authStore.user)
 const profile = computed(() => profileStore.profile)
-const hobbies = computed(() => profileStore.hobbies)
 const loading = computed(() => profileStore.loading)
 
 const isEditing = ref(false)
@@ -352,14 +351,15 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 .base-btn {
   color: white;
-  border: none;
   padding: 0.5rem 1rem;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
+  font-family: 'Poppins', sans-serif;
 }
 .hobby-card-wrapper {
   display: flex;
@@ -388,19 +388,22 @@ onMounted(async () => {
 }
 .quiz-sort-control label {
   font-weight: 500;
-  color: #333;
+  color: #256b28;
+  font-family: 'Poppins', sans-serif;
 }
-.quiz-sort-control select {
+.quiz-sort-control select,
+.hobby-filter-label select {
   padding: 0.3rem 0.7rem;
-  border: 1px solid #ddd;
+  border: 1px solid #bce7bd;
   border-radius: 6px;
   font-size: 1rem;
   cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  background: #fff;
 }
 .clear-history-btn {
-  background: linear-gradient(135deg, #ff8a65 0%, #d84315 100%);
+  background: #388e3c;
   color: #fff;
-  border: none;
   padding: 0.5rem 1rem;
   border-radius: 6px;
   cursor: pointer;
@@ -410,6 +413,7 @@ onMounted(async () => {
 .profile-view {
   max-width: 1000px;
   margin: 0 auto;
+  font-family: 'Poppins', sans-serif;
 }
 
 .profile-header {
@@ -421,17 +425,19 @@ onMounted(async () => {
 
 .profile-header h1 {
   margin: 0;
-  color: #333;
+  font-weight: 500;
+  color: #256b28;
+  font-family: 'Poppins', sans-serif;
 }
 
 .edit-button {
-  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+  background: #388e3c;
   color: white;
-  border: none;
   padding: 0.5rem 1rem;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
+  font-family: 'Poppins', sans-serif;
 }
 
 .profile-content {
@@ -441,10 +447,9 @@ onMounted(async () => {
 }
 
 .profile-card {
-  background: white;
+  background: #e8f5e9;
   border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .profile-info {
@@ -459,6 +464,7 @@ onMounted(async () => {
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
+  background: #e8f5e9;
 }
 
 .avatar img {
@@ -470,13 +476,13 @@ onMounted(async () => {
 .avatar-placeholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+  background: #388e3c;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-size: 2rem;
-  font-weight: bold;
+  font-family: 'Poppins', sans-serif;
 }
 
 .user-details {
@@ -485,19 +491,22 @@ onMounted(async () => {
 
 .view-mode h2 {
   margin: 0 0 0.5rem 0;
-  color: #333;
+  color: #256b28;
+  font-family: 'Poppins', sans-serif;
 }
 
 .username {
   color: #666;
   margin: 0 0 0.5rem 0;
   font-size: 0.9rem;
+  font-family: 'Poppins', sans-serif;
 }
 
 .bio {
   color: #888;
   margin: 0;
   font-style: italic;
+  font-family: 'Poppins', sans-serif;
 }
 
 .edit-mode {
@@ -514,21 +523,23 @@ onMounted(async () => {
 .form-group label {
   font-weight: 500;
   margin-bottom: 0.5rem;
-  color: #333;
+  color: #256b28;
+  border: none;
+  font-family: 'Poppins', sans-serif;
 }
 
 .form-group input {
   padding: 0.5rem;
-  border: 1px solid #ddd;
   border-radius: 6px;
   font-size: 1rem;
+  border: none;
+  font-family: 'Poppins', sans-serif;
 }
 
 .hobbies-section {
-  background: white;
+  background: #e8f5e9;
   border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .section-header {
@@ -540,22 +551,28 @@ onMounted(async () => {
 
 .section-header h3 {
   margin: 0;
-  color: #333;
+  font-weight: 500;
+  color: #256b28;
+  font-family: 'Poppins', sans-serif;
 }
 
-.add-button {
-  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+.add-button,
+.clear-history-btn,
+.edit-button {
+  background: #388e3c;
   color: white;
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
+  font-family: 'Poppins', sans-serif;
 }
 
 .edit-button:hover,
-.add-button:hover {
-  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+.add-button:hover,
+.clear-history-btn:hover {
+  background: #256b28;
 }
 
 .loading-state,
@@ -563,6 +580,7 @@ onMounted(async () => {
   text-align: center;
   padding: 2rem;
   color: #666;
+  font-family: 'Poppins', sans-serif;
 }
 
 .hobbies-grid {
@@ -573,25 +591,6 @@ onMounted(async () => {
   overflow-y: auto;
 }
 
-.filter-dropdown {
-  margin-bottom: 1.5rem;
-}
-
-.filter-dropdown label {
-  font-weight: 500;
-  margin-right: 1rem;
-  color: #333;
-}
-
-.filter-dropdown select {
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-/* Match .add-button height and style */
 .hobby-actions-row {
   display: flex;
   align-items: center;
@@ -600,39 +599,37 @@ onMounted(async () => {
 }
 .hobby-filter-label {
   font-weight: 500;
+  color: #256b28;
+  font-family: 'Poppins', sans-serif;
+  margin-right: 0.5rem;
 }
 .hobby-filter {
   padding: 0.3rem 0.7rem;
   border-radius: 6px;
-  border: 1px solid #ddd;
+  border: 1px solid #bce7bd;
   font-size: 1rem;
   cursor: pointer;
-  background: white;
-  box-sizing: border-box;
-  font-weight: 500;
+  background: #fff;
+  font-family: 'Poppins', sans-serif;
+  margin-right: 1rem;
 }
-
-/* Quiz History Section */
 .quiz-history-section {
-  background: white;
+  background: #e8f5e9;
   border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   margin-bottom: 2rem;
 }
 .quiz-history-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 1rem;
-  background: #f7fafc;
+  background: #e8f5e9;
   border-radius: 8px;
   padding: 1.2rem 1rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 .quiz-history-card {
-  background: white;
+  background: #fff;
   border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   padding: 1rem 1.5rem;
   margin-bottom: 1rem;
   min-width: 220px;
@@ -646,26 +643,31 @@ onMounted(async () => {
   font-weight: 600;
   color: #388e3c;
   margin-bottom: 0.5rem;
+  font-family: 'Poppins', sans-serif;
 }
 .quiz-history-date {
   font-size: 0.95rem;
   color: #666;
+  font-family: 'Poppins', sans-serif;
 }
-@media (max-width: 768px) {
-  .profile-info {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .profile-header {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
-  }
-
-  .section-header {
-    flex-direction: column;
-    gap: 1rem;
-  }
+.hobby-sort-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: 1rem;
+}
+.hobby-sort-control label {
+  font-weight: 500;
+  color: #256b28;
+  font-family: 'Poppins', sans-serif;
+}
+.hobby-sort-control select {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid #bce7bd;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  background: #fff;
 }
 </style>
