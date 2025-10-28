@@ -135,8 +135,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Floras+Display:wght@700&display=swap');
 @import '@/assets/fonts/floras-display.css';
 
 .dashboard-header {
@@ -146,7 +144,7 @@ onUnmounted(() => {
   top: 0;
   z-index: 100;
   overflow: visible;
-  font-family: 'Poppins', sans-serif;
+  
 }
 
 .header-content {
@@ -157,7 +155,6 @@ onUnmounted(() => {
   justify-content: space-between;
   padding: 0 2rem;
   overflow: visible;
-  font-family: 'Poppins', sans-serif;
 }
 
 .logo-section {
@@ -222,7 +219,6 @@ onUnmounted(() => {
 .user-button span {
   color: #256b28;
   font-weight: 500;
-  font-family: 'Poppins', sans-serif;
 }
 
 .chevron {

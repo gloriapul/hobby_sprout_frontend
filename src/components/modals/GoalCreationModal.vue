@@ -1,9 +1,11 @@
 <template>
-  <div class="modal-overlay" @click="handleClose">
+  <div class="modal-overlay" @click="step === 1 || manualStepError ? handleClose() : null">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
         <h2>Create New Goal</h2>
-        <button @click="handleClose" class="close-button">×</button>
+        <button v-if="step === 1 || manualStepError" @click="handleClose" class="close-button">
+          ×
+        </button>
       </div>
       <div class="modal-body">
         <div v-if="step === 1" class="step-content">
@@ -66,7 +68,7 @@
                 </li>
               </template>
             </draggable>
-             <div class="form-actions">
+            <div class="form-actions">
               <label for="manualStepGen" class="form-label">Add Step</label>
               <textarea
                 id="manualStepGen"
@@ -446,37 +448,38 @@ async function saveGoal() {
   padding: 1rem;
 }
 .modal-content {
-  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-  border-radius: 20px;
+  background: #f6fff7;
+  border-radius: 16px;
   width: 100%;
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 10px 40px rgba(56, 142, 60, 0.15);
-  border: 1px solid #a5d6a7;
+  border: 1.5px solid #81c784;
+
 }
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 2rem 2rem 1rem 2rem;
-  border-bottom: 1px solid #a5d6a7;
-  background: linear-gradient(90deg, #a5d6a7 0%, #81c784 100%);
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
+  padding: 1.5rem 1.5rem 1rem 1.5rem;
+  border-bottom: 1px solid #81c784;
+  background: #e8f5e9;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
 }
 .modal-header h2 {
   margin: 0;
-  color: #388e3c;
-  font-size: 1.7rem;
-  font-weight: 700;
-  letter-spacing: 1px;
+  color: #256b28;
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  
 }
 .close-button {
   background: none;
   border: none;
   font-size: 2rem;
-  color: #388e3c;
+  color: #256b28;
   cursor: pointer;
   width: 40px;
   height: 40px;
@@ -484,37 +487,39 @@ async function saveGoal() {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: background-color 0.2s;
+  transition: background 0.2s;
 }
 .close-button:hover {
-  background: #c8e6c9;
-  color: #1b5e20;
+  background: #e0f2f1;
+  color: #256b28;
 }
 .modal-body {
-  padding: 2rem;
+  padding: 1.5rem;
 }
 .modal-body label {
-  color: #388e3c;
-  font-weight: 600;
+  color: #256b28;
+  font-weight: 500;
   margin-bottom: 0.5rem;
   display: block;
+  
 }
 .modal-body textarea,
 .modal-body input {
   width: 100%;
   border-radius: 8px;
-  border: 1px solid #a5d6a7;
+  border: 1.5px solid #81c784;
   padding: 0.75rem;
   margin-bottom: 0.5rem;
   font-size: 1rem;
-  background: #f1f8e9;
-  color: #388e3c;
+  background: #f6fff7;
+  color: #256b28;
+  
   transition: border-color 0.2s;
 }
 .modal-body textarea:focus,
 .modal-body input:focus {
   outline: none;
-  border-color: #388e3c;
+  border-color: #256b28;
 }
 .step-content h3 {
   margin: 0 0 0.5rem 0;
@@ -522,7 +527,7 @@ async function saveGoal() {
   font-size: 1.3rem;
 }
 .form-help {
-  color: #388e3c;
+  color: #256b28;
   margin-bottom: 1rem;
   font-size: 0.95rem;
   background: #e8f5e9;
@@ -544,72 +549,84 @@ async function saveGoal() {
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
-  background: #f1f8e9;
+  background: #f6fff7;
   border-radius: 8px;
   padding: 0.5rem 1rem;
-  box-shadow: 0 2px 8px rgba(56, 142, 60, 0.05);
+  border: 1px solid #e0f2f1;
+  box-shadow: none;
+  
 }
 .delete-step {
-  background: linear-gradient(135deg, #a5d6a7 0%, #388e3c 100%);
-  color: white;
+  background: #388e3c;
+  color: #fff;
   border: none;
   border-radius: 6px;
   padding: 0.25rem 0.75rem;
   cursor: pointer;
   font-size: 0.95rem;
+  
+  font-weight: 500;
   transition: background 0.2s;
 }
 .delete-step:hover {
-  background: linear-gradient(135deg, #388e3c 0%, #a5d6a7 100%);
+  background: #256b28;
 }
 .next-button,
 .primary-button {
-  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
-  color: white;
+  background: #388e3c;
+  color: #fff;
   border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
+  padding: 0.85rem 1.5rem;
+  border-radius: 8px;
   font-size: 1rem;
   cursor: pointer;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(56, 142, 60, 0.08);
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
+  font-weight: 500;
+  box-shadow: none;
+  transition: background 0.2s;
 }
-.next-button:disabled {
+.next-button:disabled,
+.primary-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+.next-button:hover,
+.primary-button:hover {
+  background: #256b28;
 }
 .secondary-button {
   background: transparent;
   color: #388e3c;
   border: 2px solid #388e3c;
   padding: 0.75rem 1.5rem;
-  border-radius: 10px;
+  border-radius: 8px;
   font-size: 1rem;
   cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s;
+  margin: 10px;
+  font-weight: 500;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 .secondary-button:hover {
   background: #388e3c;
-  color: white;
+  color: #fff;
 }
 .cancel-button {
   background: transparent;
-  color: #388e3c;
-  border: 2px solid #388e3c;
+  color: #256b28;
+  border: 2px solid #256b28;
   padding: 0.75rem 1.5rem;
-  border-radius: 10px;
+  border-radius: 8px;
   font-size: 1rem;
   cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s;
+  font-weight: 500;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 .cancel-button:hover {
-  background: #388e3c;
-  color: white;
+  background: #256b28;
+  color: #fff;
 }
 .loading-spinner {
   width: 40px;
@@ -620,21 +637,22 @@ async function saveGoal() {
   animation: spin 1s linear infinite;
   margin: 0 auto 2rem auto;
 }
-/* editable step input styles */
+
 .edit-step-input {
-  border: 1px solid #a5d6a7;
+  border: 1.5px solid #81c784;
   border-radius: 6px;
   padding: 0.4em 0.7em;
   font-size: 1em;
-  background: #f1f8e9;
-  color: #388e3c;
+  background: #f6fff7;
+  color: #256b28;
   flex: 1;
   min-width: 0;
+  
 }
 .edit-step-input:focus {
   outline: none;
-  border-color: #388e3c;
-  background: #fffde7;
+  border-color: #256b28;
+  background: #fff;
 }
 @keyframes spin {
   0% {

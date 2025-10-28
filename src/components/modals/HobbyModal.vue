@@ -97,7 +97,7 @@ const submitHobby = () => {
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
-  font-family: 'Poppins', sans-serif;
+
 }
 
 .add-btn:hover {

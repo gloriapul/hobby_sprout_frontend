@@ -94,8 +94,8 @@
             <h4>{{ hobbyMatch }}</h4>
             <p>This hobby has been carefully selected based on your personality and preferences!</p>
             <div class="action-buttons">
-              <button @click="addHobbyToProfile" class="add-hobby-btn">✨ Add to My Hobbies</button>
-              <button @click="retakeQuiz" class="retake-btn">🔄 Take Quiz Again</button>
+              <button @click="addHobbyToProfile" class="add-hobby-btn">Add to My Hobbies</button>
+              <button @click="retakeQuiz" class="retake-btn">Take Quiz Again</button>
             </div>
           </div>
         </div>
@@ -223,7 +223,7 @@ const selectAnswer = (answer: any) => {
   // Store both answer and freeResponseText for each question
   answers.value[currentQuestionIndex.value] = {
     answer,
-    freeResponseText: isDependsAnswer(answer) ? freeResponseText.value : '',
+    freeResponseText: isDependsAnswer(answer) ? freeResponseText.value : ''
   }
   if (!isDependsAnswer(answer)) {
     freeResponseText.value = ''
@@ -247,7 +247,7 @@ const nextQuestion = async () => {
   // Save the answer object
   answers.value[currentQuestionIndex.value] = {
     answer: selectedAnswer.value,
-    freeResponseText: isDependsAnswer(selectedAnswer.value) ? freeResponseText.value.trim() : '',
+    freeResponseText: isDependsAnswer(selectedAnswer.value) ? freeResponseText.value.trim() : ''
   }
 
   if (isLastQuestion.value) {
@@ -421,7 +421,7 @@ onMounted(() => {
 }
 
 .start-quiz-button {
-  background: #81c784;
+  background: #388e3c;
   color: white;
   border: none;
   padding: 1rem 3rem;
@@ -433,7 +433,7 @@ onMounted(() => {
 }
 
 .start-quiz-button:hover {
-  transform: translateY(-2px);
+  background: #256b28;
 }
 
 .quiz-content {
@@ -539,12 +539,12 @@ onMounted(() => {
 }
 
 .next-button {
-  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+  background: #388e3c;
   color: white;
 }
 
 .next-button:hover:not(:disabled) {
-  transform: translateY(-1px);
+  background: #256b28;
 }
 
 .next-button:disabled {
@@ -589,10 +589,6 @@ onMounted(() => {
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.2s;
-}
-
-.view-recommendations-button:hover {
-  transform: translateY(-2px);
 }
 
 .retake-button {
@@ -698,7 +694,7 @@ onMounted(() => {
 }
 
 .add-hobby-btn {
-  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+  background: #388e3c;
   color: white;
   border: none;
   padding: 1rem 2rem;
@@ -710,13 +706,13 @@ onMounted(() => {
 }
 
 .add-hobby-btn:hover {
-  transform: translateY(-2px);
+  background: #256b28;
 }
 
 .retake-btn {
-  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
-  color: white;
-  border: none;
+  background: linear-gradient(135deg, #ffffff, #f8fff8);
+  color: #388e3c;
+  border: 2px solid #388e3c;
   padding: 1rem 2rem;
   border-radius: 50px;
   font-size: 1rem;
@@ -726,7 +722,7 @@ onMounted(() => {
 }
 
 .retake-btn:hover {
-  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+  background: #388e3c;
   color: white;
 }
 

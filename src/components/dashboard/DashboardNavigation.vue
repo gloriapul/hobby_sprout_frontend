@@ -59,7 +59,7 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  font-family: 'Poppins', sans-serif;
+
 }
 
 .nav-container {
@@ -90,7 +90,6 @@
   border-radius: 8px;
   transition: all 0.2s;
   white-space: nowrap;
-  font-family: 'Poppins', sans-serif;
 }
 
 .nav-item:hover {
@@ -107,6 +106,5 @@
 
 .nav-item span {
   font-size: 0.9rem;
-  font-family: 'Poppins', sans-serif;
 }
 </style>

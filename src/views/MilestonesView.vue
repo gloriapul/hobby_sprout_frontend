@@ -136,7 +136,7 @@
           <p>
             You've completed your goal: <strong>{{ currentGoal.description }}</strong>
           </p>
-          <button @click="resetForNewGoal" class="next-goal-button">🎯 Set Your Next Goal</button>
+          <button @click="resetForNewGoal" class="next-goal-button">Set Your Next Goal</button>
         </div>
       </div>
     </div>
@@ -146,7 +146,7 @@
       class="close-goal-actions"
       style="margin-bottom: 2rem"
     >
-      <button @click="closeActiveGoal" class="close-goal-button stylish-close-goal">
+      <button @click="closeActiveGoal" class="close-goal">
         <span>Abandon Goal</span>
       </button>
     </div>
@@ -317,20 +317,6 @@ const handleGoalCreated = async (goalData: {
   }
 }
 
-const handleStepAdded = async (stepDescriptions: string[] | string) => {
-  showAddStep.value = false
-  if (currentGoal.value) {
-    if (Array.isArray(stepDescriptions)) {
-      for (const desc of stepDescriptions) {
-        await milestoneStore.addStep(currentGoal.value.id, desc)
-      }
-    } else {
-      await milestoneStore.addStep(currentGoal.value.id, stepDescriptions)
-    }
-    await milestoneStore.loadGoalSteps(currentGoal.value.id)
-  }
-}
-
 // Load data on mount
 onMounted(async () => {
   if (authStore.user) {
@@ -363,10 +349,8 @@ onMounted(async () => {
   margin: 0 0 0.5rem 0;
   color: #333;
   font-size: 2.5rem;
-  background: linear-gradient(135deg, #81c784, #388e3c);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-weight: 500;
+  color: #256b28;
 }
 
 .page-description {
@@ -385,10 +369,9 @@ onMounted(async () => {
 .no-goal-content {
   text-align: center;
   max-width: 500px;
-  background: white;
+  background: #e8f5e9;
   border-radius: 16px;
   padding: 3rem 2rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .no-goal-icon {
@@ -438,8 +421,7 @@ onMounted(async () => {
 }
 
 .hobby-button:hover {
-  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
-  color: white;
+  background: #388e3c;
 }
 
 .or-divider {
@@ -457,7 +439,7 @@ onMounted(async () => {
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: background 0.2s, color 0.2s;
 }
 
 .create-goal-button:hover {
@@ -476,14 +458,18 @@ onMounted(async () => {
   font-size: 0.9rem;
 }
 
-.get-started-tips a {
+.get-started-tips a  {
   color: #388e3c;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
+  border-radius: 999px;
+  transition: background 0.2s, color 0.2s
 }
 
 .get-started-tips a:hover {
-  text-decoration: underline;
+  background: #e8f5e9;
+  color: #256b28;
+  text-decoration: none;
 }
 
 .active-goal-section {
@@ -492,11 +478,10 @@ onMounted(async () => {
 }
 
 .goal-header {
-  background: white;
+  background: #e8f5e9;
   border-radius: 16px;
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -546,11 +531,10 @@ onMounted(async () => {
 }
 
 .progress-overview {
-  background: white;
+  background: #e8f5e9;
   border-radius: 16px;
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .progress-stats {
@@ -596,11 +580,10 @@ onMounted(async () => {
 }
 
 .steps-section {
-  background: white;
   border-radius: 16px;
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #e8f5e9;
 }
 
 .steps-header {
@@ -700,7 +683,7 @@ onMounted(async () => {
   align-items: center;
   gap: 1rem;
   padding: 1.5rem;
-  border: 2px solid #e9ecef;
+  border: 2px solid #ffffff;
   border-radius: 12px;
   transition: all 0.2s;
 }
@@ -780,7 +763,6 @@ onMounted(async () => {
   border-radius: 16px;
   padding: 3rem 2rem;
   text-align: center;
-  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
 }
 
 .achievement-icon {
@@ -813,7 +795,7 @@ onMounted(async () => {
 }
 
 .next-goal-button:hover {
-  transform: translateY(-2px);
+  background: #667eea;
 }
 
 .loading-state {
@@ -830,45 +812,8 @@ onMounted(async () => {
   font-size: 1.1rem;
 }
 
-@media (max-width: 768px) {
-  .goal-header {
-    flex-direction: column;
-    align-items: stretch;
-    text-align: center;
-  }
-
-  .progress-stats {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-  }
-
-  .steps-header {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: stretch;
-  }
-
-  .step-item {
-    flex-direction: column;
-    align-items: stretch;
-    text-align: center;
-    gap: 1rem;
-  }
-
-  .step-meta {
-    justify-content: center;
-  }
-
-  .hobby-buttons {
-    flex-direction: column;
-    align-items: center;
-  }
-}
-</style>
-<style scoped>
-/* Stylish Close Goal Button */
-.stylish-close-goal {
-  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+.close-goal {
+  background: #de4d4d;
   color: #fff;
   border: none;
   border-radius: 30px;
@@ -878,15 +823,13 @@ onMounted(async () => {
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
-  box-shadow: 0 2px 8px rgba(56, 142, 60, 0.12);
   cursor: pointer;
   transition:
     background 0.2s,
     transform 0.2s;
 }
-.stylish-close-goal:hover {
-  background: linear-gradient(135deg, #388e3c 0%, #81c784 100%);
-  transform: translateY(-2px) scale(1.04);
+.close-goal:hover {
+  background: #9a3333;
 }
 .close-goal-icon {
   font-size: 1.3em;

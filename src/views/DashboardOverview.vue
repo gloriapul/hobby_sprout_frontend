@@ -136,12 +136,10 @@ watch(
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
 .dashboard-overview {
   width: 100%;
   padding: 0;
-  font-family: 'Poppins', sans-serif;
+
   background: #fff;
 }
 
@@ -180,7 +178,8 @@ watch(
   flex-shrink: 0;
   color: #388e3c;
 }
-.stat-content h3, .stat-content span {
+.stat-content h3,
+.stat-content span {
   margin: 0 0 0.25rem 0;
   color: #256b28;
   font-size: 1.8rem;
@@ -215,6 +214,7 @@ watch(
   padding: 1.5rem;
   text-decoration: none;
   color: #256b28;
+  border: 2px solid #bce7bd;
   transition:
     background 0.2s,
     color 0.2s,

@@ -11,6 +11,7 @@ defineProps<{ hobby: string }>()
 <style scoped>
 .hobby-card {
   background: #b2e3b5;
+  border: 2px solid #81c784;
   border-radius: 12px;
   padding: 1.5rem 2rem;
   margin: 0.5rem 0;
@@ -20,6 +21,7 @@ defineProps<{ hobby: string }>()
 }
 .hobby-card:hover {
   background: #81c784;
+  border: 2px solid #388e3c;
 }
 .hobby-name {
   font-size: 1.2rem;
