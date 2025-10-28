@@ -286,6 +286,12 @@ const generateHobbyMatch = async () => {
 const addHobbyToProfile = async () => {
   if (!hobbyMatch.value || !authStore.user) return
 
+  // Check if hobby already exists in user's hobby list
+  if (profileStore.hobbies.includes(hobbyMatch.value)) {
+    alert('You already have this hobby in your list!')
+    return
+  }
+
   try {
     await profileStore.setHobby(hobbyMatch.value)
     alert(
@@ -294,26 +300,11 @@ const addHobbyToProfile = async () => {
     router.push('/dashboard/milestones')
   } catch (error: any) {
     console.error('Failed to add hobby to profile:', error)
-    if (typeof error?.message === 'string' && error.message.toLowerCase().includes('already')) {
-      alert('You already have this hobby in your list!')
-    } else {
-      alert('Failed to add hobby to profile. Please try again.')
-    }
+    alert('Failed to add hobby to profile. Please try again.')
   }
 }
 
 const retakeQuiz = async () => {
-  if (authStore.user && hobbyMatch.value) {
-    try {
-      // Delete existing hobby match so user can generate a new one
-      await ApiService.callConceptAction('QuizMatchmaker', 'deleteHobbyMatch', {
-        user: authStore.user.id,
-      })
-    } catch (error) {
-      console.error('Failed to delete existing match:', error)
-    }
-  }
-
   quizStarted.value = false
   quizCompleted.value = false
   currentQuestionIndex.value = 0

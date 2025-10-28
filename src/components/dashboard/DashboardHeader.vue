@@ -92,7 +92,7 @@ onUnmounted(() => {
           <button ref="userButtonRef" @click="toggleUserMenu" class="user-button">
             <div class="user-avatar">
               <img
-                v-if="profileStore.profile?.image"
+                v-if="profileStore.profile && profileStore.profile.image"
                 :src="profileStore.profile.image"
                 :alt="displayName"
                 style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%"
@@ -258,45 +258,52 @@ onUnmounted(() => {
     cursor: pointer;
     transition: background-color 0.2s;
   }
+}
 
-  .logout-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: #fff;
-    color: #e53935;
-    font-weight: 600;
-    border-radius: 0 0 8px 8px;
-    border-top: 1px solid #e9ecef;
-    box-shadow: none;
-    transition:
-      background 0.2s,
-      color 0.2s;
-    padding: 0.7rem 1.2rem;
-    font-size: 1rem;
-    min-width: 120px;
-    justify-content: flex-start;
-    border: none;
-    outline: none;
-    cursor: pointer;
-  }
-  .logout-btn:hover {
-    background: #ffeaea;
-    color: #b71c1c;
-  }
-  .logout-btn:active {
-    background: #ffd6d6;
-    color: #b71c1c;
-  }
-  .logout-icon {
-    width: 20px;
-    height: 20px;
-    margin-right: 0.25rem;
-    color: #e53935;
-    flex-shrink: 0;
-  }
-
-  /* removed invalid background */
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(90deg, #fff 70%, #ffeaea 100%);
+  color: #e53935;
+  font-weight: 600;
+  border-radius: 0 0 8px 8px;
+  border-top: 1px solid #e9ecef;
+  box-shadow: none;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    box-shadow 0.2s;
+  padding: 0.8rem 1.4rem;
+  font-size: 1rem;
+  min-width: 140px;
+  justify-content: flex-start;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  position: relative;
+}
+.logout-btn:hover {
+  background: linear-gradient(90deg, #ffeaea 80%, #ffd6d6 100%);
+  color: #b71c1c;
+  box-shadow: 0 2px 8px rgba(229, 57, 53, 0.08);
+}
+.logout-btn:active {
+  background: #ffd6d6;
+  color: #b71c1c;
+}
+.logout-btn:focus {
+  outline: 2px solid #e53935;
+  outline-offset: 2px;
+}
+.logout-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 0.25rem;
+  color: #e53935;
+  flex-shrink: 0;
+  transition: color 0.2s;
 }
 
 .user-dropdown a:first-child {

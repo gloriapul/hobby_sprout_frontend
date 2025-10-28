@@ -1,6 +1,6 @@
 <template>
   <div class="hobby-step-history-view">
-    <h1>Step History for {{ hobbyName }}</h1>
+    <h1>{{ hobbyName }} History </h1>
     <div v-if="loading" class="loading">Loading step history...</div>
     <div v-else-if="goals.length === 0" class="empty">No goals found for this hobby.</div>
     <div v-else>
@@ -237,7 +237,6 @@ onMounted(async () => {
       }),
     )
     goals.value = goalsWithSteps
-    openAllGoals(goalsWithSteps)
   } catch (err) {
     goals.value = []
   } finally {
@@ -255,35 +254,16 @@ onMounted(async () => {
 }
 .goal-header-row {
   display: flex;
-  align-items: center;
-  .step-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 0.2rem;
-  }
-  .step-number {
-    font-weight: bold;
-    color: #388e3c;
-    font-size: 1.08rem;
-    margin-right: 0.5rem;
-  }
-  .step-desc {
-    font-size: 1.05rem;
-    flex: 1;
-  }
-  .step-status {
-    font-size: 0.98rem;
-    color: #888;
-    font-weight: 500;
-    margin-left: 1rem;
-  }
-  .step-status.done {
-    color: #388e3c;
-  }
+  align-items: baseline;
+  gap: 1.2rem;
+  margin-bottom: 0.3rem;
+  background: linear-gradient(90deg, #e8f5e9 60%, #c8e6c9 100%);
+  border-radius: 12px;
+  border: 2px solid #c8e6c9;
+  box-shadow: 0 2px 8px rgba(56, 142, 60, 0.06);
+  padding: 1.1rem 1.5rem 1.1rem 1.5rem;
+  font-size: 1.13rem;
   font-weight: 600;
-  color: #388e3c;
-  font-size: 1.05rem;
 }
 .step-status {
   font-size: 0.98rem;
@@ -360,6 +340,13 @@ onMounted(async () => {
   align-items: baseline;
   gap: 1.2rem;
   margin-bottom: 0.3rem;
+  background: linear-gradient(90deg, #e8f5e9 60%, #c8e6c9 100%);
+  border-radius: 12px;
+  border: 2px solid #c8e6c9;
+  box-shadow: 0 2px 8px rgba(56, 142, 60, 0.06);
+  padding: 1.1rem 1.5rem 1.1rem 1.5rem;
+  font-size: 1.13rem;
+  font-weight: 600;
 }
 .goal-status-label {
   font-size: 1rem;

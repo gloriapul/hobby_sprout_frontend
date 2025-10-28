@@ -2,7 +2,7 @@
   <div class="profile-view">
     <div class="profile-header">
       <h1>My Profile</h1>
-      <button @click="toggleEditMode" class="edit-button">
+      <button @click="toggleEditMode" class="base-btn edit-button">
         {{ isEditing ? 'Save Changes' : 'Edit Profile' }}
       </button>
     </div>
@@ -53,12 +53,15 @@
       <div class="hobbies-section">
         <div class="section-header">
           <h3>My Hobbies</h3>
-          <select v-model="hobbyFilter" class="hobby-filter">
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="all">All</option>
-          </select>
-          <button @click="showAddHobby = true" class="add-button">+ Add Hobby</button>
+          <div class="hobby-actions-row">
+            <label for="hobbyFilter" class="hobby-filter-label">Filter by:</label>
+            <select id="hobbyFilter" v-model="hobbyFilter" class="hobby-filter">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="all">All</option>
+            </select>
+            <button @click="showAddHobby = true" class="base-btn add-button">+ Add Hobby</button>
+          </div>
         </div>
 
         <div v-if="loading" class="loading-state">Loading hobbies...</div>
@@ -95,12 +98,21 @@
       <div class="quiz-history-section">
         <div class="section-header">
           <h3>Quiz History</h3>
-          <div class="quiz-sort-control">
-            <label for="quizSort">Sort by:</label>
-            <select id="quizSort" v-model="quizSortOrder">
-              <option value="desc">Most Recent</option>
-              <option value="asc">Least Recent</option>
-            </select>
+          <div style="display: flex; gap: 1rem; align-items: center; margin-left: auto">
+            <div class="quiz-sort-control">
+              <label for="quizSort">Sort by:</label>
+              <select id="quizSort" v-model="quizSortOrder">
+                <option value="desc">Most Recent</option>
+                <option value="asc">Least Recent</option>
+              </select>
+            </div>
+            <button
+              v-if="sortedQuizHistory.length > 0"
+              @click="clearQuizHistory"
+              class="base-btn clear-history-btn"
+            >
+              Clear History
+            </button>
           </div>
         </div>
         <div v-if="quizHistoryLoading" class="loading-state">Loading quiz history...</div>
@@ -136,7 +148,7 @@ const sortedQuizHistory = computed(() => {
     return quizSortOrder.value === 'desc' ? bTime - aTime : aTime - bTime
   })
 })
-// Add missing markHobbyInactive and markHobbyActive methods for HobbyDetailModal events
+
 const markHobbyInactive = async (hobbyName: string) => {
   await profileStore.closeHobby(hobbyName)
   if (user.value) {
@@ -276,15 +288,24 @@ const addHobby = async (hobbyName: string) => {
   }
 }
 
-const removeHobby = async (hobbyName: string) => {
-  await profileStore.closeHobby(hobbyName)
-}
-
 const selectedHobby = ref<string | null>(null)
 const selectedHobbyGoals = ref<any[] | null>(null)
 const selectedHobbyIsActive = ref(false)
 
 import { ApiService } from '@/services/api'
+
+const clearQuizHistory = async () => {
+  if (!user.value) return
+  if (!confirm('Are you sure you want to clear your quiz history? This cannot be undone.')) return
+  try {
+    await ApiService.callConceptAction('QuizMatchmaker', '_deleteHobbyMatches', {
+      user: user.value.id,
+    })
+    quizHistory.value = []
+  } catch (err) {
+    alert('Failed to clear quiz history.')
+  }
+}
 
 const handleHobbyClick = async (hobby: string) => {
   selectedHobby.value = hobby
@@ -331,6 +352,15 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+
+.base-btn {
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
 .hobby-card-wrapper {
   display: flex;
   flex-direction: column;
@@ -367,6 +397,16 @@ onMounted(async () => {
   font-size: 1rem;
   cursor: pointer;
 }
+.clear-history-btn {
+  background: linear-gradient(135deg, #ff8a65 0%, #d84315 100%);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
 .profile-view {
   max-width: 1000px;
   margin: 0 auto;
@@ -529,6 +569,8 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1rem;
+  max-height: 230px;
+  overflow-y: auto;
 }
 
 .filter-dropdown {
@@ -549,13 +591,25 @@ onMounted(async () => {
   cursor: pointer;
 }
 
+/* Match .add-button height and style */
+.hobby-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: auto;
+}
+.hobby-filter-label {
+  font-weight: 500;
+}
 .hobby-filter {
-  padding: 0.5rem;
-  border: 1px solid #ddd;
+  padding: 0.3rem 0.7rem;
   border-radius: 6px;
+  border: 1px solid #ddd;
   font-size: 1rem;
   cursor: pointer;
-  margin-left: 1rem;
+  background: white;
+  box-sizing: border-box;
+  font-weight: 500;
 }
 
 /* Quiz History Section */
@@ -568,10 +622,7 @@ onMounted(async () => {
 }
 .quiz-history-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-}
-.quiz-history-card {
+  background: linear-gradient(135deg, #ff8a65 0%, #d84315 100%);
   background: #f7fafc;
   border-radius: 8px;
   padding: 1.2rem 1rem;
