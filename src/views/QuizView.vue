@@ -220,6 +220,11 @@ const startQuiz = () => {
 
 const selectAnswer = (answer: any) => {
   selectedAnswer.value = answer
+  // Store both answer and freeResponseText for each question
+  answers.value[currentQuestionIndex.value] = {
+    answer,
+    freeResponseText: isDependsAnswer(answer) ? freeResponseText.value : '',
+  }
   if (!isDependsAnswer(answer)) {
     freeResponseText.value = ''
   }
@@ -239,10 +244,11 @@ const nextQuestion = async () => {
   // If free response, require text
   if (isDependsAnswer(selectedAnswer.value) && !freeResponseText.value.trim()) return
 
-  // Save the answer
-  answers.value[currentQuestionIndex.value] = isDependsAnswer(selectedAnswer.value)
-    ? freeResponseText.value.trim()
-    : selectedAnswer.value.value
+  // Save the answer object
+  answers.value[currentQuestionIndex.value] = {
+    answer: selectedAnswer.value,
+    freeResponseText: isDependsAnswer(selectedAnswer.value) ? freeResponseText.value.trim() : '',
+  }
 
   if (isLastQuestion.value) {
     // Complete the quiz and generate hobby match
@@ -260,8 +266,10 @@ const nextQuestion = async () => {
   } else {
     // Move to next question
     currentQuestionIndex.value++
-    selectedAnswer.value = answers.value[currentQuestionIndex.value] || null
-    freeResponseText.value = ''
+    // Restore answer and free response for next question if available
+    const next = answers.value[currentQuestionIndex.value]
+    selectedAnswer.value = next ? next.answer : null
+    freeResponseText.value = next && next.freeResponseText ? next.freeResponseText : ''
   }
 }
 const canProceedToNext = computed(() => {
@@ -275,7 +283,9 @@ const canProceedToNext = computed(() => {
 const previousQuestion = () => {
   if (currentQuestionIndex.value > 0) {
     currentQuestionIndex.value--
-    selectedAnswer.value = answers.value[currentQuestionIndex.value] || null
+    const prev = answers.value[currentQuestionIndex.value]
+    selectedAnswer.value = prev ? prev.answer : null
+    freeResponseText.value = prev && prev.freeResponseText ? prev.freeResponseText : ''
   }
 }
 
@@ -362,7 +372,8 @@ onMounted(() => {
   margin: 0 0 1rem 0;
   color: #333;
   font-size: 2.5rem;
-  background: linear-gradient(135deg, #81c784, #388e3c);
+  font-weight: 500;
+  background: #256b28;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -376,10 +387,9 @@ onMounted(() => {
 }
 
 .intro-card {
-  background: white;
+  background: #e8f5e9;
   border-radius: 16px;
   padding: 3rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 
@@ -411,7 +421,7 @@ onMounted(() => {
 }
 
 .start-quiz-button {
-  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+  background: #81c784;
   color: white;
   border: none;
   padding: 1rem 3rem;
@@ -430,7 +440,6 @@ onMounted(() => {
   background: white;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .progress-section {
@@ -548,7 +557,6 @@ onMounted(() => {
   background: white;
   border-radius: 16px;
   padding: 3rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .results-header h2 {
