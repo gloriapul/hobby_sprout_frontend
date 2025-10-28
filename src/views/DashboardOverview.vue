@@ -1,8 +1,8 @@
 <template>
   <div class="dashboard-overview">
     <div class="welcome-section">
-      <h1>Welcome back, {{ displayName }}! 🎯</h1>
-      <p>Here's what's happening with your hobbies today.</p>
+      <h1>Welcome back, {{ displayName }}!</h1>
+      <p>Ready to continue your hobby journey?</p>
     </div>
 
     <div class="stats-grid">
@@ -194,7 +194,7 @@ watch(
 
 .welcome-section h1 {
   margin: 0 0 0.5rem 0;
-  color: #333;
+  color: #357A5F;
   font-size: 2rem;
 }
 
@@ -215,7 +215,7 @@ watch(
   background: white;
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(220, 130, 134, 0.08);
   display: flex;
   align-items: center;
   gap: 1rem;

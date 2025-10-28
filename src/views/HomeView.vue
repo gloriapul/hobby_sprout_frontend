@@ -7,8 +7,7 @@
             <img src="/HobbySproutLogo.png" alt="HobbySprout Logo" class="hero-logo" />
           </div>
           <h1 class="hero-title">
-            <span class="title-main">Hobby</span>
-            <span class="title-accent">Sprout</span>
+            <span class="title-main">HobbySprout</span>
           </h1>
           <p class="hero-subtitle">
             Discover, track, and grow your passions with personalized hobby recommendations and
@@ -51,16 +50,6 @@
             <h3>Track Your Progress</h3>
             <p>Set goals, create milestones, and track your journey as you work on your hobbies.</p>
           </div>
-          <div class="feature-card">
-            <div class="feature-icon">👤</div>
-            <h3>Personal Dashboard</h3>
-            <p>Manage all your hobbies, goals, and achievements in an organized space.</p>
-          </div>
-          <div class="feature-card">
-            <div class="feature-icon">🚀</div>
-            <h3>Step-by-Step Guidance</h3>
-            <p>Break down complex skills into manageable steps with AI-powered recommendations.</p>
-          </div>
         </div>
       </div>
     </div>
@@ -69,22 +58,22 @@
       <div class="container">
         <h2 class="section-title">How it works</h2>
         <div class="steps-grid">
-          <div class="step-item">
+          <div class="feature-card step-item">
             <div class="step-number">1</div>
             <h3>Take the Quiz</h3>
             <p>Answer questions about your preferences, interests, and personality.</p>
           </div>
-          <div class="step-item">
+          <div class="feature-card step-item">
             <div class="step-number">2</div>
             <h3>Get a Recommendation</h3>
             <p>Receive a personalized hobby suggestion tailored to your unique profile.</p>
           </div>
-          <div class="step-item">
+          <div class="feature-card step-item">
             <div class="step-number">3</div>
             <h3>Set Goals</h3>
             <p>Create specific, achievable goals for your chosen hobbies.</p>
           </div>
-          <div class="step-item">
+          <div class="feature-card step-item">
             <div class="step-number">4</div>
             <h3>Track Progress</h3>
             <p>Monitor your journey and celebrate your achievements along the way.</p>
@@ -139,10 +128,18 @@ onMounted(() => {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+.home-view {
+  font-family: 'Poppins', sans-serif;
+  min-height: 100vh;
+  font-weight: 400;
+}
+@import '@/assets/fonts/floras-display.css';
 .home-view {
   min-height: 100vh;
+  font-weight: 400;
 }
-/* Logo styles */
+
 .logo-container {
   display: flex;
   justify-content: flex-start;
@@ -182,22 +179,8 @@ onMounted(() => {
 .hero-title {
   font-size: 4rem;
   font-weight: 800;
-  margin: 0 0 1.5rem 0;
   line-height: 1.1;
-}
-
-.title-main {
-  display: block;
-  font-weight: 900;
-}
-
-.title-accent {
-  background: linear-gradient(45deg, #a5d6a7, #388e3c);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  display: block;
-  font-weight: 900;
+  font-family: 'Floras Display', sans-serif !important;
 }
 
 .hero-subtitle {
@@ -226,13 +209,18 @@ onMounted(() => {
 }
 
 .cta-button.primary {
-  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+  background: #388e3c;
   color: white;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
-.cta-button.primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(56, 142, 60, 0.15);
+.cta-button.primary:hover,
+.cta-button.large.primary:hover {
+  background: #256b28;
+  color: white;
+  box-shadow: none;
 }
 
 .cta-button.secondary {
@@ -272,7 +260,6 @@ onMounted(() => {
   text-align: center;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: transform 0.3s;
 }
 
 .icon-item:hover {
@@ -288,17 +275,14 @@ onMounted(() => {
 .features-section,
 .how-it-works-section {
   padding: 5rem 0;
-  background: #f8f9fa;
-}
-
-.how-it-works-section {
-  background: white;
+  color: white;
+  background: #fff;
 }
 
 .section-title {
   text-align: center;
   font-size: 2.5rem;
-  font-weight: 700;
+  font-weight: 600;
   margin-bottom: 3rem;
   color: #333;
 }
@@ -318,23 +302,26 @@ onMounted(() => {
   transition: transform 0.3s;
 }
 
-.feature-card:hover {
-  transform: translateY(-5px);
-}
-
 .feature-icon {
   font-size: 3rem;
   margin-bottom: 1.5rem;
 }
 
-.feature-card h3 {
+.feature-card h3,
+.step-item h3 {
   font-size: 1.3rem;
-  font-weight: 600;
   margin-bottom: 1rem;
   color: #333;
 }
+.feature-card h3 {
+  font-weight: 500;
+}
+.step-item h3 {
+  font-weight: 600;
+}
 
-.feature-card p {
+.feature-card p,
+.step-item p {
   color: #666;
   line-height: 1.6;
 }
@@ -347,13 +334,13 @@ onMounted(() => {
 
 .step-item {
   text-align: center;
-  padding: 2rem;
+  padding: 2.5rem;
 }
 
 .step-number {
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #a5d6a7, #388e3c);
+  background: #388e3c;
   color: white;
   border-radius: 50%;
   display: flex;
@@ -366,9 +353,9 @@ onMounted(() => {
 
 .step-item h3 {
   font-size: 1.3rem;
-  font-weight: 600;
   margin-bottom: 1rem;
   color: #333;
+  font-weight: 600;
 }
 
 .step-item p {
@@ -385,8 +372,8 @@ onMounted(() => {
 
 .cta-content h2 {
   font-size: 2.5rem;
-  font-weight: 700;
   margin-bottom: 1rem;
+  font-weight: 600;
 }
 
 .cta-content p {

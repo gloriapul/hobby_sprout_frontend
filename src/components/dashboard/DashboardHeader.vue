@@ -134,10 +134,13 @@ onUnmounted(() => {
   </header>
 </template>
 
+.logo-floras { font-family: 'Floras Display', serif; font-weight: 700; letter-spacing: 0.03em; }
+@import url('https://fonts.googleapis.com/css2?family=Floras+Display:wght@700&display=swap');
+@import '@/assets/fonts/floras-display.css';
 <style scoped>
 .dashboard-header {
-  background: white;
-  border-bottom: 1px solid #e9ecef;
+  background: #c4dfaa;
+  border-bottom: 4px solid #357a5f;
   height: 80px;
   position: sticky;
   top: 0;
@@ -169,9 +172,11 @@ onUnmounted(() => {
 
 .logo-section h1 {
   margin: 0;
-  color: #333;
-  font-size: 1.5rem;
+  color: #115c3f;
+  font-size: 2rem;
   font-weight: 600;
+  font-family: 'Floras Display', serif;
+  letter-spacing: 0.04em;
 }
 
 .header-actions {
@@ -252,7 +257,6 @@ onUnmounted(() => {
   cursor: pointer;
   transition: background-color 0.2s;
 }
-
 
 .logout-btn {
   display: flex;
