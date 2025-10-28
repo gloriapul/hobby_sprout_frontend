@@ -1,6 +1,6 @@
 <template>
   <div class="hobby-step-history-view">
-    <h1>{{ hobbyName }} History </h1>
+    <h1>{{ hobbyName }} History</h1>
     <div v-if="loading" class="loading">Loading step history...</div>
     <div v-else-if="goals.length === 0" class="empty">No goals found for this hobby.</div>
     <div v-else>
@@ -38,6 +38,18 @@
             v-for="(step, idx) in goal.steps"
             :key="step.id"
             :class="['step-card', { complete: step.isComplete }]"
+            :style="
+              (() => {
+                const colorPair = stepColors[idx % stepColors.length] || {
+                  background: '#e8f5e9',
+                  color: '#388e3c',
+                }
+                return {
+                  background: colorPair.background,
+                  color: colorPair.color,
+                }
+              })()
+            "
           >
             <div class="step-header">
               <span class="step-number"
@@ -114,11 +126,6 @@ function toggleGoal(goalId: string) {
   openGoals[goalId] = !openGoals[goalId]
 }
 
-function openAllGoals(goalsArr: any[]) {
-  goalsArr.forEach((g) => {
-    openGoals[g.id] = true
-  })
-}
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { ApiService } from '@/services/api'
@@ -243,13 +250,23 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+// Color pairs for step cards
+const stepColors = [
+  { background: '#e8f5e9', color: '#38778e' },
+  { background: '#e3f2fd', color: '#1565c0' },
+  { background: '#fffde7', color: '#f9a825' },
+  { background: '#fce4ec', color: '#ad1457' },
+  { background: '#f3e5f5', color: '#6a1b9a' },
+  { background: '#fbe9e7', color: '#d84315' },
+]
 </script>
 
 <style scoped>
 .goal-duration-label {
   margin-left: 1.2rem;
   font-size: 0.98rem;
-  color: #1976d2;
+  color: #38778e;
   font-weight: 500;
 }
 .goal-header-row {
@@ -257,10 +274,9 @@ onMounted(async () => {
   align-items: baseline;
   gap: 1.2rem;
   margin-bottom: 0.3rem;
-  background: linear-gradient(90deg, #e8f5e9 60%, #c8e6c9 100%);
+  background: #e8f5e9;
   border-radius: 12px;
   border: 2px solid #c8e6c9;
-  box-shadow: 0 2px 8px rgba(56, 142, 60, 0.06);
   padding: 1.1rem 1.5rem 1.1rem 1.5rem;
   font-size: 1.13rem;
   font-weight: 600;
@@ -327,7 +343,7 @@ onMounted(async () => {
 }
 .goal-sort-control select {
   padding: 0.3rem 0.7rem;
-  border: 1px solid #ddd;
+  border: 1px solid #bce7bd;
   border-radius: 6px;
   font-size: 1rem;
   cursor: pointer;
@@ -340,10 +356,9 @@ onMounted(async () => {
   align-items: baseline;
   gap: 1.2rem;
   margin-bottom: 0.3rem;
-  background: linear-gradient(90deg, #e8f5e9 60%, #c8e6c9 100%);
+  background: #e8f5e9;
   border-radius: 12px;
-  border: 2px solid #c8e6c9;
-  box-shadow: 0 2px 8px rgba(56, 142, 60, 0.06);
+  border: none;
   padding: 1.1rem 1.5rem 1.1rem 1.5rem;
   font-size: 1.13rem;
   font-weight: 600;
@@ -368,20 +383,17 @@ onMounted(async () => {
   padding: 0.7rem 1rem;
   border-radius: 8px;
   margin-bottom: 0.5rem;
-  background: #f7fafc;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 1rem;
 }
-.steps-list li.complete {
-  background: #e0f2f1;
-  color: #388e3c;
-}
+
 .step-number {
   font-weight: 600;
   margin-right: 0.7rem;
-  color: #388e3c;
+  color: #38778e;
 }
 .step-desc {
   flex: 1;
@@ -397,25 +409,23 @@ onMounted(async () => {
   gap: 0.5em;
   margin-top: 2rem;
   color: #388e3c;
+  border: none;
   background: #e8f5e9;
   text-decoration: none;
   font-weight: 500;
   border-radius: 8px;
   padding: 0.5rem 1.2rem;
-  box-shadow: 0 2px 8px rgba(56, 142, 60, 0.07);
-  border: 1px solid #c8e6c9;
+
   font-size: 1rem;
   transition:
     background 0.2s,
     color 0.2s,
-    border 0.2s,
-    box-shadow 0.2s;
+    border 0.2s;
 }
 .back-link:hover {
   background: #c8e6c9;
   color: #256029;
   border-color: #256029;
   text-decoration: none;
-  box-shadow: 0 4px 16px rgba(56, 142, 60, 0.13);
 }
 </style>

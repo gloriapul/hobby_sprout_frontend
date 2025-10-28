@@ -74,11 +74,10 @@
           <div v-for="hobby in filteredHobbies" :key="hobby" class="hobby-card-wrapper">
             <HobbyCard :hobby="hobby" @click="handleHobbyClick(hobby)" />
             <router-link
-              v-if="hobbyHasGoals(hobby)"
+              v-if="goalsLoaded && hobbyHasGoals(hobby)"
               class="view-step-history-link"
               :to="{ name: 'hobby-step-history', params: { hobby } }"
             >
-              View Step History
             </router-link>
           </div>
         </div>
@@ -179,6 +178,7 @@ const milestoneStore = useMilestoneStore()
 const user = computed(() => authStore.user)
 const profile = computed(() => profileStore.profile)
 const loading = computed(() => profileStore.loading)
+const goalsLoaded = computed(() => !milestoneStore.loading)
 
 const isEditing = ref(false)
 const showAddHobby = ref(false)
@@ -345,6 +345,8 @@ const handleHobbyClick = async (hobby: string) => {
 onMounted(async () => {
   if (user.value) {
     await profileStore.loadProfile(user.value.id)
+    // Ensure user's goals are loaded so hobbyHasGoals can return accurate results
+    await milestoneStore.loadUserGoals(user.value.id)
     await fetchQuizHistory()
   }
 })

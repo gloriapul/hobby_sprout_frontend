@@ -142,56 +142,7 @@ watch(
   padding-left: 0;
   box-sizing: border-box;
 }
-.goal-row-flex {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.1em;
-  margin-bottom: 0.5em;
-  padding-left: 0.5em;
-  word-break: break-word;
-  max-width: 100%;
-}
-.goal-main {
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-  width: 100%;
-  flex-wrap: wrap;
-}
-.goal-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1em;
-  margin-left: 1.5em;
-  margin-top: 0.1em;
-}
-.goal-desc {
-  font-weight: 500;
-  margin-left: 0.5em;
-  margin-right: 0.5em;
-  flex: 1 1 auto;
-  min-width: 80px;
-  word-break: break-word;
-}
-.goal-date,
-.goal-status,
-.goal-status.completed {
-  color: #888;
-}
-.goal-date {
-  white-space: nowrap;
-}
-.goal-date-label {
-  font-weight: 500;
-  color: #666;
-  margin-right: 0.2em;
-}
-.goal-status-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0.2em;
-}
+
 .actions {
   display: flex;
   gap: 1rem;
@@ -199,15 +150,18 @@ watch(
   min-height: 42px;
   min-width: 220px;
   position: relative;
+  font-weight: 500;
 }
+
 .inactive-btn {
   background: #fff3e0;
   color: #e65100;
-  border: 1px solid #e65100;
+  border: none;
   border-radius: 8px;
   padding: 0.5rem 1rem;
   cursor: pointer;
   font-size: 1rem;
+  font-weight: 500;
   min-width: 120px;
   min-height: 42px;
   display: inline-flex;
@@ -221,16 +175,17 @@ watch(
 .inactive-btn:hover {
   background: #ffe0b2;
   color: #a84300;
-  border-color: #a84300;
 }
+
 .active-btn {
   background: #e8f5e9;
   color: #388e3c;
-  border: 1px solid #388e3c;
+  border: none;
   border-radius: 8px;
   padding: 0.5rem 1rem;
   cursor: pointer;
   font-size: 1rem;
+  font-weight: 500;
   min-width: 120px;
   min-height: 42px;
   display: inline-flex;
@@ -241,16 +196,16 @@ watch(
     color 0.2s,
     border 0.2s;
 }
+
 .active-btn:hover {
   background: #c8e6c9;
   color: #256029;
-  border-color: #256029;
 }
 
 .view-step-history-link {
-  background: #e8f5e9;
-  color: #388e3c;
-  border: 1px solid #388e3c;
+  background: #d1f3ff;
+  color: #38778e;
+  border: none;
   border-radius: 8px;
   padding: 0.5rem 1rem;
   font-size: 1rem;
@@ -267,9 +222,8 @@ watch(
 }
 
 .view-step-history-link:hover {
-  background: #c8e6c9;
-  color: #256029;
-  border-color: #256029;
+  background: #8fd4eb;
+  color: #327188;
 }
 
 .goals-spinner-wrap {

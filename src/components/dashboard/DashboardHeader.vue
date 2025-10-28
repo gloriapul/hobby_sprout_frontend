@@ -174,7 +174,7 @@ onUnmounted(() => {
 
 .logo-section h1 {
   margin: 0;
-  color: #256b28;
+  color: #388e3c;
   font-size: 2rem;
   font-weight: 600;
   font-family: 'Floras Display', serif;
