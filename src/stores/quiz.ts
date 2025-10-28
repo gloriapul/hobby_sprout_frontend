@@ -203,7 +203,6 @@ export const useQuizStore = defineStore('quiz', () => {
     progress,
     canGoNext,
     canGoPrevious,
-    hasResponded,
 
     // Actions
     loadQuestions,

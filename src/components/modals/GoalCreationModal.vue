@@ -354,7 +354,6 @@ function handleAddStep() {
   manualStepError.value = ''
 }
 
-// will work on one active goal improvement for rest of assignment
 function removeStep(idx: number) {
   steps.value.splice(idx, 1)
 }
