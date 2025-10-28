@@ -36,33 +36,30 @@
             <span>Quiz</span>
           </router-link>
         </div>
-      <router-link to="/dashboard/profile" class="nav-item" active-class="active">
-        <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
-          <path
-            fill-rule="evenodd"
-            d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-            clip-rule="evenodd"
-          />
-        </svg>
-        <span>Profile</span>
-      </router-link>
-    </div>
+        <router-link to="/dashboard/profile" class="nav-item" active-class="active">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path
+              fill-rule="evenodd"
+              d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <span>Profile</span>
+        </router-link>
+      </div>
     </div>
   </nav>
 </template>
 
-<script setup lang="ts">
-// Navigation component for the dashboard
-</script>
+<script setup lang="ts"></script>
 
 <style scoped>
 .dashboard-navigation {
-  background: white;
-  border-bottom: 1px solid #e9ecef;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: #e8f5e9;
   position: sticky;
   top: 0;
   z-index: 100;
+  font-family: 'Poppins', sans-serif;
 }
 
 .nav-container {
@@ -72,6 +69,7 @@
   align-items: center;
   gap: 2rem;
   overflow-x: auto;
+  font-family: 'Poppins', sans-serif;
 }
 
 .nav-section {
@@ -87,26 +85,16 @@
   gap: 0.5rem;
   padding: 1rem 1.25rem;
   text-decoration: none;
-  color: #495057;
+  color: #256b28;
   font-weight: 500;
   border-radius: 8px;
   transition: all 0.2s;
   white-space: nowrap;
-  border-bottom: 3px solid transparent;
+  font-family: 'Poppins', sans-serif;
 }
 
 .nav-item:hover {
-  background: #f8f9fa;
-  color: #388e3c;
-}
-
-.nav-item.active {
-  color: #388e3c;
-  border-bottom-color: #388e3c;
-  background: #f8f9fa;
-}
-
-.nav-item.active .nav-icon {
+  background: #bce7bd;
   color: #388e3c;
 }
 
@@ -119,44 +107,6 @@
 
 .nav-item span {
   font-size: 0.9rem;
-}
-
-@media (max-width: 768px) {
-  .nav-container {
-    padding: 0 1rem;
-    gap: 1rem;
-  }
-
-  .nav-section {
-    gap: 0.25rem;
-  }
-
-  .nav-item {
-    padding: 0.75rem 1rem;
-    flex-direction: column;
-    gap: 0.25rem;
-    text-align: center;
-    min-width: 60px;
-  }
-
-  .nav-item span {
-    font-size: 0.75rem;
-  }
-
-  .nav-icon {
-    width: 16px;
-    height: 16px;
-  }
-}
-
-@media (max-width: 480px) {
-  .nav-item span {
-    display: none;
-  }
-
-  .nav-item {
-    min-width: 48px;
-    padding: 0.75rem 0.5rem;
-  }
+  font-family: 'Poppins', sans-serif;
 }
 </style>

@@ -49,7 +49,7 @@
     </div>
 
     <div v-if="recentGoals.length > 0" class="recent-activity">
-      <h2>Recent Goals</h2>
+      <h2>Active Goal</h2>
       <div class="goals-list">
         <div
           v-for="goal in recentGoals"
@@ -60,26 +60,7 @@
           <div class="goal-info">
             <h4>{{ goal.description }}</h4>
             <p>Date started: {{ goal.createdAt ? formatDate(goal.createdAt) : 'No Date' }}</p>
-            <!--
-            <p style="color: #888; font-size: 0.85em">
-              <strong>Debug:</strong>
-              isActive={{ goal.isActive ? 'true' : 'false' }}, completed={{
-                goal.completed ? 'true' : 'false'
-              }}
-            </p>
-            -->
           </div>
-          <!--
-          <div class="goal-status">
-            <span
-              class="status-badge"
-              :class="{ completed: !goal.isActive, active: goal.isActive }"
-            >
-              <template v-if="!goal.isActive">Completed</template>
-              <template v-else>In Progress</template>
-            </span>
-          </div>
-          -->
         </div>
       </div>
     </div>
@@ -101,29 +82,6 @@ const profileStore = useProfileStore()
 const milestoneStore = useMilestoneStore()
 
 const user = computed(() => authStore.user)
-
-// Try to get account creation date from profile (preferred) or user
-function getAccountCreatedAt(): string | null {
-  // If profileStore.profile has a createdAt, use it
-  if (
-    profileStore.profile &&
-    typeof profileStore.profile === 'object' &&
-    'createdAt' in profileStore.profile &&
-    typeof (profileStore.profile as any).createdAt === 'string'
-  ) {
-    return (profileStore.profile as any).createdAt
-  }
-  // Fallback: user.value.createdAt if present
-  if (
-    user.value &&
-    typeof user.value === 'object' &&
-    'createdAt' in user.value &&
-    typeof user.value.createdAt === 'string'
-  ) {
-    return user.value.createdAt
-  }
-  return null
-}
 const hobbies = computed(() => profileStore.hobbies)
 const goals = computed(() => milestoneStore.goals)
 
@@ -132,13 +90,8 @@ const displayName = computed(() => {
   return profileStore.profile?.name || user.value?.username || 'User'
 })
 
-// const completedGoalsCount = computed(() => {
-//   return goals.value.filter((goal) => !goal.isActive).length
-// })
-
 const recentGoals = computed(() => {
-  // Show last 3 goals, including completed (inactive) and active
-  return goals.value.slice(0, 3)
+  return goals.value.slice(0, 1)
 })
 
 async function reloadAllGoals() {
@@ -183,21 +136,24 @@ watch(
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
 .dashboard-overview {
   width: 100%;
   padding: 0;
+  font-family: 'Poppins', sans-serif;
+  background: #fff;
 }
 
 .welcome-section {
   margin-bottom: 2rem;
 }
-
 .welcome-section h1 {
   margin: 0 0 0.5rem 0;
-  color: #357A5F;
+  color: #256b28;
   font-size: 2rem;
+  font-weight: 500;
 }
-
 .welcome-section p {
   margin: 0;
   color: #666;
@@ -210,12 +166,10 @@ watch(
   gap: 1.5rem;
   margin-bottom: 3rem;
 }
-
 .stat-card {
-  background: white;
-  border-radius: 12px;
+  background: #e8f5e9;
+  border-radius: 20px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(220, 130, 134, 0.08);
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -224,11 +178,11 @@ watch(
 .stat-icon {
   font-size: 2.5rem;
   flex-shrink: 0;
+  color: #388e3c;
 }
-
-.stat-content h3 {
+.stat-content h3, .stat-content span {
   margin: 0 0 0.25rem 0;
-  color: #333;
+  color: #256b28;
   font-size: 1.8rem;
   font-weight: 600;
 }
@@ -243,47 +197,47 @@ watch(
 .recent-activity {
   margin-bottom: 3rem;
 }
-
 .quick-actions h2,
 .recent-activity h2 {
   margin: 0 0 1.5rem 0;
-  color: #333;
+  color: #256b28;
   font-size: 1.5rem;
+  font-weight: 500;
 }
-
 .actions-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
 }
-
 .action-card {
-  background: white;
-  border-radius: 12px;
+  background: #e8f5e9;
+  border-radius: 20px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   text-decoration: none;
-  color: inherit;
-  transition: all 0.2s;
+  color: #256b28;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border 0.2s;
   text-align: center;
 }
-
 .action-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
+  background: #bce7bd;
+  color: #256b28;
+  border-color: #388e3c;
+  transform: none;
 }
-
 .action-icon {
   font-size: 3rem;
   margin-bottom: 1rem;
+  color: #388e3c;
 }
-
 .action-card h3 {
   margin: 0 0 0.5rem 0;
-  color: #333;
+  color: #256b28;
   font-size: 1.2rem;
+  font-weight: 600;
 }
-
 .action-card p {
   margin: 0;
   color: #666;
@@ -292,36 +246,30 @@ watch(
 }
 
 .goals-list {
-  background: white;
-  border-radius: 12px;
+  background: #e8f5e9;
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
-
 .goal-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid #bce7bd;
   cursor: pointer;
   transition: background-color 0.2s;
 }
-
 .goal-item:last-child {
   border-bottom: none;
 }
-
 .goal-item:hover {
-  background: #f8f9fa;
+  background: #bce7bd;
 }
-
 .goal-info h4 {
   margin: 0 0 0.25rem 0;
-  color: #333;
+  color: #256b28;
   font-size: 1rem;
 }
-
 .goal-info p {
   margin: 0;
   color: #666;
@@ -329,69 +277,24 @@ watch(
 }
 
 .status-badge {
-  background: #eee;
-  color: #666;
+  background: #e8f5e9;
+  color: #256b28;
   padding: 0.25rem 0.75rem;
-  border-radius: 12px;
+  border-radius: 999px;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  border: 1.2px solid #bce7bd;
   transition:
     background 0.2s,
-    color 0.2s;
+    color 0.2s,
+    border 0.2s;
 }
 
 .status-badge.completed {
-  background: #43a047;
+  background: #388e3c;
   color: #fff;
-  box-shadow: 0 2px 8px rgba(67, 160, 71, 0.15);
-}
-.spinner {
-  display: inline-block;
-  width: 1.5em;
-  height: 1.5em;
-  border: 3px solid #e0e0e0;
-  border-top: 3px solid #43a047;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  vertical-align: middle;
-}
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-@media (max-width: 768px) {
-  .welcome-section h1 {
-    font-size: 1.5rem;
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-  }
-
-  .stat-card {
-    padding: 1rem;
-  }
-
-  .stat-icon {
-    font-size: 2rem;
-  }
-
-  .actions-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .goal-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
+  border-color: #388e3c;
 }
 </style>

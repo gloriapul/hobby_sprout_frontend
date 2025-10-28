@@ -1,3 +1,63 @@
+<template>
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="logo-section">
+        <img src="/HobbySproutLogo.png" alt="HobbySprout" class="logo" />
+        <h1>HobbySprout</h1>
+      </div>
+
+      <div class="header-actions">
+        <div class="user-menu">
+          <button ref="userButtonRef" @click="toggleUserMenu" class="user-button">
+            <div class="user-avatar">
+              <img
+                v-if="profileStore.profile && profileStore.profile.image"
+                :src="profileStore.profile.image"
+                :alt="displayName"
+                style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%"
+              />
+              <span v-else>{{ getUserInitials() }}</span>
+            </div>
+            <span>{{ displayName }}</span>
+            <svg
+              class="chevron"
+              :class="{ open: showUserMenu }"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+
+          <Teleport to="body">
+            <div v-if="showUserMenu" class="user-dropdown" :style="dropdownStyle as CSSProperties">
+              <button class="logout-btn" @click="handleLogout">
+                <svg class="logout-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path
+                    fill-rule="evenodd"
+                    d="M7 4a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 102 0V4a3 3 0 00-3-3H8a3 3 0 00-3 3v12a3 3 0 003 3h4a3 3 0 003-3v-3a1 1 0 10-2 0v3a1 1 0 01-1 1H8a1 1 0 01-1-1V4z"
+                    clip-rule="evenodd"
+                  />
+                  <path
+                    fill-rule="evenodd"
+                    d="M12.293 9.293a1 1 0 011.414 0l2 2a1 1 0 010 1.414l-2 2a1 1 0 01-1.414-1.414L13.586 13H7a1 1 0 110-2h6.586l-1.293-1.293a1 1 0 010-1.414z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+                <span>Logout</span>
+              </button>
+            </div>
+          </Teleport>
+        </div>
+      </div>
+    </div>
+  </header>
+</template>
+
 <script setup lang="ts">
 import type { CSSProperties } from 'vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
@@ -74,78 +134,19 @@ onUnmounted(() => {
 })
 </script>
 
-<template>
-  <header class="dashboard-header">
-    <div class="header-content">
-      <div class="logo-section">
-        <img src="/HobbySproutLogo.png" alt="HobbySprout" class="logo" />
-        <h1>HobbySprout</h1>
-      </div>
-
-      <div class="header-actions">
-        <div class="user-menu">
-          <button ref="userButtonRef" @click="toggleUserMenu" class="user-button">
-            <div class="user-avatar">
-              <img
-                v-if="profileStore.profile && profileStore.profile.image"
-                :src="profileStore.profile.image"
-                :alt="displayName"
-                style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%"
-              />
-              <span v-else>{{ getUserInitials() }}</span>
-            </div>
-            <span>{{ displayName }}</span>
-            <svg
-              class="chevron"
-              :class="{ open: showUserMenu }"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                clip-rule="evenodd"
-              />
-            </svg>
-          </button>
-
-          <Teleport to="body">
-            <div v-if="showUserMenu" class="user-dropdown" :style="dropdownStyle as CSSProperties">
-              <button class="logout-btn" @click="handleLogout">
-                <svg class="logout-icon" viewBox="0 0 20 20" fill="currentColor">
-                  <path
-                    fill-rule="evenodd"
-                    d="M7 4a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 102 0V4a3 3 0 00-3-3H8a3 3 0 00-3 3v12a3 3 0 003 3h4a3 3 0 003-3v-3a1 1 0 10-2 0v3a1 1 0 01-1 1H8a1 1 0 01-1-1V4z"
-                    clip-rule="evenodd"
-                  />
-                  <path
-                    fill-rule="evenodd"
-                    d="M12.293 9.293a1 1 0 011.414 0l2 2a1 1 0 010 1.414l-2 2a1 1 0 01-1.414-1.414L13.586 13H7a1 1 0 110-2h6.586l-1.293-1.293a1 1 0 010-1.414z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-                <span>Logout</span>
-              </button>
-            </div>
-          </Teleport>
-        </div>
-      </div>
-    </div>
-  </header>
-</template>
-
-.logo-floras { font-family: 'Floras Display', serif; font-weight: 700; letter-spacing: 0.03em; }
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Floras+Display:wght@700&display=swap');
 @import '@/assets/fonts/floras-display.css';
-<style scoped>
+
 .dashboard-header {
-  background: #c4dfaa;
-  border-bottom: 4px solid #357a5f;
+  background: #e8f5e9;
   height: 80px;
   position: sticky;
   top: 0;
   z-index: 100;
   overflow: visible;
+  font-family: 'Poppins', sans-serif;
 }
 
 .header-content {
@@ -156,6 +157,7 @@ onUnmounted(() => {
   justify-content: space-between;
   padding: 0 2rem;
   overflow: visible;
+  font-family: 'Poppins', sans-serif;
 }
 
 .logo-section {
@@ -172,7 +174,7 @@ onUnmounted(() => {
 
 .logo-section h1 {
   margin: 0;
-  color: #115c3f;
+  color: #256b28;
   font-size: 2rem;
   font-weight: 600;
   font-family: 'Floras Display', serif;
@@ -208,7 +210,7 @@ onUnmounted(() => {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+  background: #388e3c;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -218,8 +220,9 @@ onUnmounted(() => {
 }
 
 .user-button span {
-  color: #333;
+  color: #256b28;
   font-weight: 500;
+  font-family: 'Poppins', sans-serif;
 }
 
 .chevron {
@@ -238,7 +241,6 @@ onUnmounted(() => {
   background: white;
   border: 1px solid #e9ecef;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   min-width: 160px;
   z-index: 1000;
   overflow: visible;
@@ -262,15 +264,13 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: linear-gradient(90deg, #fff 70%, #ffeaea 100%);
   color: #e53935;
   font-weight: 600;
   border-radius: 0 0 8px 8px;
   border-top: 1px solid #e9ecef;
   transition:
     background 0.2s,
-    color 0.2s,
-    box-shadow 0.2s;
+    color 0.2s;
   padding: 0.8rem 1.4rem;
   font-size: 1rem;
   min-width: 140px;
@@ -280,19 +280,13 @@ onUnmounted(() => {
   cursor: pointer;
   letter-spacing: 0.01em;
 }
-.logout-btn:hover {
-  background: linear-gradient(90deg, #ffeaea 80%, #ffd6d6 100%);
-  color: #b71c1c;
-  box-shadow: 0 2px 8px rgba(229, 57, 53, 0.08);
-}
+
+.logout-btn:hover,
 .logout-btn:active {
   background: #ffd6d6;
   color: #b71c1c;
 }
-.logout-btn:focus {
-  outline: 2px solid #e53935;
-  outline-offset: 2px;
-}
+
 .logout-icon {
   width: 15px;
   height: 15px;
@@ -300,29 +294,5 @@ onUnmounted(() => {
   color: #e53935;
   flex-shrink: 0;
   transition: color 0.2s;
-}
-
-.user-dropdown a:first-child {
-  border-radius: 8px 8px 0 0;
-}
-
-.user-dropdown button:last-child {
-  border-radius: 0 0 8px 8px;
-  border-top: 1px solid #e9ecef;
-  color: #dc3545;
-}
-
-@media (max-width: 768px) {
-  .header-content {
-    padding: 0 1rem;
-  }
-
-  .logo-section h1 {
-    display: none;
-  }
-
-  .user-button span {
-    display: none;
-  }
 }
 </style>
