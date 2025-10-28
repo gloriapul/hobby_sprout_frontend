@@ -31,16 +31,35 @@
 
       <div v-if="currentQuestion" class="question-card">
         <h2 class="question-text">{{ currentQuestion.text }}</h2>
+
         <div class="answers-grid">
-          <button
-            v-for="answer in currentQuestion.answers"
-            :key="answer.id"
-            @click="selectAnswer(answer)"
-            class="answer-button"
-            :class="{ selected: selectedAnswer?.id === answer.id }"
-          >
-            {{ answer.text }}
-          </button>
+          <template v-for="answer in currentQuestion.answers" :key="answer.id">
+            <button
+              v-if="!isDependsAnswer(answer)"
+              @click="selectAnswer(answer)"
+              class="answer-button"
+              :class="{ selected: selectedAnswer?.id === answer.id }"
+            >
+              {{ answer.text }}
+            </button>
+            <div v-else class="free-response-option">
+              <button
+                @click="selectAnswer(answer)"
+                class="answer-button"
+                :class="{ selected: selectedAnswer?.id === answer.id }"
+              >
+                Other (please specify)
+              </button>
+              <textarea
+                v-if="selectedAnswer?.id === answer.id"
+                v-model="freeResponseText"
+                class="free-response-textarea"
+                placeholder="Please describe..."
+                rows="3"
+                style="width: 100%; margin-top: 0.5rem"
+              ></textarea>
+            </div>
+          </template>
         </div>
 
         <div class="question-actions">
@@ -51,7 +70,11 @@
           >
             ← Previous
           </button>
-          <button @click="nextQuestion" :disabled="!selectedAnswer" class="nav-button next-button">
+          <button
+            @click="nextQuestion"
+            :disabled="!canProceedToNext"
+            class="nav-button next-button"
+          >
             {{ isLastQuestion ? 'Finish Quiz' : 'Next →' }}
           </button>
         </div>
@@ -116,6 +139,7 @@ const loading = ref(false)
 const loadingMatch = ref(false)
 const currentQuestionIndex = ref(0)
 const selectedAnswer = ref<any>(null)
+const freeResponseText = ref('')
 const answers = ref<any[]>([])
 const hobbyMatch = ref<string | null>(null)
 
@@ -196,26 +220,51 @@ const startQuiz = () => {
 
 const selectAnswer = (answer: any) => {
   selectedAnswer.value = answer
+  if (!isDependsAnswer(answer)) {
+    freeResponseText.value = ''
+  }
+}
+
+function isDependsAnswer(answer: any) {
+  return (
+    answer.text.toLowerCase().includes('depends') ||
+    answer.value === 'depends' ||
+    answer.value === 'mood' ||
+    answer.value === 'seasonal'
+  )
 }
 
 const nextQuestion = async () => {
   if (!selectedAnswer.value) return
+  // If free response, require text
+  if (isDependsAnswer(selectedAnswer.value) && !freeResponseText.value.trim()) return
 
   // Save the answer
-  answers.value[currentQuestionIndex.value] = selectedAnswer.value
+  if (isDependsAnswer(selectedAnswer.value)) {
+    answers.value[currentQuestionIndex.value] = {
+      answerText: freeResponseText.value.trim(),
+    }
+  } else {
+    answers.value[currentQuestionIndex.value] = {
+      answerText: selectedAnswer.value.value,
+    }
+  }
 
   // Submit response to API
   if (authStore.user) {
     try {
       if (currentQuestion.value) {
-        await ApiService.callConceptAction('QuizMatchmaker', 'submitResponse', {
+        const params = {
           user: authStore.user.id,
           question: currentQuestion.value.id.toString(),
-          response: selectedAnswer.value.value,
-        })
+          answerText: isDependsAnswer(selectedAnswer.value)
+            ? freeResponseText.value.trim()
+            : selectedAnswer.value.value,
+        }
+        await ApiService.callConceptAction('QuizMatchmaker', 'submitResponse', params)
       }
     } catch (error) {
-      console.error('Failed to submit quiz response:', error)
+      console.error('Failed to submit or update quiz response:', error)
     }
   }
 
@@ -224,15 +273,27 @@ const nextQuestion = async () => {
     loading.value = true
     quizCompleted.value = true
 
+    // Print responses to console for debugging
+    console.log('Quiz responses being passed in:', JSON.parse(JSON.stringify(answers.value)))
+
     // Generate hobby match
+    console.log('Calling generateHobbyMatch with:', { user: authStore.user?.id })
     await generateHobbyMatch()
     loading.value = false
   } else {
     // Move to next question
     currentQuestionIndex.value++
     selectedAnswer.value = answers.value[currentQuestionIndex.value] || null
+    freeResponseText.value = ''
   }
 }
+const canProceedToNext = computed(() => {
+  if (!selectedAnswer.value) return false
+  if (isDependsAnswer(selectedAnswer.value)) {
+    return !!freeResponseText.value.trim()
+  }
+  return true
+})
 
 const previousQuestion = () => {
   if (currentQuestionIndex.value > 0) {
@@ -241,21 +302,17 @@ const previousQuestion = () => {
   }
 }
 
-const viewRecommendations = () => {
-  // Store quiz results and navigate to recommendations
-  localStorage.setItem('quizResults', JSON.stringify(answers.value))
-  router.push('/dashboard/recommendations')
-}
-
 const generateHobbyMatch = async () => {
   if (!authStore.user) return
 
+  const params = { user: authStore.user.id }
+  console.log('generateHobbyMatch parameters:', params)
   loadingMatch.value = true
   try {
     const response = await ApiService.callConceptAction<{ matchedHobby: string }>(
       'QuizMatchmaker',
       'generateHobbyMatch',
-      { user: authStore.user.id },
+      params,
     )
 
     if ('matchedHobby' in response) {
@@ -263,21 +320,6 @@ const generateHobbyMatch = async () => {
     }
   } catch (error: any) {
     console.error('Failed to generate hobby match:', error)
-    if (error.message?.includes('already exists')) {
-      // Get existing match
-      try {
-        const existingMatch = await ApiService.callConceptAction<{ hobbyMatch: string }>(
-          'QuizMatchmaker',
-          '_getMatchedHobby',
-          { user: authStore.user.id },
-        )
-        if ('hobbyMatch' in existingMatch) {
-          hobbyMatch.value = existingMatch.hobbyMatch
-        }
-      } catch (getError) {
-        console.error('Failed to get existing match:', getError)
-      }
-    }
   } finally {
     loadingMatch.value = false
   }
@@ -708,6 +750,32 @@ onMounted(() => {
 .no-match p {
   color: #666;
   margin-bottom: 1rem;
+}
+
+.free-response-option {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+}
+.free-response-textarea {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1.5px solid #81c784;
+  font-size: 1rem;
+  resize: vertical;
+  min-height: 60px;
+  box-sizing: border-box;
+  background: #f8f9ff;
+  color: #333;
+  transition: border-color 0.2s;
+}
+.free-response-textarea:focus {
+  outline: none;
+  border-color: #388e3c;
+  background: #fff;
 }
 
 @media (max-width: 768px) {
