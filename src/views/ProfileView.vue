@@ -622,11 +622,21 @@ onMounted(async () => {
 }
 .quiz-history-grid {
   display: grid;
-  background: linear-gradient(135deg, #ff8a65 0%, #d84315 100%);
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
   background: #f7fafc;
   border-radius: 8px;
   padding: 1.2rem 1rem;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+.quiz-history-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
+  min-width: 220px;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   align-items: flex-start;

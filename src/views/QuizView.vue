@@ -240,33 +240,9 @@ const nextQuestion = async () => {
   if (isDependsAnswer(selectedAnswer.value) && !freeResponseText.value.trim()) return
 
   // Save the answer
-  if (isDependsAnswer(selectedAnswer.value)) {
-    answers.value[currentQuestionIndex.value] = {
-      answerText: freeResponseText.value.trim(),
-    }
-  } else {
-    answers.value[currentQuestionIndex.value] = {
-      answerText: selectedAnswer.value.value,
-    }
-  }
-
-  // Submit response to API
-  if (authStore.user) {
-    try {
-      if (currentQuestion.value) {
-        const params = {
-          user: authStore.user.id,
-          question: currentQuestion.value.id.toString(),
-          answerText: isDependsAnswer(selectedAnswer.value)
-            ? freeResponseText.value.trim()
-            : selectedAnswer.value.value,
-        }
-        await ApiService.callConceptAction('QuizMatchmaker', 'submitResponse', params)
-      }
-    } catch (error) {
-      console.error('Failed to submit or update quiz response:', error)
-    }
-  }
+  answers.value[currentQuestionIndex.value] = isDependsAnswer(selectedAnswer.value)
+    ? freeResponseText.value.trim()
+    : selectedAnswer.value.value
 
   if (isLastQuestion.value) {
     // Complete the quiz and generate hobby match
@@ -276,9 +252,10 @@ const nextQuestion = async () => {
     // Print responses to console for debugging
     console.log('Quiz responses being passed in:', JSON.parse(JSON.stringify(answers.value)))
 
-    // Generate hobby match
-    console.log('Calling generateHobbyMatch with:', { user: authStore.user?.id })
-    await generateHobbyMatch()
+    // Generate hobby match with all answers
+    if (authStore.user) {
+      await generateHobbyMatch()
+    }
     loading.value = false
   } else {
     // Move to next question
@@ -305,7 +282,10 @@ const previousQuestion = () => {
 const generateHobbyMatch = async () => {
   if (!authStore.user) return
 
-  const params = { user: authStore.user.id }
+  const params = {
+    user: authStore.user.id,
+    answers: answers.value,
+  }
   console.log('generateHobbyMatch parameters:', params)
   loadingMatch.value = true
   try {
