@@ -51,15 +51,13 @@
     <div v-if="recentGoals.length > 0" class="recent-activity">
       <h2>Active Goal</h2>
       <div class="goals-list">
-        <div
-          v-for="goal in recentGoals"
-          :key="goal.id"
-          class="goal-item"
-          @click="$router.push('/dashboard/milestones')"
-        >
+        <div v-if="recentGoals[0]" class="goal-item" @click="$router.push('/dashboard/milestones')">
           <div class="goal-info">
-            <h4>{{ goal.description }}</h4>
-            <p>Date started: {{ goal.createdAt ? formatDate(goal.createdAt) : 'No Date' }}</p>
+            <h4>{{ recentGoals[0].description }}</h4>
+            <p>
+              Date started:
+              {{ recentGoals[0].createdAt ? formatDate(recentGoals[0].createdAt) : 'No Date' }}
+            </p>
           </div>
         </div>
       </div>
@@ -247,7 +245,7 @@ watch(
 
 .goals-list {
   background: #e8f5e9;
-  border-radius: 20px;
+  border-radius: 16px;
   overflow: hidden;
 }
 .goal-item {
@@ -255,15 +253,15 @@ watch(
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid #bce7bd;
+  border: 2px solid #bce7bd;
+  border-radius: 16px;
   cursor: pointer;
   transition: background-color 0.2s;
 }
-.goal-item:last-child {
-  border-bottom: none;
-}
+
 .goal-item:hover {
   background: #bce7bd;
+  border-color: #388e3c;
 }
 .goal-info h4 {
   margin: 0 0 0.25rem 0;
