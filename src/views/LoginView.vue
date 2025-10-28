@@ -121,7 +121,7 @@ const handleLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+  background: #bce7bd;
   padding: 1rem;
 }
 
@@ -129,7 +129,6 @@ const handleLogin = async () => {
   background: white;
   border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 400px;
 }
@@ -186,7 +185,7 @@ input:disabled {
 }
 
 .auth-button {
-  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+  background: #388e3c;
   color: white;
   border: none;
   padding: 0.75rem;
@@ -194,18 +193,7 @@ input:disabled {
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: transform 0.2s;
   margin-top: 1rem;
-}
-
-.auth-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-}
-
-.auth-button:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-  transform: none;
 }
 
 .error-message {
@@ -230,6 +218,43 @@ input:disabled {
   border-top: 1px solid #eee;
 }
 
+.auth-button {
+  background: #388e3c;
+  color: #fff;
+  border: none;
+  padding: 1rem 2.5rem;
+  border-radius: 999px;
+  font-size: 1.13rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+.auth-button:hover:not(:disabled) {
+  background: #256b28;
+  color: #fff;
+}
+.auth-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  color: #fff;
+}
+.auth-link {
+  color: #388e3c;
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.7rem 1.7rem;
+  border-radius: 999px;
+  transition:
+    background 0.2s,
+    color 0.2s;
+  background: transparent;
+  display: inline-block;
+}
+.auth-link:hover {
+  background: #e8f5e9;
+  color: #256b28;
+  text-decoration: none;
+}
 .auth-footer p {
   color: #666;
   font-size: 0.9rem;
@@ -239,10 +264,16 @@ input:disabled {
 .auth-link {
   color: #388e3c;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
+  padding: 0.7rem 1.7rem;
+  border-radius: 999px;
+  transition: background 0.2s, color 0.2s;
+  background: transparent;
+  display: inline-block;
 }
-
 .auth-link:hover {
-  text-decoration: underline;
+  background: #e8f5e9;
+  color: #256b28;
+  text-decoration: none;
 }
 </style>

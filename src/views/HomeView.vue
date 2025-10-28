@@ -129,13 +129,10 @@ onMounted(() => {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import '@/assets/fonts/floras-display.css';
+
 .home-view {
   font-family: 'Poppins', sans-serif;
-  min-height: 100vh;
-  font-weight: 400;
-}
-@import '@/assets/fonts/floras-display.css';
-.home-view {
   min-height: 100vh;
   font-weight: 400;
 }
@@ -151,11 +148,10 @@ onMounted(() => {
   width: auto;
   margin-right: 1rem;
   border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(56, 142, 60, 0.12);
 }
 
 .hero-section {
-  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 60%, #a5d6a7 100%);
+  background: #bce7bd;
   color: #187c1d;
   padding: 4rem 2rem;
   min-height: 80vh;
@@ -172,7 +168,6 @@ onMounted(() => {
   align-items: center;
   background: rgba(232, 245, 233, 0.85);
   border-radius: 32px;
-  box-shadow: 0 4px 24px rgba(56, 142, 60, 0.07);
   padding: 2rem;
 }
 
@@ -220,7 +215,6 @@ onMounted(() => {
 .cta-button.large.primary:hover {
   background: #256b28;
   color: white;
-  box-shadow: none;
 }
 
 .cta-button.secondary {
@@ -275,7 +269,6 @@ onMounted(() => {
 .features-section,
 .how-it-works-section {
   padding: 5rem 0;
-  color: white;
   background: #fff;
 }
 
@@ -284,7 +277,7 @@ onMounted(() => {
   font-size: 2.5rem;
   font-weight: 600;
   margin-bottom: 3rem;
-  color: #333;
+  color: #256b28;
 }
 
 .features-grid {
@@ -293,11 +286,11 @@ onMounted(() => {
   gap: 2rem;
 }
 
-.feature-card {
-  background: white;
+.feature-card,
+.step-item {
+  background: #e8f5e9;
   padding: 2.5rem;
   border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   text-align: center;
   transition: transform 0.3s;
 }
@@ -311,13 +304,8 @@ onMounted(() => {
 .step-item h3 {
   font-size: 1.3rem;
   margin-bottom: 1rem;
-  color: #333;
-}
-.feature-card h3 {
+  color: #256b28;
   font-weight: 500;
-}
-.step-item h3 {
-  font-weight: 600;
 }
 
 .feature-card p,
@@ -330,11 +318,6 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 2rem;
-}
-
-.step-item {
-  text-align: center;
-  padding: 2.5rem;
 }
 
 .step-number {
@@ -351,21 +334,9 @@ onMounted(() => {
   margin: 0 auto 1.5rem auto;
 }
 
-.step-item h3 {
-  font-size: 1.3rem;
-  margin-bottom: 1rem;
-  color: #333;
-  font-weight: 600;
-}
-
-.step-item p {
-  color: #666;
-  line-height: 1.6;
-}
-
 .cta-section {
-  background: linear-gradient(135deg, #e8f5e9 0%, #a5d6a7 100%);
-  color: #388e3c;
+  background: #bce7bd;
+  color: #256b28;
   padding: 5rem 0;
   text-align: center;
 }
@@ -380,66 +351,5 @@ onMounted(() => {
   font-size: 1.2rem;
   margin-bottom: 2.5rem;
   opacity: 0.9;
-}
-
-@media (max-width: 768px) {
-  .hero-content {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-    text-align: center;
-  }
-
-  .hero-title {
-    font-size: 2.5rem;
-  }
-
-  .hero-subtitle {
-    font-size: 1.1rem;
-  }
-
-  .hobby-icons {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-  }
-
-  .icon-item {
-    font-size: 2rem;
-    padding: 1rem;
-  }
-
-  .features-grid,
-  .steps-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .section-title {
-    font-size: 2rem;
-  }
-
-  .cta-content h2 {
-    font-size: 2rem;
-  }
-
-  .hero-buttons {
-    justify-content: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .hero-section {
-    padding: 2rem 1rem;
-  }
-
-  .container {
-    padding: 0 1rem;
-  }
-
-  .hero-title {
-    font-size: 2rem;
-  }
-
-  .hobby-icons {
-    grid-template-columns: repeat(3, 1fr);
-  }
 }
 </style>
