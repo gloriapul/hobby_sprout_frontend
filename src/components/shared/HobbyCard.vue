@@ -10,18 +10,16 @@ defineProps<{ hobby: string }>()
 
 <style scoped>
 .hobby-card {
-  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-  border: 2px solid #81c784;
-  border-radius: 16px;
+  background: #b2e3b5;
+  border-radius: 12px;
   padding: 1.5rem 2rem;
   margin: 0.5rem 0;
-  box-shadow: 0 2px 8px rgba(56, 142, 60, 0.08);
   display: flex;
   align-items: center;
   transition: box-shadow 0.2s;
 }
 .hobby-card:hover {
-  box-shadow: 0 4px 16px rgba(56, 142, 60, 0.15);
+  background: #81c784;
 }
 .hobby-name {
   font-size: 1.2rem;

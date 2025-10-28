@@ -628,7 +628,7 @@ onMounted(async () => {
   padding: 1.2rem 1rem;
 }
 .quiz-history-card {
-  background: #fff;
+  background: #b2e3b5;
   border-radius: 8px;
   padding: 1rem 1.5rem;
   margin-bottom: 1rem;
