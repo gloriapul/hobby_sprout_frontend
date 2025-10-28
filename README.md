@@ -17,11 +17,18 @@ A college senior, unsure about dedicating time to a new hobby, discovers HobbySp
 #### Check In 
 [Check In Google Drive Link](https://drive.google.com/file/d/1C2_7B3RHrQhVvFLfHhBG9iiOOmLbsRd5/view?usp=sharing)
 
-### Visual Design Study
+#### Final
+[Final Google Drive Link 9edit0](https://drive.google.com/file/d/1C2_7B3RHrQhVvFLfHhBG9iiOOmLbsRd5/view?usp=sharing)
+
+## Visual Design Study
 
 [Check In Google Slides Link](https://docs.google.com/presentation/d/11KOza0QxJegwlJRS2OytLb8BY-9jOD2HVAjNbZ9Te7g/edit?usp=sharing)
 
-This study includes my thought process behind the design process for my app.
+This study visually goes into my thought process behind the design process for my app.
+
+### Updated Backend
+
+[Backend Document Updates](https://github.com/gloriapul/hobby_sprout/blob/main/design/assignment4b-design-changes.md)
 
 ## Setup
 
