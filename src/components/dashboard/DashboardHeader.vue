@@ -18,13 +18,6 @@ const displayName = computed(() => {
 const showUserMenu = ref(false)
 const userButtonRef = ref<HTMLElement>()
 
-const dropdownStyle = ref<CSSProperties>({
-  position: 'fixed',
-  top: '80px',
-  right: '2rem',
-  zIndex: '1000',
-})
-
 const getUserInitials = () => {
   const name = displayName.value
   if (!name || name === 'User') return 'U'
@@ -35,15 +28,17 @@ const getUserInitials = () => {
     .toUpperCase()
 }
 
+const dropdownStyle = ref<CSSProperties>({})
 const toggleUserMenu = () => {
   showUserMenu.value = !showUserMenu.value
   if (showUserMenu.value && userButtonRef.value) {
     const rect = userButtonRef.value.getBoundingClientRect()
     dropdownStyle.value = {
       position: 'fixed',
-      top: `${rect.bottom + 8}px`,
-      right: '2rem',
-      zIndex: '1000',
+      top: `${rect.bottom}px`,
+      left: `${rect.left}px`,
+      minWidth: `${rect.width}px`,
+      zIndex: 1000,
     }
   }
 }
@@ -200,65 +195,64 @@ onUnmounted(() => {
   padding: 0.5rem 0.75rem;
   cursor: pointer;
   transition: all 0.2s;
-
-  /* removed invalid background and border-color */
-
-  .user-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 0.85rem;
-    font-weight: 600;
-  }
-
-  .user-button span {
-    color: #333;
-    font-weight: 500;
-  }
-
-  .chevron {
-    width: 16px;
-    height: 16px;
-    color: #666;
-    transition: transform 0.2s;
-  }
-
-  .chevron.open {
-    transform: rotate(180deg);
-  }
-
-  .user-dropdown {
-    position: fixed;
-    top: 80px;
-    right: 2rem;
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    min-width: 160px;
-    z-index: 1000;
-    overflow: visible;
-  }
-
-  .user-dropdown a,
-  .user-dropdown button {
-    display: block;
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: none;
-    background: none;
-    text-align: left;
-    text-decoration: none;
-    color: #333;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
+  margin-bottom: 0;
+  border-bottom-width: 1px;
 }
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.user-button span {
+  color: #333;
+  font-weight: 500;
+}
+
+.chevron {
+  width: 16px;
+  height: 16px;
+  color: #666;
+  transition: transform 0.2s;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+.user-dropdown {
+  position: fixed;
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 160px;
+  z-index: 1000;
+  overflow: visible;
+}
+
+.user-dropdown a,
+.user-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: none;
+  text-align: left;
+  text-decoration: none;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
 
 .logout-btn {
   display: flex;
@@ -269,7 +263,6 @@ onUnmounted(() => {
   font-weight: 600;
   border-radius: 0 0 8px 8px;
   border-top: 1px solid #e9ecef;
-  box-shadow: none;
   transition:
     background 0.2s,
     color 0.2s,
@@ -282,7 +275,6 @@ onUnmounted(() => {
   outline: none;
   cursor: pointer;
   letter-spacing: 0.01em;
-  position: relative;
 }
 .logout-btn:hover {
   background: linear-gradient(90deg, #ffeaea 80%, #ffd6d6 100%);
@@ -298,8 +290,8 @@ onUnmounted(() => {
   outline-offset: 2px;
 }
 .logout-icon {
-  width: 20px;
-  height: 20px;
+  width: 15px;
+  height: 15px;
   margin-right: 0.25rem;
   color: #e53935;
   flex-shrink: 0;
