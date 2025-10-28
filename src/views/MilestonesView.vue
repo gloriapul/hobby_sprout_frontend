@@ -43,6 +43,13 @@
             <span class="goal-status">Active Goal</span>
             <span class="step-count">{{ totalSteps }} steps</span>
           </div>
+          <div
+            v-if="currentGoal.createdAt"
+            class="goal-start-date"
+            style="margin-top: 0.5rem; color: #666; font-size: 0.95rem"
+          >
+            Started at: {{ formatDate(currentGoal.createdAt) }}
+          </div>
         </div>
       </div>
 
@@ -108,7 +115,6 @@
             <div class="step-content">
               <h4>{{ step.description }}</h4>
               <div class="step-meta">
-                <span class="step-date">Started: {{ formatDate(step.start) }}</span>
                 <span v-if="step.completion" class="completion-date">
                   Completed: {{ formatDate(step.completion) }}
                 </span>
@@ -295,7 +301,12 @@ const isNextStep = (index: number) => {
 }
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString()
+  const date = new Date(dateString)
+  return (
+    date.toLocaleDateString() +
+    ' ' +
+    date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  )
 }
 
 const router = useRouter()
@@ -439,7 +450,9 @@ onMounted(async () => {
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .create-goal-button:hover {
@@ -458,12 +471,14 @@ onMounted(async () => {
   font-size: 0.9rem;
 }
 
-.get-started-tips a  {
+.get-started-tips a {
   color: #388e3c;
   text-decoration: none;
   font-weight: 600;
   border-radius: 999px;
-  transition: background 0.2s, color 0.2s
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .get-started-tips a:hover {

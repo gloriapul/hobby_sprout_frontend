@@ -25,6 +25,15 @@
           </button>
           <h2 class="goal-title">Goal: {{ goal.description }}</h2>
           <span class="goal-status-label">{{ goal.isActive ? 'Active' : 'Inactive' }}</span>
+          <span
+            class="goal-start-label"
+            v-if="
+              goal.steps && goal.steps.length && (goal.steps[0].start || goal.steps[0].createdAt)
+            "
+            style="margin-left: 1.2rem; font-size: 0.98rem; color: #666; font-weight: 400"
+          >
+            Started at: {{ formatDate(goal.steps[0].start || goal.steps[0].createdAt) }}
+          </span>
           <span class="goal-duration-label">
             <template v-if="getGoalDuration(goal) !== null">
               <span v-if="goal.isActive">Time since started: </span>
@@ -58,9 +67,6 @@
               <span class="step-desc">{{ step.description }}</span>
             </div>
             <div class="step-dates">
-              <span v-if="step.start || step.createdAt" class="step-date">
-                <strong>Started:</strong> {{ formatDate(step.start || step.createdAt) }}
-              </span>
               <span
                 v-if="step.isComplete && (step.completedAt || step.completion)"
                 class="step-date"
@@ -259,7 +265,7 @@ const stepColors = [
   { background: '#fffde7', color: '#f9a825' },
   { background: '#fce4ec', color: '#ad1457' },
   { background: '#e8f5e9', color: '#388e3c' },
-  { background: '#d1f3ff', color: '#38778e' }
+  { background: '#d1f3ff', color: '#38778e' },
 ]
 </script>
 
