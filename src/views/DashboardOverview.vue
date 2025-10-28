@@ -7,7 +7,7 @@
 
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon">🎯</div>
+        <div class="stat-icon">🥇</div>
         <div class="stat-content">
           <h3>
             <span v-if="allGoalsLoading" class="spinner"></span>
@@ -36,7 +36,7 @@
         </router-link>
 
         <router-link to="/dashboard/profile" class="action-card">
-          <div class="action-icon">🎨</div>
+          <div class="action-icon">🎤</div>
           <h3>Add Hobby</h3>
           <p>Discover and add new hobbies to explore</p>
         </router-link>
