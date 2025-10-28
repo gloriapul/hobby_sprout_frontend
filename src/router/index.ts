@@ -51,6 +51,11 @@ const router = createRouter({
           name: 'quiz',
           component: () => import('../views/QuizView.vue'),
         },
+        {
+          path: 'hobby/:hobby/steps',
+          name: 'hobby-step-history',
+          component: () => import('../views/HobbyStepHistoryView.vue'),
+        },
       ],
     },
   ],

@@ -40,12 +40,26 @@
           </div>
           <div v-else>
             <h3>Review & Approve Steps</h3>
-            <ul class="steps-list">
-              <li v-for="(step, idx) in steps" :key="idx">
-                {{ step }}
-                <button @click="removeStep(idx)" class="delete-step">Delete</button>
-              </li>
-            </ul>
+            <draggable
+              v-model="steps"
+              class="steps-list"
+              item-key="idx"
+              :animation="200"
+              handle=".drag-handle"
+            >
+              <template #item="{ element: step, index: idx }">
+                <li>
+                  <span
+                    class="drag-handle"
+                    title="Drag to reorder"
+                    style="cursor: grab; margin-right: 0.5em"
+                    >☰</span
+                  >
+                  {{ step }}
+                  <button @click="removeStep(idx)" class="delete-step">Delete</button>
+                </li>
+              </template>
+            </draggable>
             <!-- will fix manual step adding after generating for assignment-->
             <div class="form-actions">
               <label for="manualStepGen" class="form-label">Add Step</label>
@@ -91,35 +105,52 @@
               <button type="submit" class="next-button">Add Manual Step</button>
             </div>
           </form>
-          <ul class="steps-list">
-            <li v-for="(step, idx) in steps" :key="idx">
-              {{ step }}
-              <button @click="removeStep(idx)" class="delete-step">Delete</button>
-            </li>
-          </ul>
-          <pre
-            style="
-              background: #f1f8e9;
-              color: #388e3c;
-              padding: 0.5rem 1rem;
-              margin-top: 1rem;
-              font-size: 0.9em;
-            "
+          <draggable
+            v-model="steps"
+            class="steps-list"
+            item-key="idx"
+            :animation="200"
+            handle=".drag-handle"
           >
-            Debug: steps = {{ JSON.stringify(steps) }}
-          </pre>
+            <template #item="{ element: step, index: idx }">
+              <li>
+                <span
+                  class="drag-handle"
+                  title="Drag to reorder"
+                  style="cursor: grab; margin-right: 0.5em"
+                  >☰</span
+                >
+                {{ step }}
+                <button @click="removeStep(idx)" class="delete-step">Delete</button>
+              </li>
+            </template>
+          </draggable>
           <button @click="saveGoal" :disabled="steps.length === 0" class="primary-button">
             Save Goal & Steps
           </button>
         </div>
         <div v-else-if="step === 3" class="step-content">
           <h3>Finalize Your Goal</h3>
-          <ul class="steps-list">
-            <li v-for="(step, idx) in steps" :key="idx">
-              {{ step }}
-              <button @click="removeStep(idx)" class="delete-step">Delete</button>
-            </li>
-          </ul>
+          <draggable
+            v-model="steps"
+            class="steps-list"
+            item-key="idx"
+            :animation="200"
+            handle=".drag-handle"
+          >
+            <template #item="{ element: step, index: idx }">
+              <li>
+                <span
+                  class="drag-handle"
+                  title="Drag to reorder"
+                  style="cursor: grab; margin-right: 0.5em"
+                  >☰</span
+                >
+                {{ step }}
+                <button @click="removeStep(idx)" class="delete-step">Delete</button>
+              </li>
+            </template>
+          </draggable>
           <button @click="saveGoal" class="primary-button">Save Goal & Steps</button>
         </div>
       </div>
@@ -129,6 +160,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+import draggable from 'vuedraggable'
 function resetModalState() {
   step.value = 1
   method.value = null
@@ -143,7 +176,6 @@ function handleClose() {
   resetModalState()
   emit('close')
 }
-import { ref } from 'vue'
 const props = defineProps<{ hobby: string }>()
 
 const emit = defineEmits(['close', 'goalCreated'])
@@ -161,40 +193,61 @@ async function chooseMethod(selected: 'generate' | 'manual') {
   method.value = selected
   step.value = 2
   if (selected === 'generate') {
-    // Simulate step generation for preview (no backend call)
     generating.value = true
     manualStepError.value = ''
     steps.value = []
-    // Optionally, you could call a local LLM or placeholder here
-    // For now, just fake some steps for preview
-    setTimeout(() => {
-      steps.value = [
-        'Research the basics of your goal',
-        'Gather necessary materials',
-        'Set a schedule',
-        'Track your progress',
-        'Celebrate completion!',
-      ]
+    try {
+      const { ApiService } = await import('@/services/api')
+      const userId = authStore.user?.id
+      if (!userId) throw new Error('User not found')
+      const result = await ApiService.callConceptAction<any>('MilestoneTracker', 'generateSteps', {
+        user: userId,
+        description: goalDescription.value,
+        hobby: props.hobby,
+      })
+      if (result && Array.isArray(result.steps)) {
+        steps.value = result.steps
+      } else if (result && typeof result.error === 'string') {
+        manualStepError.value = result.error
+      } else {
+        manualStepError.value = 'Failed to generate steps. Please try again.'
+      }
+    } catch (err) {
+      manualStepError.value = 'Failed to generate steps. Please try again.'
+      console.error('[GoalCreationModal] Error generating steps:', err)
+    } finally {
       generating.value = false
-    }, 1200)
+    }
   }
 }
 
 // generateSteps is now only used for regeneration preview (local only)
-function generateSteps() {
+async function generateSteps() {
   generating.value = true
   manualStepError.value = ''
   steps.value = []
-  setTimeout(() => {
-    steps.value = [
-      'Research the basics of your goal',
-      'Gather necessary materials',
-      'Set a schedule',
-      'Track your progress',
-      'Celebrate completion!',
-    ]
+  try {
+    const { ApiService } = await import('@/services/api')
+    const userId = authStore.user?.id
+    if (!userId) throw new Error('User not found')
+    const result = await ApiService.callConceptAction<any>('MilestoneTracker', 'generateSteps', {
+      user: userId,
+      description: goalDescription.value,
+      hobby: props.hobby,
+    })
+    if (result && Array.isArray(result.steps)) {
+      steps.value = result.steps
+    } else if (result && typeof result.error === 'string') {
+      manualStepError.value = result.error
+    } else {
+      manualStepError.value = 'Failed to generate steps. Please try again.'
+    }
+  } catch (err) {
+    manualStepError.value = 'Failed to generate steps. Please try again.'
+    console.error('[GoalCreationModal] Error generating steps:', err)
+  } finally {
     generating.value = false
-  }, 1200)
+  }
 }
 
 function regenerateSteps() {

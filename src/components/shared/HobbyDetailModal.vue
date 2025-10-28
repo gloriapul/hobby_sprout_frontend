@@ -11,42 +11,26 @@
           <div v-if="props.loading" class="goals-spinner-wrap">
             <span class="spinner"></span>
           </div>
-          <ul v-else-if="Array.isArray(goals) && goals.length">
-            <li v-for="goal in goals" :key="goal.id">
-              <div class="goal-row-flex">
-                <div class="goal-main">
-                  <span class="goal-desc">{{ goal.description }}</span>
-                </div>
-                <div class="goal-meta">
-                  <span v-if="getGoalStartedDate(goal)" class="goal-date">
-                    <span class="goal-date-label">Started:</span>
-                    {{ formatDate(getGoalStartedDate(goal)!) }}
-                  </span>
-                  <span v-if="getGoalCompletedDate(goal)" class="goal-date">
-                    <span class="goal-date-label">Completed:</span>
-                    {{ formatDate(getGoalCompletedDate(goal)!) }}
-                  </span>
-                  <span class="goal-status-wrap">
-                    <span class="goal-date-label">Status:</span>
-                    <span v-if="goal.completed" class="goal-status completed">Inactive</span>
-                    <span v-else class="goal-status">Active</span>
-                  </span>
-                </div>
-              </div>
-            </li>
-          </ul>
-          <div v-else-if="Array.isArray(goals) && goals.length === 0">
-            No goals found for this hobby.
+          <div v-else>
+            <p class="goal-count">
+              <strong>{{ Array.isArray(goals) ? goals.length : 0 }}</strong>
+              {{ goals && goals.length === 1 ? 'goal exists' : 'goals exist' }} for this hobby.
+            </p>
           </div>
         </div>
         <div class="actions">
+          <button
+            v-if="Array.isArray(goals) && goals.length > 0"
+            class="view-step-history-link"
+            @click="goToStepHistory"
+            type="button"
+          >
+            View Goal & Step History
+          </button>
           <button v-if="isActive" @click="markInactive" class="inactive-btn">
             Mark as Inactive
           </button>
-          <button v-else class="inactive-btn" style="visibility: hidden" aria-hidden="true">
-            Mark as Inactive
-          </button>
-          <button v-if="!isActive" @click="markActive" class="active-btn">Mark as Active</button>
+          <button v-else class="active-btn" @click="markActive">Mark as Active</button>
         </div>
         <div v-if="showInactiveError" class="inactive-error">
           Cannot mark as inactive while there are active goals.
@@ -58,28 +42,11 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { formatDate } from '@/utils'
+import { useRouter } from 'vue-router'
+const router = useRouter()
 
-// Helper: get started date from steps
-function getGoalStartedDate(goal: any): string | null {
-  if (!goal.steps || !Array.isArray(goal.steps) || goal.steps.length === 0) return null
-  // Find earliest step.start (or createdAt fallback)
-  const dates = goal.steps.map((s: any) => s.start || s.createdAt).filter(Boolean)
-  if (dates.length === 0) return null
-  return dates.reduce((earliest: string, curr: string) =>
-    new Date(curr) < new Date(earliest) ? curr : earliest,
-  )
-}
-// Helper: get completed date from steps (if all complete)
-function getGoalCompletedDate(goal: any): string | null {
-  if (!goal.steps || !Array.isArray(goal.steps) || goal.steps.length === 0) return null
-  if (!goal.steps.every((s: any) => s.isComplete)) return null
-  // Find latest step.completion (or completedAt fallback)
-  const dates = goal.steps.map((s: any) => s.completion || s.completedAt).filter(Boolean)
-  if (dates.length === 0) return null
-  return dates.reduce((latest: string, curr: string) =>
-    new Date(curr) > new Date(latest) ? curr : latest,
-  )
+function goToStepHistory() {
+  router.push({ name: 'hobby-step-history', params: { hobby: props.hobby } })
 }
 
 const emit = defineEmits(['close', 'markInactive', 'markActive'])
@@ -240,6 +207,21 @@ watch(
   border-radius: 8px;
   padding: 0.5rem 1rem;
   cursor: pointer;
+  font-size: 1rem;
+  min-width: 120px;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border 0.2s;
+}
+.inactive-btn:hover {
+  background: #ffe0b2;
+  color: #a84300;
+  border-color: #a84300;
 }
 .active-btn {
   background: #e8f5e9;
@@ -248,7 +230,48 @@ watch(
   border-radius: 8px;
   padding: 0.5rem 1rem;
   cursor: pointer;
+  font-size: 1rem;
+  min-width: 120px;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border 0.2s;
 }
+.active-btn:hover {
+  background: #c8e6c9;
+  color: #256029;
+  border-color: #256029;
+}
+
+.view-step-history-link {
+  background: #e8f5e9;
+  color: #388e3c;
+  border: 1px solid #388e3c;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border 0.2s;
+  min-width: 120px;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.view-step-history-link:hover {
+  background: #c8e6c9;
+  color: #256029;
+  border-color: #256029;
+}
+
 .goals-spinner-wrap {
   display: flex;
   align-items: center;

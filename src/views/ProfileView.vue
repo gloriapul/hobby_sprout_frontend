@@ -68,12 +68,16 @@
         </div>
 
         <div v-else class="hobbies-grid">
-          <HobbyCard
-            v-for="hobby in filteredHobbies"
-            :key="hobby"
-            :hobby="hobby"
-            @click="handleHobbyClick(hobby)"
-          />
+          <div v-for="hobby in filteredHobbies" :key="hobby" class="hobby-card-wrapper">
+            <HobbyCard :hobby="hobby" @click="handleHobbyClick(hobby)" />
+            <router-link
+              v-if="hobbyHasGoals(hobby)"
+              class="view-step-history-link"
+              :to="{ name: 'hobby-step-history', params: { hobby } }"
+            >
+              View Step History
+            </router-link>
+          </div>
         </div>
 
         <HobbyDetailModal
@@ -87,6 +91,29 @@
           @markActive="markHobbyActive"
         />
       </div>
+      <!-- Quiz History Section -->
+      <div class="quiz-history-section">
+        <div class="section-header">
+          <h3>Quiz History</h3>
+          <div class="quiz-sort-control">
+            <label for="quizSort">Sort by:</label>
+            <select id="quizSort" v-model="quizSortOrder">
+              <option value="desc">Most Recent</option>
+              <option value="asc">Least Recent</option>
+            </select>
+          </div>
+        </div>
+        <div v-if="quizHistoryLoading" class="loading-state">Loading quiz history...</div>
+        <div v-else-if="sortedQuizHistory.length === 0" class="empty-state">
+          <p>No quiz results yet. Take the quiz to get your first hobby match!</p>
+        </div>
+        <div v-else class="quiz-history-grid">
+          <div v-for="match in sortedQuizHistory" :key="match.id" class="quiz-history-card">
+            <div class="quiz-history-hobby">{{ match.hobby }}</div>
+            <div class="quiz-history-date">Matched on {{ formatDate(match.matchedAt) }}</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <HobbyModal v-if="showAddHobby" @close="showAddHobby = false" @add="addHobby" />
@@ -94,6 +121,21 @@
 </template>
 
 <script setup lang="ts">
+// Helper to check if a hobby has at least one goal
+const hobbyHasGoals = (hobby: string) => {
+  if (Array.isArray(milestoneStore.goals)) {
+    return milestoneStore.goals.some((g: any) => g.hobby === hobby)
+  }
+  return false
+}
+const quizSortOrder = ref<'desc' | 'asc'>('desc')
+const sortedQuizHistory = computed(() => {
+  return [...quizHistory.value].sort((a, b) => {
+    const aTime = new Date(a.matchedAt).getTime()
+    const bTime = new Date(b.matchedAt).getTime()
+    return quizSortOrder.value === 'desc' ? bTime - aTime : aTime - bTime
+  })
+})
 // Add missing markHobbyInactive and markHobbyActive methods for HobbyDetailModal events
 const markHobbyInactive = async (hobbyName: string) => {
   await profileStore.closeHobby(hobbyName)
@@ -148,6 +190,41 @@ const filteredHobbies = computed(() => {
   return allHobbies.value
 })
 
+// Quiz History State
+const quizHistory = ref<Array<{ id: string; hobby: string; matchedAt: string }>>([])
+const quizHistoryLoading = ref(false)
+
+const fetchQuizHistory = async () => {
+  if (!user.value) return
+  quizHistoryLoading.value = true
+  try {
+    const result = await ApiService.callConceptAction<any>(
+      'QuizMatchmaker',
+      '_getAllHobbyMatches',
+      { user: user.value.id },
+    )
+    if (Array.isArray(result)) {
+      quizHistory.value = result.map((m: any) => ({
+        id: m.id || m._id || m.matchedAt,
+        hobby: m.hobby,
+        matchedAt: m.matchedAt,
+      }))
+    } else {
+      quizHistory.value = []
+    }
+  } catch (err) {
+    quizHistory.value = []
+  } finally {
+    quizHistoryLoading.value = false
+  }
+}
+
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr)
+  const date = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+  const time = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+  return `${date} at ${time}`
+}
 const getInitials = (name: string) => {
   return name
     .split(' ')
@@ -248,11 +325,48 @@ const handleHobbyClick = async (hobby: string) => {
 onMounted(async () => {
   if (user.value) {
     await profileStore.loadProfile(user.value.id)
+    await fetchQuizHistory()
   }
 })
 </script>
 
 <style scoped>
+.hobby-card-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+.view-step-history-link {
+  align-self: flex-end;
+  color: #388e3c;
+  font-size: 0.98rem;
+  text-decoration: none;
+  font-weight: 500;
+  margin-top: 0.2rem;
+  margin-bottom: 0.5rem;
+  transition: text-decoration 0.15s;
+}
+.view-step-history-link:hover {
+  text-decoration: underline;
+}
+.quiz-sort-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+.quiz-sort-control label {
+  font-weight: 500;
+  color: #333;
+}
+.quiz-sort-control select {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+}
 .profile-view {
   max-width: 1000px;
   margin: 0 auto;
@@ -444,6 +558,38 @@ onMounted(async () => {
   margin-left: 1rem;
 }
 
+/* Quiz History Section */
+.quiz-history-section {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+.quiz-history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+.quiz-history-card {
+  background: #f7fafc;
+  border-radius: 8px;
+  padding: 1.2rem 1rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.quiz-history-hobby {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #388e3c;
+  margin-bottom: 0.5rem;
+}
+.quiz-history-date {
+  font-size: 0.95rem;
+  color: #666;
+}
 @media (max-width: 768px) {
   .profile-info {
     flex-direction: column;
