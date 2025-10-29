@@ -61,9 +61,12 @@
             "
           >
             <div class="step-header">
-              <span class="step-number"
-                ><strong>{{ idx + 1 }}.</strong></span
+              <span
+                class="step-number"
+                :style="{ color: stepColors[idx % stepColors.length]?.color || '#388e3c' }"
               >
+                <strong>{{ idx + 1 }}.</strong>
+              </span>
               <span class="step-desc">{{ step.description }}</span>
             </div>
             <div class="step-dates">
