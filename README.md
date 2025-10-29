@@ -25,7 +25,7 @@ The check in video follows this user journey carefully and the final video demo 
 
 ## Visual Design Study
 
-[Check In Google Slides Link](https://docs.google.com/presentation/d/11KOza0QxJegwlJRS2OytLb8BY-9jOD2HVAjNbZ9Te7g/edit?usp=sharing)
+[Visual Study Link](https://docs.google.com/presentation/d/11KOza0QxJegwlJRS2OytLb8BY-9jOD2HVAjNbZ9Te7g/edit?usp=sharing)
 
 This study visually goes into my thought process behind the design process for my app.
 
