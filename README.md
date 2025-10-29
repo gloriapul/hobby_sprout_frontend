@@ -10,7 +10,10 @@ The base functionality of the application has been implemented to demonstrate th
 
 ### User Journey
 
+### Complete
 A college senior, unsure about dedicating time to a new hobby, discovers HobbySprout and registers for an account. After setting up her profile, she takes the built-in quiz to help choose a hobby since she is still unsure of what she wants, and the app recommends knitting. She explores the home page and uses the milestone tracker to set a goal of wanting to learn how to knit a sweater. HobbySprout breaks these goals into manageable steps, such as watching tutorials and buying materials, making the process feel achievable. She reviews the generated steps and approves them, and later marks her first step as in progress. As she completes tasks and sees her milestones increase, she feels motivated to keep going and work toward her ultimate goal of making a sweater.
+
+The check in video follows this user journey carefully and the final video demo for assignment 4b takes a more broad look at what happens after this crucial and central user journey, including actions the user may take. 
 
 ### Screen Recording
 
@@ -18,7 +21,7 @@ A college senior, unsure about dedicating time to a new hobby, discovers HobbySp
 [Check In Google Drive Link](https://drive.google.com/file/d/1C2_7B3RHrQhVvFLfHhBG9iiOOmLbsRd5/view?usp=sharing)
 
 #### Final
-[Final Google Drive Link 9edit0](https://drive.google.com/file/d/1C2_7B3RHrQhVvFLfHhBG9iiOOmLbsRd5/view?usp=sharing)
+[Final Google Drive Link](https://drive.google.com/file/d/1C2_7B3RHrQhVvFLfHhBG9iiOOmLbsRd5/view?usp=sharing)
 
 ## Visual Design Study
 
