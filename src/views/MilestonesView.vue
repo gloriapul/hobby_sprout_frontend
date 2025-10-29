@@ -78,62 +78,48 @@
       </div>
 
       <!-- Steps List -->
-      <div class="steps-section">
+        <div class="steps-section">
         <div class="steps-header">
           <h3>Your Steps</h3>
-          <button
-            v-if="currentGoalSteps.length === 0"
-            @click="generateStepsForCurrentGoal"
-            :disabled="generatingSteps"
-            class="generate-steps-button"
-          >
-            {{ generatingSteps ? 'Generating...' : '✨ Generate Steps' }}
-          </button>
-        </div>
 
-        <div v-if="generatingSteps" class="generating-steps">
-          <div class="loading-spinner"></div>
-          <p>Creating personalized steps for your goal...</p>
-        </div>
+          <div v-if="generatingSteps" class="generating-steps">
+            <div class="loading-spinner"></div>
+            <p>Creating personalized steps for your goal...</p>
+          </div>
 
-        <div v-else-if="currentGoalSteps.length === 0" class="no-steps">
-          <p>No steps yet. Generate AI-powered steps or add your own!</p>
-          <button @click="showAddStep = true" class="add-step-button">+ Add Manual Step</button>
-        </div>
-
-        <div v-else class="steps-list">
-          <div
-            v-for="(step, index) in currentGoalSteps"
-            :key="step.id"
-            class="step-item"
-            :class="{
-              completed: step.isComplete,
-              'next-step': !step.isComplete && isNextStep(index),
-            }"
-          >
-            <div class="step-number">{{ index + 1 }}</div>
-            <div class="step-content">
-              <h4>{{ step.description }}</h4>
-              <div class="step-meta">
-                <span v-if="step.completion" class="completion-date">
-                  Completed: {{ formatDate(step.completion) }}
-                </span>
+          <div v-else class="steps-list">
+            <div
+              v-for="(step, index) in currentGoalSteps"
+              :key="step.id"
+              class="step-item"
+              :class="{
+                completed: step.isComplete,
+                'next-step': !step.isComplete && isNextStep(index),
+              }"
+            >
+              <div class="step-number">{{ index + 1 }}</div>
+              <div class="step-content">
+                <h4>{{ step.description }}</h4>
+                <div class="step-meta">
+                  <span v-if="step.completion" class="completion-date">
+                    Completed: {{ formatDate(step.completion) }}
+                  </span>
+                </div>
               </div>
-            </div>
-            <div class="step-actions">
-              <button
-                v-if="!step.isComplete"
-                @click="completeStep(step.id)"
-                class="complete-button"
-              >
-                ✓ Complete
-              </button>
-              <span v-else class="completed-icon">✅</span>
+              <div class="step-actions">
+                <button
+                  v-if="!step.isComplete"
+                  @click="completeStep(step.id)"
+                  class="complete-button"
+                >
+                  ✓ Complete
+                </button>
+                <span v-else class="completed-icon">✅</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
-
       <!-- Achievement Section -->
       <div v-if="goalProgress === 100" class="achievement-section">
         <div class="achievement-card">
@@ -148,7 +134,7 @@
     </div>
 
     <div
-      v-if="goalProgress < 100 && currentGoalSteps.length > 0"
+      v-if="currentGoal && currentGoal.isActive && goalProgress !== 100"
       class="close-goal-actions"
       style="margin-bottom: 2rem"
     >
@@ -601,41 +587,11 @@ onMounted(async () => {
   background: #e8f5e9;
 }
 
-.steps-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-}
-
 .steps-header h3 {
   margin: 0;
   color: #333;
   font-size: 1.3rem;
-}
-
-.generate-steps-button {
-  background: linear-gradient(135deg, #81c784, #388e3c);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.generate-steps-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-}
-
-.generate-steps-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.generating-steps {
-  text-align: center;
-  padding: 3rem 1rem;
+  margin-bottom: 2rem;
 }
 
 .loading-spinner {
@@ -655,21 +611,6 @@ onMounted(async () => {
   100% {
     transform: rotate(360deg);
   }
-}
-
-.generating-steps p {
-  color: #666;
-  margin: 0;
-}
-
-.no-steps {
-  text-align: center;
-  padding: 3rem 1rem;
-  color: #666;
-}
-
-.no-steps p {
-  margin-bottom: 1.5rem;
 }
 
 .add-step-button {

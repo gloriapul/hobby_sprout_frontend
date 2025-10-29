@@ -90,7 +90,9 @@
             <button @click="saveGoal" :disabled="steps.length === 0" class="primary-button">
               Save Goal & Steps
             </button>
-            <button @click="regenerateSteps" class="secondary-button">Regenerate Steps</button>
+            <button @click="confirmRegenerateSteps" class="secondary-button">
+              Regenerate Steps
+            </button>
           </div>
         </div>
         <div v-else-if="step === 2 && method === 'manual'" class="step-content">
@@ -105,11 +107,14 @@
                 placeholder="Describe what needs to be done for this step..."
                 rows="3"
                 required
+                @input="manualStepError = ''"
               ></textarea>
               <span v-if="manualStepError" class="error-message">{{ manualStepError }}</span>
             </div>
             <div class="form-actions">
-              <button type="submit" class="next-button">Add Manual Step</button>
+              <button type="submit" class="next-button" :disabled="!!manualStepError">
+                Add Manual Step
+              </button>
             </div>
           </form>
           <draggable
@@ -167,6 +172,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+
 import draggable from 'vuedraggable'
 function resetModalState() {
   step.value = 1
@@ -194,6 +200,9 @@ const manualStepError = ref('')
 const generating = ref(false)
 import { useAuthStore } from '@/stores/auth'
 const authStore = useAuthStore()
+import { useMilestoneStore } from '@/stores/milestone'
+const milestoneStore = useMilestoneStore()
+const goalIdRef = ref<string | null>(null)
 
 async function chooseMethod(selected: 'generate' | 'manual') {
   method.value = selected
@@ -233,6 +242,7 @@ async function chooseMethod(selected: 'generate' | 'manual') {
       }
       const goalId = goalResult.goal
       if (!goalId) throw new Error('Failed to create goal.')
+      goalIdRef.value = goalId
       // 2. Generate steps for the new goal
       const genResult = await ApiService.callConceptAction<any>(
         'MilestoneTracker',
@@ -267,68 +277,6 @@ async function chooseMethod(selected: 'generate' | 'manual') {
       generating.value = false
     }
   }
-}
-
-async function generateSteps() {
-  generating.value = true
-  manualStepError.value = ''
-  steps.value = []
-  try {
-    const { ApiService } = await import('@/services/api')
-    const userId = authStore.user?.id
-    if (!userId) throw new Error('User not found')
-    // Check for existing active goal for this user and hobby
-    const existingGoals = await ApiService.callConceptAction<any>('MilestoneTracker', '_getGoal', {
-      user: userId,
-      hobby: props.hobby,
-    })
-    if (Array.isArray(existingGoals) && existingGoals.length > 0) {
-      manualStepError.value =
-        'You already have an active goal for this hobby. Please close it before creating a new one.'
-      generating.value = false
-      return
-    }
-    // 1. Create the goal first
-    const goalResult = await ApiService.callConceptAction<any>('MilestoneTracker', 'createGoal', {
-      user: userId,
-      description: goalDescription.value,
-      hobby: props.hobby,
-    })
-    if (goalResult && typeof goalResult.error === 'string') {
-      manualStepError.value = goalResult.error
-      throw new Error(goalResult.error)
-    }
-    const goalId = goalResult.goal
-    if (!goalId) throw new Error('Failed to create goal.')
-    // 2. Generate steps for the new goal
-    const genResult = await ApiService.callConceptAction<any>('MilestoneTracker', 'generateSteps', {
-      goal: goalId,
-    })
-    if (genResult && Array.isArray(genResult.steps)) {
-      // 3. Fetch the generated steps' details
-      const stepsResult = await ApiService.callConceptAction<any>('MilestoneTracker', '_getSteps', {
-        goal: goalId,
-      })
-      if (stepsResult && Array.isArray(stepsResult)) {
-        steps.value = stepsResult.map((s: any) => s.description)
-      } else {
-        manualStepError.value = 'Failed to fetch generated steps.'
-      }
-    } else if (genResult && typeof genResult.error === 'string') {
-      manualStepError.value = genResult.error
-    } else {
-      manualStepError.value = 'Failed to generate steps. Please try again.'
-    }
-  } catch (err) {
-    manualStepError.value = 'Failed to generate steps. Please try again.'
-    console.error('[GoalCreationModal] Error generating steps:', err)
-  } finally {
-    generating.value = false
-  }
-}
-
-function regenerateSteps() {
-  generateSteps()
 }
 
 function validateManualStep() {
@@ -366,6 +314,10 @@ async function saveGoal() {
     }
     if (!goalDescription.value || !goalDescription.value.trim()) {
       manualStepError.value = 'Goal description is required.'
+      return
+    }
+    if (!steps.value || steps.value.length === 0) {
+      manualStepError.value = 'You must add at least one step before saving your goal.'
       return
     }
     const userId = authStore.user?.id
@@ -430,9 +382,27 @@ async function saveGoal() {
     console.error('[GoalCreationModal] Error saving goal:', err)
   }
 }
+
+async function confirmRegenerateSteps() {
+  if (!goalIdRef.value) {
+    manualStepError.value = 'No goal to regenerate steps for.'
+    return
+  }
+  try {
+    await milestoneStore.regenerateSteps(goalIdRef.value)
+    await milestoneStore.loadGoalSteps(goalIdRef.value)
+    steps.value = milestoneStore.steps.map((s) => s.description)
+  } catch (err) {
+    manualStepError.value = 'Failed to regenerate steps.'
+  }
+}
 </script>
 
 <style scoped>
+.error-message {
+  color: #d32f2f;
+  margin-top: 0.25em;
+}
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -454,7 +424,6 @@ async function saveGoal() {
   max-height: 90vh;
   overflow-y: auto;
   border: 1.5px solid #81c784;
-
 }
 .modal-header {
   display: flex;
@@ -472,7 +441,6 @@ async function saveGoal() {
   font-size: 1.5rem;
   font-weight: 500;
   letter-spacing: 0.5px;
-  
 }
 .close-button {
   background: none;
@@ -500,7 +468,6 @@ async function saveGoal() {
   font-weight: 500;
   margin-bottom: 0.5rem;
   display: block;
-  
 }
 .modal-body textarea,
 .modal-body input {
@@ -512,7 +479,7 @@ async function saveGoal() {
   font-size: 1rem;
   background: #f6fff7;
   color: #256b28;
-  
+
   transition: border-color 0.2s;
 }
 .modal-body textarea:focus,
@@ -553,7 +520,6 @@ async function saveGoal() {
   padding: 0.5rem 1rem;
   border: 1px solid #e0f2f1;
   box-shadow: none;
-  
 }
 .delete-step {
   background: #388e3c;
@@ -563,7 +529,7 @@ async function saveGoal() {
   padding: 0.25rem 0.75rem;
   cursor: pointer;
   font-size: 0.95rem;
-  
+
   font-weight: 500;
   transition: background 0.2s;
 }
@@ -646,7 +612,6 @@ async function saveGoal() {
   color: #256b28;
   flex: 1;
   min-width: 0;
-  
 }
 .edit-step-input:focus {
   outline: none;

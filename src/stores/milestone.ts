@@ -227,6 +227,29 @@ export const useMilestoneStore = defineStore('milestone', () => {
     }
   }
 
+  // Regenerate steps for a goal
+  const regenerateSteps = async (goalId: string) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await ApiService.callConceptAction<{ steps: string[] } | { error: string }>(
+        'MilestoneTracker',
+        'regenerateSteps',
+        { goal: goalId },
+      )
+      if ('error' in response) {
+        throw new Error(response.error)
+      }
+      // Reload steps after regeneration
+      await loadGoalSteps(goalId)
+    } catch (err: any) {
+      error.value = err.message || 'Failed to regenerate steps'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   const completeStep = async (stepId: string) => {
     loading.value = true
     error.value = null
@@ -357,6 +380,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
     loadGoalSteps,
     generateSteps,
     addStep,
+    regenerateSteps,
     completeStep,
     removeStep,
     closeGoal,
