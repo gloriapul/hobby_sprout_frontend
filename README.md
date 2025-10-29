@@ -21,7 +21,7 @@ The check in video follows this user journey carefully and the final video demo 
 [Check In Google Drive Link](https://drive.google.com/file/d/1C2_7B3RHrQhVvFLfHhBG9iiOOmLbsRd5/view?usp=sharing)
 
 #### Final
-[Final Google Drive Link](https://drive.google.com/file/d/1C2_7B3RHrQhVvFLfHhBG9iiOOmLbsRd5/view?usp=sharing)
+[Final Google Drive Link](https://drive.google.com/file/d/13lSqX4Wdi4TWI5wO7vQVDXbDHxCN13eO/view?usp=drive_link)
 
 ## Visual Design Study
 
