@@ -296,8 +296,6 @@ function handleAddStep() {
   if (!validateManualStep()) return
   const stepText = manualStepInput.value.trim()
   steps.value.push(stepText)
-  // Debug output
-  console.log('[GoalCreationModal] Added step:', stepText, 'Current steps:', steps.value)
   manualStepInput.value = ''
   manualStepError.value = ''
 }

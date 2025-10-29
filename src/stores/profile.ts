@@ -80,7 +80,6 @@ export const useProfileStore = defineStore('profile', () => {
             '_getUserHobbies',
             { user: userId },
           )
-          console.log('Raw hobbyResponse from backend:', hobbyResponse)
           if (Array.isArray(hobbyResponse)) {
             hobbies.value = hobbyResponse.map((h) => h.hobby)
             activeHobbies.value = hobbyResponse.filter((h) => h.active).map((h) => h.hobby)
@@ -90,17 +89,14 @@ export const useProfileStore = defineStore('profile', () => {
           hobbies.value = []
         }
       } else {
-        console.log('Profile not found, trying to create one...')
         // Profile doesn't exist yet, try to create one
         try {
           await createProfile()
-          console.log('Loaded hobbies:', hobbies.value)
         } catch (createError: any) {
           // If creation fails because profile already exists, that's ok
           if (!createError.message?.includes('already exists')) {
             throw createError
           }
-          console.log('Profile already exists, initializing empty profile state')
           // Initialize empty profile state since we couldn't load it
           profile.value = { name: '', image: '' }
         }
@@ -139,9 +135,6 @@ export const useProfileStore = defineStore('profile', () => {
   }
 
   const setName = async (name: string) => {
-    console.log('setName called with:', name)
-    console.log('currentUserId:', currentUserId.value)
-
     if (!currentUserId.value) {
       throw new Error('No user ID available')
     }
@@ -150,23 +143,14 @@ export const useProfileStore = defineStore('profile', () => {
     error.value = null
 
     try {
-      console.log('Making API call to setName with:', {
-        user: currentUserId.value,
-        displayname: name,
-      })
-
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'UserProfile',
         'setName',
         { user: currentUserId.value, displayname: name },
       )
-
-      console.log('API response:', response)
-
       if ('error' in response) {
         // If profile doesn't exist, create it first then retry
         if (response.error.includes('not found')) {
-          console.log('Profile not found, creating profile and retrying...')
           await createProfile()
 
           // Retry the setName call
@@ -190,7 +174,6 @@ export const useProfileStore = defineStore('profile', () => {
       }
       profile.value.name = name
 
-      console.log('Name successfully updated to:', name)
     } catch (err: any) {
       console.error('setName error:', err)
       error.value = err.message || 'Failed to set name'

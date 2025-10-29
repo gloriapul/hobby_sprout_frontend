@@ -15,15 +15,9 @@ const apiClient: AxiosInstance = axios.create({
   },
 })
 
-// Log the API base URL for debugging
-console.log('API Base URL:', API_BASE_URL)
-console.log('Development mode:', import.meta.env.DEV)
-
 // Request interceptor (for adding auth tokens, logging, etc.)
 apiClient.interceptors.request.use(
   (config) => {
-    // Add any request transformations here
-    console.log(`Making ${config.method?.toUpperCase()} request to ${config.url}`)
     return config
   },
   (error) => {

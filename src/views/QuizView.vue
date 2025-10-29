@@ -255,9 +255,6 @@ const nextQuestion = async () => {
     loading.value = true
     quizCompleted.value = true
 
-    // Print responses to console for debugging
-    console.log('Quiz responses being passed in:', JSON.parse(JSON.stringify(answers.value)))
-
     // Generate hobby match with all answers
     if (authStore.user) {
       await generateHobbyMatch()
@@ -296,7 +293,6 @@ const generateHobbyMatch = async () => {
     user: authStore.user.id,
     answers: answers.value,
   }
-  console.log('generateHobbyMatch parameters:', params)
   loadingMatch.value = true
   try {
     const response = await ApiService.callConceptAction<{ matchedHobby: string }>(

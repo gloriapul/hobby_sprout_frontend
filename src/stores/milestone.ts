@@ -197,13 +197,11 @@ export const useMilestoneStore = defineStore('milestone', () => {
     error.value = null
 
     try {
-      console.log('API addStep called:', goalId, description)
       const response = await ApiService.callConceptAction<{ step: string } | { error: string }>(
         'MilestoneTracker',
         'addStep',
         { goal: goalId, description },
       )
-      console.log('API addStep response:', response)
 
       if ('error' in response) {
         throw new Error(response.error)
@@ -218,7 +216,6 @@ export const useMilestoneStore = defineStore('milestone', () => {
       }
 
       steps.value.push(newStep)
-      console.log('Steps after push:', steps.value)
     } catch (err: any) {
       error.value = err.message || 'Failed to add step'
       throw err

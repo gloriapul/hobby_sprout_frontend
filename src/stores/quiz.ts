@@ -123,7 +123,6 @@ export const useQuizStore = defineStore('quiz', () => {
       const response = await ApiService.callConceptAction<
         { hobby: string; score: number } | { error: string }
       >('QuizMatchmaker', 'generateHobbyMatch', {})
-      console.log('QuizMatchmaker.generateHobbyMatch response:', response)
 
       if ('error' in response) {
         error.value = response.error
@@ -135,7 +134,6 @@ export const useQuizStore = defineStore('quiz', () => {
         hobby: response.hobby,
         score: response.score,
       })
-      console.log('Generated hobbyMatches:', hobbyMatches.value)
 
       quizCompleted.value = true
     } catch (err: any) {
