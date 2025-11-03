@@ -43,6 +43,9 @@
           Don't have an account?
           <router-link to="/register" class="auth-link">Sign up here</router-link>
         </p>
+        <p>
+          <router-link to="/" class="auth-link">Back to Home</router-link>
+        </p>
       </div>
     </div>
   </div>
@@ -267,7 +270,9 @@ input:disabled {
   font-weight: 600;
   padding: 0.7rem 1.7rem;
   border-radius: 999px;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
   background: transparent;
   display: inline-block;
 }

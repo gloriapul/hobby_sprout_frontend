@@ -58,6 +58,9 @@
           Already have an account?
           <router-link to="/login" class="auth-link">Sign in here</router-link>
         </p>
+        <p>
+          <router-link to="/" class="auth-link">Back to Home</router-link>
+        </p>
       </div>
     </div>
   </div>
