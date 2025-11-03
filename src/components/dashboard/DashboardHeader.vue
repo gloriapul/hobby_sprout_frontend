@@ -123,9 +123,9 @@ const handleClickOutside = (e: Event) => {
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
 
-  // Load profile if user is authenticated
-  if (user.value?.id) {
-    profileStore.loadProfile(user.value.id)
+  // Load profile if user is authenticated (session token is used, not user ID)
+  if (user.value) {
+    profileStore.loadProfile()
   }
 })
 
@@ -144,7 +144,6 @@ onUnmounted(() => {
   top: 0;
   z-index: 100;
   overflow: visible;
-  
 }
 
 .header-content {

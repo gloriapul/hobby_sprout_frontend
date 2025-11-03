@@ -99,7 +99,7 @@ async function reloadAllGoals() {
       const response = await ApiService.callConceptAction<any[]>(
         'MilestoneTracker',
         '_getAllGoals',
-        { },
+        {},
       )
       if (Array.isArray(response)) {
         allGoals.value = response
@@ -115,21 +115,34 @@ async function reloadAllGoals() {
 
 onMounted(async () => {
   if (user.value) {
-    // Load profile and goals
-    await profileStore.loadProfile(user.value.id)
-    await milestoneStore.loadUserGoals()
-    await reloadAllGoals()
+    // Load profile and goals with error handling
+    try {
+      await profileStore.loadProfile() // Session token is used, not user ID
+    } catch (err) {
+      console.error('Failed to load profile on mount:', err)
+      // Continue loading goals even if profile fails
+    }
+
+    try {
+      await milestoneStore.loadUserGoals()
+      await reloadAllGoals()
+    } catch (err) {
+      console.error('Failed to load goals on mount:', err)
+    }
   }
 })
 
-// Watch for changes in milestoneStore.goals and reload from backend if a goal is completed
-// Reload allGoals from backend whenever milestoneStore.goals changes
+// Only watch for changes in the goals array length, not deep changes
+// This prevents infinite loops while still detecting when goals are added/removed
 watch(
-  () => milestoneStore.goals,
-  async () => {
-    await reloadAllGoals()
+  () => milestoneStore.goals.length,
+  async (newLength, oldLength) => {
+    // Only reload if length actually changed and it's not the initial load
+    if (oldLength !== undefined && newLength !== oldLength) {
+      console.log('Goals length changed, reloading all goals...')
+      await reloadAllGoals()
+    }
   },
-  { deep: true },
 )
 </script>
 

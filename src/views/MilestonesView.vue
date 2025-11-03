@@ -167,14 +167,7 @@ const closeActiveGoal = async () => {
     milestoneStore.currentGoal = null
     showCreateGoal.value = false
     selectedHobbyForGoal.value = undefined
-    if (authStore.user) {
-      await milestoneStore.loadUserGoals()
-      // After reload, also reload steps for new currentGoal if any
-      const goal = milestoneStore.currentGoal as { id?: string } | null
-      if (goal && goal.id) {
-        await milestoneStore.loadGoalSteps(goal.id)
-      }
-    }
+    // No need to reload - deleteGoal already updates store state
     await nextTick()
   }
 }
@@ -190,13 +183,7 @@ const resetForNewGoal = async () => {
   milestoneStore.currentGoal = null
   showCreateGoal.value = false
   selectedHobbyForGoal.value = undefined
-  if (authStore.user) {
-    await milestoneStore.loadUserGoals()
-    const goal = milestoneStore.currentGoal as { id?: string } | null
-    if (goal && goal.id) {
-      await milestoneStore.loadGoalSteps(goal.id)
-    }
-  }
+  // No need to reload - deleteGoal already updates store state
   await nextTick()
 }
 import { ref, computed, onMounted, nextTick } from 'vue'
@@ -231,12 +218,7 @@ const goalProgress = computed(() => milestoneStore.goalProgress)
 const createGoalForHobby = async (hobby: string) => {
   // Prevent opening modal until goals are loaded and no active goal exists
   if (loading.value) return
-  if (authStore.user && authStore.user.id) {
-    await milestoneStore.loadUserGoals()
-    if (milestoneStore.currentGoal) {
-      await milestoneStore.loadGoalSteps(milestoneStore.currentGoal.id)
-    }
-  }
+  // Check store state directly - no need to reload
   if (milestoneStore.currentGoal && milestoneStore.currentGoal.isActive) {
     alert('You already have an active goal. Please complete or close it first.')
     return
@@ -248,11 +230,7 @@ const createGoalForHobby = async (hobby: string) => {
 const completeStep = async (stepId: string) => {
   try {
     await milestoneStore.completeStep(stepId)
-    // If all steps are now complete, reload goal state to trigger achievement section
-    if (currentGoal.value && goalProgress.value === 100 && authStore.user) {
-      await milestoneStore.loadUserGoals()
-      await milestoneStore.loadGoalSteps(currentGoal.value.id)
-    }
+    // completeStep already updates the local state, no need to reload
   } catch (error) {
     console.error('Failed to complete step:', error)
     alert('Failed to complete step. Please try again.')
@@ -289,8 +267,7 @@ const handleGoalCreated = async (goalData: {
   showCreateGoal.value = false
   selectedHobbyForGoal.value = undefined
   if (authStore.user) {
-    // Always reload user goals and steps after modal closes to ensure UI is up to date
-    await milestoneStore.loadUserGoals()
+    // createGoal already updates the store, just load steps for the new goal
     if (milestoneStore.currentGoal && milestoneStore.currentGoal.id) {
       await milestoneStore.loadGoalSteps(milestoneStore.currentGoal.id)
     }
@@ -303,7 +280,7 @@ const handleGoalCreated = async (goalData: {
 onMounted(async () => {
   if (authStore.user) {
     // Load goals and profile data
-    await Promise.all([milestoneStore.loadUserGoals(), profileStore.loadProfile(authStore.user.id)])
+    await Promise.all([milestoneStore.loadUserGoals(), profileStore.loadProfile()])
 
     // If there's an active goal, load its steps
     if (currentGoal.value) {

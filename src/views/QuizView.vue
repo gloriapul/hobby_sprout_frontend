@@ -113,11 +113,6 @@
         </div>
       </div>
     </div>
-
-    <div v-if="loading" class="loading-overlay">
-      <div class="loading-spinner"></div>
-      <p>Processing your answers...</p>
-    </div>
   </div>
 </template>
 
@@ -223,7 +218,7 @@ const selectAnswer = (answer: any) => {
   // Store both answer and freeResponseText for each question
   answers.value[currentQuestionIndex.value] = {
     answer,
-    freeResponseText: isDependsAnswer(answer) ? freeResponseText.value : ''
+    freeResponseText: isDependsAnswer(answer) ? freeResponseText.value : '',
   }
   if (!isDependsAnswer(answer)) {
     freeResponseText.value = ''
@@ -247,7 +242,7 @@ const nextQuestion = async () => {
   // Save the answer object
   answers.value[currentQuestionIndex.value] = {
     answer: selectedAnswer.value,
-    freeResponseText: isDependsAnswer(selectedAnswer.value) ? freeResponseText.value.trim() : ''
+    freeResponseText: isDependsAnswer(selectedAnswer.value) ? freeResponseText.value.trim() : '',
   }
 
   if (isLastQuestion.value) {
@@ -289,10 +284,23 @@ const previousQuestion = () => {
 const generateHobbyMatch = async () => {
   if (!authStore.user) return
 
+  // Transform answers to just the values/text the backend expects
+  const formattedAnswers = answers.value
+    .map((item, index) => {
+      if (!item || !item.answer) return null
+
+      // If there's a free response, use that; otherwise use the answer value
+      if (item.freeResponseText) {
+        return item.freeResponseText
+      }
+      return item.answer.value || item.answer.text
+    })
+    .filter((a) => a !== null)
+
   const params = {
-    user: authStore.user.id,
-    answers: answers.value,
+    answers: formattedAnswers,
   }
+
   loadingMatch.value = true
   try {
     const response = await ApiService.callConceptAction<{ matchedHobby: string }>(
@@ -604,44 +612,6 @@ onMounted(() => {
   color: white;
 }
 
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #e9ecef;
-  border-top: 4px solid #388e3c;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.loading-overlay p {
-  color: #666;
-  font-size: 1.1rem;
-}
-
 .loading-match {
   text-align: center;
   padding: 2rem;
@@ -655,6 +625,15 @@ onMounted(() => {
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem auto;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .hobby-recommendation {

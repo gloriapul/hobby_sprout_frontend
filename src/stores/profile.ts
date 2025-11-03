@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { ApiService } from '@/services/api'
+import { getFromStorage } from '@/utils'
 
 interface Profile {
   name: string
@@ -20,16 +21,21 @@ export const useProfileStore = defineStore('profile', () => {
   const hasProfile = computed(() => profile.value !== null)
 
   // Actions
-  // Toggle hobby active/inactive, will work on for rest of assignment
+  // Toggle hobby active/inactive
   async function setHobbyActive(hobby: string) {
-    if (!currentUserId.value) throw new Error('No user ID available')
     loading.value = true
     error.value = null
     try {
       await ApiService.callConceptAction('UserProfile', 'setHobby', {
-        hobby,
+        hobby, // Session token is automatically added by ApiService
       })
-      await loadProfile(currentUserId.value)
+      // Optimistically update local state
+      if (!activeHobbies.value.includes(hobby)) {
+        activeHobbies.value.push(hobby)
+      }
+      if (!hobbies.value.includes(hobby)) {
+        hobbies.value.push(hobby)
+      }
     } catch (err: any) {
       error.value = err.message || 'Failed to activate hobby'
       throw err
@@ -39,14 +45,14 @@ export const useProfileStore = defineStore('profile', () => {
   }
 
   async function setHobbyInactive(hobby: string) {
-    if (!currentUserId.value) throw new Error('No user ID available')
     loading.value = true
     error.value = null
     try {
       await ApiService.callConceptAction('UserProfile', 'closeHobby', {
-        hobby,
+        hobby, // Session token is automatically added by ApiService
       })
-      await loadProfile(currentUserId.value)
+      // Optimistically update local state
+      activeHobbies.value = activeHobbies.value.filter((h) => h !== hobby)
     } catch (err: any) {
       error.value = err.message || 'Failed to deactivate hobby'
       throw err
@@ -54,16 +60,18 @@ export const useProfileStore = defineStore('profile', () => {
       loading.value = false
     }
   }
-  const loadProfile = async (userId: string) => {
+  const loadProfile = async (userId?: string) => {
     loading.value = true
     error.value = null
-    currentUserId.value = userId
+    if (userId) {
+      currentUserId.value = userId
+    }
 
     try {
       const response = await ApiService.callConceptAction<any[]>(
         'UserProfile',
         '_getUserProfile',
-        {},
+        {}, // Session token is automatically added by ApiService
       )
 
       if (Array.isArray(response) && response.length > 0) {
@@ -73,72 +81,65 @@ export const useProfileStore = defineStore('profile', () => {
           name: profileData.displayname || '',
           image: profileData.profile || '',
         }
+
         // Load all hobbies (active and inactive) after profile loads
-        try {
-          const hobbyResponse = await ApiService.callConceptAction<any[]>(
-            'UserProfile',
-            '_getUserHobbies',
-            {},
-          )
-          if (Array.isArray(hobbyResponse)) {
-            hobbies.value = hobbyResponse.map((h) => h.hobby)
-            activeHobbies.value = hobbyResponse.filter((h) => h.active).map((h) => h.hobby)
-          }
-        } catch (hobbyError) {
-          console.error('Failed to load active hobbies:', hobbyError)
-          hobbies.value = []
+        const hobbyResponse = await ApiService.callConceptAction<any[]>(
+          'UserProfile',
+          '_getUserHobbies',
+          {}, // Session token is automatically added by ApiService
+        )
+        if (Array.isArray(hobbyResponse)) {
+          hobbies.value = hobbyResponse.map((h) => h.hobby)
+          activeHobbies.value = hobbyResponse.filter((h) => h.active).map((h) => h.hobby)
         }
       } else {
-        // Profile doesn't exist yet, try to create one
-        try {
-          await createProfile()
-        } catch (createError: any) {
-          // If creation fails because profile already exists, that's ok
-          if (!createError.message?.includes('already exists')) {
-            throw createError
-          }
-          // Initialize empty profile state since we couldn't load it
-          profile.value = { name: '', image: '' }
-        }
+        // Profile doesn't exist yet - this means the CreateProfileAfterRegister sync hasn't completed
+        // Initialize with empty values and let the user know to refresh
+        profile.value = { name: '', image: '' }
+        hobbies.value = []
       }
     } catch (err: any) {
-      error.value = err.message || 'Failed to load profile'
+      if (err.response?.status === 504) {
+        error.value =
+          'Backend server timeout. The server may be overloaded or processing. Please try refreshing in a moment.'
+      } else if (err.code === 'ECONNABORTED') {
+        error.value = 'Connection timeout while loading profile. Please try refreshing.'
+      } else {
+        error.value = err.message || 'Failed to load profile'
+      }
       console.error('Profile load error:', err)
     } finally {
       loading.value = false
     }
   }
 
+  // Internal helper - profile creation should happen via backend sync after registration
+  // This is kept for legacy/admin purposes only
   const createProfile = async () => {
-    if (!currentUserId.value) {
-      throw new Error('No user ID available')
-    }
-
     try {
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'UserProfile',
         'createProfile',
-        {},
+        {}, // Session token added automatically by ApiService
       )
 
       if ('error' in response) {
-        throw new Error(response.error)
+        // If profile already exists, that's ok - the sync already created it
+        if (!response.error.includes('already exists')) {
+          throw new Error(response.error)
+        }
       }
 
       // Initialize empty profile
       profile.value = { name: '', image: '' }
       hobbies.value = []
     } catch (err: any) {
-      error.value = err.message || 'Failed to create profile'
-      throw err
+      console.warn('Manual profile creation failed:', err.message)
+      // Don't throw - profile should be created by sync
     }
   }
 
   const setName = async (name: string) => {
-    if (!currentUserId.value) {
-      throw new Error('No user ID available')
-    }
-
     loading.value = true
     error.value = null
 
@@ -146,26 +147,11 @@ export const useProfileStore = defineStore('profile', () => {
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'UserProfile',
         'setName',
-        { displayname: name },
+        { displayname: name }, // Session token added automatically by ApiService
       )
+
       if ('error' in response) {
-        // If profile doesn't exist, create it first then retry
-        if (response.error.includes('not found')) {
-          await createProfile()
-
-          // Retry the setName call
-          const retryResponse = await ApiService.callConceptAction<{} | { error: string }>(
-            'UserProfile',
-            'setName',
-            { displayname: name },
-          )
-
-          if ('error' in retryResponse) {
-            throw new Error(retryResponse.error)
-          }
-        } else {
-          throw new Error(response.error)
-        }
+        throw new Error(response.error)
       }
 
       // Update local state
@@ -183,10 +169,6 @@ export const useProfileStore = defineStore('profile', () => {
   }
 
   const setImage = async (image: string) => {
-    if (!currentUserId.value) {
-      throw new Error('No user ID available')
-    }
-
     loading.value = true
     error.value = null
 
@@ -194,28 +176,28 @@ export const useProfileStore = defineStore('profile', () => {
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'UserProfile',
         'setImage',
-        { profile: image },
+        { profile: image }, // Session token added automatically by ApiService
       )
 
       if ('error' in response) {
         throw new Error(response.error)
       }
 
-      if (profile.value) {
-        profile.value.image = image
+      // Update local state
+      if (!profile.value) {
+        profile.value = { name: '', image: '' }
       }
+      profile.value.image = image
     } catch (err: any) {
+      console.error('setImage error:', err)
       error.value = err.message || 'Failed to set image'
       throw err
     } finally {
       loading.value = false
     }
   }
-  const setHobby = async (hobby: string) => {
-    if (!currentUserId.value) {
-      throw new Error('No user ID available')
-    }
 
+  const setHobby = async (hobby: string) => {
     loading.value = true
     error.value = null
 
@@ -223,35 +205,32 @@ export const useProfileStore = defineStore('profile', () => {
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'UserProfile',
         'setHobby',
-        { hobby },
+        { hobby }, // Session token added automatically by ApiService
       )
 
       if ('error' in response) {
         throw new Error(response.error)
       }
 
-      // Always reload active hobbies from backend after adding
-      try {
-        const hobbyResponse = await ApiService.callConceptAction<any[]>(
-          'UserProfile',
-          '_getActiveHobbies',
-          {},
-        )
-        if (Array.isArray(hobbyResponse)) {
-          if (
-            hobbyResponse.length > 0 &&
-            typeof hobbyResponse[0] === 'object' &&
-            'hobby' in hobbyResponse[0]
-          ) {
-            hobbies.value = hobbyResponse.filter((h) => h.active).map((h) => h.hobby)
-          } else {
-            hobbies.value = hobbyResponse.filter((h) => typeof h === 'string')
-          }
+      // Reload active hobbies from backend after adding
+      const hobbyResponse = await ApiService.callConceptAction<any[]>(
+        'UserProfile',
+        '_getActiveHobbies',
+        {}, // Session token added automatically by ApiService
+      )
+      if (Array.isArray(hobbyResponse)) {
+        if (
+          hobbyResponse.length > 0 &&
+          typeof hobbyResponse[0] === 'object' &&
+          'hobby' in hobbyResponse[0]
+        ) {
+          hobbies.value = hobbyResponse.filter((h) => h.active).map((h) => h.hobby)
+        } else {
+          hobbies.value = hobbyResponse.filter((h) => typeof h === 'string')
         }
-      } catch (hobbyError) {
-        console.error('Failed to reload active hobbies:', hobbyError)
       }
     } catch (err: any) {
+      console.error('setHobby error:', err)
       error.value = err.message || 'Failed to set hobby'
       throw err
     } finally {
@@ -260,10 +239,6 @@ export const useProfileStore = defineStore('profile', () => {
   }
 
   const closeHobby = async (hobby: string) => {
-    if (!currentUserId.value) {
-      throw new Error('No user ID available')
-    }
-
     loading.value = true
     error.value = null
 
@@ -271,7 +246,7 @@ export const useProfileStore = defineStore('profile', () => {
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'UserProfile',
         'closeHobby',
-        { hobby },
+        { hobby }, // Session token added automatically by ApiService
       )
 
       if ('error' in response) {
@@ -280,6 +255,7 @@ export const useProfileStore = defineStore('profile', () => {
 
       hobbies.value = hobbies.value.filter((h) => h !== hobby)
     } catch (err: any) {
+      console.error('closeHobby error:', err)
       error.value = err.message || 'Failed to close hobby'
       throw err
     } finally {

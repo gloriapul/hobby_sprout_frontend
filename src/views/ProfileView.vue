@@ -193,7 +193,7 @@ const sortedQuizHistory = computed(() => {
 const markHobbyInactive = async (hobbyName: string) => {
   await profileStore.closeHobby(hobbyName)
   if (user.value) {
-    await profileStore.loadProfile(user.value.id)
+    await profileStore.loadProfile()
   }
   showHobbyDetail.value = false
 }
@@ -201,7 +201,7 @@ const markHobbyInactive = async (hobbyName: string) => {
 const markHobbyActive = async (hobbyName: string) => {
   await profileStore.setHobby(hobbyName)
   if (user.value) {
-    await profileStore.loadProfile(user.value.id)
+    await profileStore.loadProfile()
   }
   showHobbyDetail.value = false
 }
@@ -377,7 +377,7 @@ const addHobby = async (hobbyName: string) => {
   try {
     await profileStore.setHobby(hobbyName)
     if (user.value) {
-      await profileStore.loadProfile(user.value.id)
+      await profileStore.loadProfile()
     }
     showAddHobby.value = false
   } catch (err: any) {
@@ -400,9 +400,7 @@ const clearQuizHistory = async () => {
   if (!user.value) return
   if (!confirm('Are you sure you want to clear your quiz history? This cannot be undone.')) return
   try {
-    await ApiService.callConceptAction('QuizMatchmaker', 'deleteHobbyMatches', 
-      {},
-    )
+    await ApiService.callConceptAction('QuizMatchmaker', 'deleteHobbyMatches', {})
     quizHistory.value = []
   } catch (err) {
     alert('Failed to clear quiz history.')
@@ -418,7 +416,7 @@ const handleHobbyClick = async (hobby: string) => {
   try {
     // Fetch all goals for this user and hobby from backend (backend filters by hobby)
     const result = await ApiService.callConceptAction('MilestoneTracker', '_getAllGoals', {
-      hobby
+      hobby,
     })
     if (Array.isArray(result)) {
       // For each goal, fetch its steps and attach as 'steps' property
@@ -446,7 +444,7 @@ const handleHobbyClick = async (hobby: string) => {
 
 onMounted(async () => {
   if (user.value) {
-    await profileStore.loadProfile(user.value.id)
+    await profileStore.loadProfile()
     // Ensure user's goals are loaded so hobbyHasGoals can return accurate results
     await milestoneStore.loadUserGoals()
     await fetchQuizHistory()

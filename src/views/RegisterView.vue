@@ -139,12 +139,27 @@ const handleRegister = async () => {
     const success = await authStore.register(form.value.username, form.value.password)
 
     if (success) {
-      router.push('/dashboard')
+      try {
+        await router.push('/dashboard')
+      } catch (error: any) {
+        if (error.code === 'ECONNABORTED') {
+          errors.value.general =
+            'Connection timeout while setting up your profile. Please try again.'
+        } else {
+          errors.value.general = 'Error loading dashboard. Please try logging in.'
+          // Redirect to login after a short delay
+          setTimeout(() => router.push('/login'), 2000)
+        }
+      }
     } else {
       errors.value.general = 'Registration failed. Username may already be taken.'
     }
   } catch (error: any) {
-    errors.value.general = error.message || 'An error occurred during registration'
+    if (error.code === 'ECONNABORTED') {
+      errors.value.general = 'Server is taking too long to respond. Please try again in a moment.'
+    } else {
+      errors.value.general = error.message || 'An error occurred during registration'
+    }
   } finally {
     loading.value = false
   }
@@ -277,7 +292,9 @@ input:disabled {
   font-weight: 600;
   padding: 0.7rem 1.7rem;
   border-radius: 999px;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
   background: transparent;
   display: inline-block;
 }

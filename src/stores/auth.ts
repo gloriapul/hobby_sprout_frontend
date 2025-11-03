@@ -67,8 +67,8 @@ export const useAuthStore = defineStore('auth', () => {
         return false
       }
 
-      // After successful registration, automatically log in to get a session
-      console.log('Registration successful, logging in...')
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+
       return await login(username, password)
     } catch (error) {
       console.error('Registration error:', error)

@@ -128,7 +128,7 @@ function deleteGoal(goalId: string) {
 onMounted(async () => {
   const user = authStore.user
   if (user) {
-    await profileStore.loadProfile(user.id)
+    await profileStore.loadProfile()
     if (profileStore.hobbies.length > 0) {
       selectedHobby.value = profileStore.hobbies[0] ?? ''
     } else {

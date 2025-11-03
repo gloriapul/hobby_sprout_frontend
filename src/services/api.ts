@@ -12,7 +12,7 @@ const PUBLIC_ENDPOINTS = [
 // Create axios instance with default configuration
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE,
-  timeout: 10000,
+  timeout: 60000, // 60 seconds to allow for LLM generation
   headers: {
     'Content-Type': 'application/json',
   },
