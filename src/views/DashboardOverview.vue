@@ -117,7 +117,7 @@ onMounted(async () => {
   if (user.value) {
     // Load profile and goals
     await profileStore.loadProfile(user.value.id)
-    await milestoneStore.loadUserGoals(user.value.id)
+    await milestoneStore.loadUserGoals()
     await reloadAllGoals()
   }
 })

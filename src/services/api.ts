@@ -1,6 +1,13 @@
 import axios, { type AxiosInstance, type AxiosResponse } from 'axios'
+import { getFromStorage } from '@/utils'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
+
+// List of public endpoints that don't require session token
+const PUBLIC_ENDPOINTS = [
+  '/PasswordAuthentication/register',
+  '/PasswordAuthentication/authenticate',
+]
 
 // Create axios instance with default configuration
 const apiClient: AxiosInstance = axios.create({
@@ -50,6 +57,7 @@ export class ApiService {
    * - All endpoints use POST method
    * - URL structure: /{conceptName}/{actionOrQueryName}
    * - Request body is a single JSON object
+   * - Authenticated endpoints automatically include session token
    */
   static async callConceptAction<T = any>(
     conceptName: string,
@@ -57,7 +65,19 @@ export class ApiService {
     data: Record<string, any> = {},
   ): Promise<T> {
     try {
-      const response = await apiClient.post(`/${conceptName}/${actionName}`, data)
+      const endpoint = `/${conceptName}/${actionName}`
+      const isPublic = PUBLIC_ENDPOINTS.includes(endpoint)
+
+      // Automatically add session token for authenticated endpoints
+      let requestData = { ...data }
+      if (!isPublic) {
+        const session = getFromStorage('token', null)
+        if (session) {
+          requestData = { session, ...data }
+        }
+      }
+
+      const response = await apiClient.post(endpoint, requestData)
       return response.data
     } catch (error) {
       console.error(`Error calling ${conceptName}/${actionName}:`, error)

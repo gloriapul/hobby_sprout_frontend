@@ -25,11 +25,9 @@ export const useAuthStore = defineStore('auth', () => {
   // Actions
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
-      const response = await ApiService.callConceptAction<{ user: string } | { error: string }>(
-        'PasswordAuthentication',
-        'authenticate',
-        { username, password },
-      )
+      const response = await ApiService.callConceptAction<
+        { user: string; session: string } | { error: string }
+      >('PasswordAuthentication', 'authenticate', { username, password })
 
       if ('error' in response) {
         console.error('Login failed:', response.error)
@@ -43,11 +41,11 @@ export const useAuthStore = defineStore('auth', () => {
       }
 
       user.value = userData
-      token.value = response.user // Using user ID as token for now
+      token.value = response.session // Store session token from backend
 
       // Persist to localStorage
       setToStorage('user', userData)
-      setToStorage('token', response.user)
+      setToStorage('token', response.session)
 
       return true
     } catch (error) {
@@ -69,20 +67,9 @@ export const useAuthStore = defineStore('auth', () => {
         return false
       }
 
-      // Set user data
-      const userData = {
-        id: response.user,
-        username: username,
-      }
-
-      user.value = userData
-      token.value = response.user // Using user ID as token for now
-
-      // Persist to localStorage
-      setToStorage('user', userData)
-      setToStorage('token', response.user)
-
-      return true
+      // After successful registration, automatically log in to get a session
+      console.log('Registration successful, logging in...')
+      return await login(username, password)
     } catch (error) {
       console.error('Registration error:', error)
       return false

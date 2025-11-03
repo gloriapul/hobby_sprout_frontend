@@ -400,7 +400,7 @@ const clearQuizHistory = async () => {
   if (!user.value) return
   if (!confirm('Are you sure you want to clear your quiz history? This cannot be undone.')) return
   try {
-    await ApiService.callConceptAction('QuizMatchmaker', '_deleteHobbyMatches', {
+    await ApiService.callConceptAction('QuizMatchmaker', 'deleteHobbyMatches', {
       user: user.value.id,
     })
     quizHistory.value = []
@@ -449,7 +449,7 @@ onMounted(async () => {
   if (user.value) {
     await profileStore.loadProfile(user.value.id)
     // Ensure user's goals are loaded so hobbyHasGoals can return accurate results
-    await milestoneStore.loadUserGoals(user.value.id)
+    await milestoneStore.loadUserGoals()
     await fetchQuizHistory()
   }
 })

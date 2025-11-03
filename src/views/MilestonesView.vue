@@ -78,7 +78,7 @@
       </div>
 
       <!-- Steps List -->
-        <div class="steps-section">
+      <div class="steps-section">
         <div class="steps-header">
           <h3>Your Steps</h3>
 
@@ -168,7 +168,7 @@ const closeActiveGoal = async () => {
     showCreateGoal.value = false
     selectedHobbyForGoal.value = undefined
     if (authStore.user) {
-      await milestoneStore.loadUserGoals(authStore.user.id)
+      await milestoneStore.loadUserGoals()
       // After reload, also reload steps for new currentGoal if any
       const goal = milestoneStore.currentGoal as { id?: string } | null
       if (goal && goal.id) {
@@ -191,7 +191,7 @@ const resetForNewGoal = async () => {
   showCreateGoal.value = false
   selectedHobbyForGoal.value = undefined
   if (authStore.user) {
-    await milestoneStore.loadUserGoals(authStore.user.id)
+    await milestoneStore.loadUserGoals()
     const goal = milestoneStore.currentGoal as { id?: string } | null
     if (goal && goal.id) {
       await milestoneStore.loadGoalSteps(goal.id)
@@ -211,7 +211,6 @@ const profileStore = useProfileStore()
 const milestoneStore = useMilestoneStore()
 
 const showCreateGoal = ref(false)
-const showAddStep = ref(false)
 const selectedHobbyForGoal = ref<string | undefined>(undefined)
 const generatingSteps = ref(false)
 
@@ -233,7 +232,7 @@ const createGoalForHobby = async (hobby: string) => {
   // Prevent opening modal until goals are loaded and no active goal exists
   if (loading.value) return
   if (authStore.user && authStore.user.id) {
-    await milestoneStore.loadUserGoals(authStore.user.id)
+    await milestoneStore.loadUserGoals()
     if (milestoneStore.currentGoal) {
       await milestoneStore.loadGoalSteps(milestoneStore.currentGoal.id)
     }
@@ -246,26 +245,12 @@ const createGoalForHobby = async (hobby: string) => {
   showCreateGoal.value = true
 }
 
-const generateStepsForCurrentGoal = async () => {
-  if (!currentGoal.value) return
-
-  generatingSteps.value = true
-  try {
-    await milestoneStore.generateSteps(currentGoal.value.id)
-  } catch (error) {
-    console.error('Failed to generate steps:', error)
-    alert('Failed to generate steps. Please try again.')
-  } finally {
-    generatingSteps.value = false
-  }
-}
-
 const completeStep = async (stepId: string) => {
   try {
     await milestoneStore.completeStep(stepId)
     // If all steps are now complete, reload goal state to trigger achievement section
     if (currentGoal.value && goalProgress.value === 100 && authStore.user) {
-      await milestoneStore.loadUserGoals(authStore.user.id)
+      await milestoneStore.loadUserGoals()
       await milestoneStore.loadGoalSteps(currentGoal.value.id)
     }
   } catch (error) {
@@ -305,7 +290,7 @@ const handleGoalCreated = async (goalData: {
   selectedHobbyForGoal.value = undefined
   if (authStore.user) {
     // Always reload user goals and steps after modal closes to ensure UI is up to date
-    await milestoneStore.loadUserGoals(authStore.user.id)
+    await milestoneStore.loadUserGoals()
     if (milestoneStore.currentGoal && milestoneStore.currentGoal.id) {
       await milestoneStore.loadGoalSteps(milestoneStore.currentGoal.id)
     }
@@ -318,10 +303,7 @@ const handleGoalCreated = async (goalData: {
 onMounted(async () => {
   if (authStore.user) {
     // Load goals and profile data
-    await Promise.all([
-      milestoneStore.loadUserGoals(authStore.user.id),
-      profileStore.loadProfile(authStore.user.id),
-    ])
+    await Promise.all([milestoneStore.loadUserGoals(), profileStore.loadProfile(authStore.user.id)])
 
     // If there's an active goal, load its steps
     if (currentGoal.value) {

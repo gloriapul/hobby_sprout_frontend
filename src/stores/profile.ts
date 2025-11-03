@@ -27,7 +27,6 @@ export const useProfileStore = defineStore('profile', () => {
     error.value = null
     try {
       await ApiService.callConceptAction('UserProfile', 'setHobby', {
-        user: currentUserId.value,
         hobby,
       })
       await loadProfile(currentUserId.value)
@@ -45,7 +44,6 @@ export const useProfileStore = defineStore('profile', () => {
     error.value = null
     try {
       await ApiService.callConceptAction('UserProfile', 'closeHobby', {
-        user: currentUserId.value,
         hobby,
       })
       await loadProfile(currentUserId.value)
@@ -62,9 +60,11 @@ export const useProfileStore = defineStore('profile', () => {
     currentUserId.value = userId
 
     try {
-      const response = await ApiService.callConceptAction<any[]>('UserProfile', '_getUserProfile', {
-        user: userId,
-      })
+      const response = await ApiService.callConceptAction<any[]>(
+        'UserProfile',
+        '_getUserProfile',
+        {},
+      )
 
       if (Array.isArray(response) && response.length > 0) {
         // The response is an array with profile data
@@ -78,7 +78,7 @@ export const useProfileStore = defineStore('profile', () => {
           const hobbyResponse = await ApiService.callConceptAction<any[]>(
             'UserProfile',
             '_getUserHobbies',
-            { user: userId },
+            {},
           )
           if (Array.isArray(hobbyResponse)) {
             hobbies.value = hobbyResponse.map((h) => h.hobby)
@@ -118,7 +118,7 @@ export const useProfileStore = defineStore('profile', () => {
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'UserProfile',
         'createProfile',
-        { user: currentUserId.value },
+        {},
       )
 
       if ('error' in response) {
@@ -146,7 +146,7 @@ export const useProfileStore = defineStore('profile', () => {
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'UserProfile',
         'setName',
-        { user: currentUserId.value, displayname: name },
+        { displayname: name },
       )
       if ('error' in response) {
         // If profile doesn't exist, create it first then retry
@@ -157,7 +157,7 @@ export const useProfileStore = defineStore('profile', () => {
           const retryResponse = await ApiService.callConceptAction<{} | { error: string }>(
             'UserProfile',
             'setName',
-            { user: currentUserId.value, displayname: name },
+            { displayname: name },
           )
 
           if ('error' in retryResponse) {
@@ -173,7 +173,6 @@ export const useProfileStore = defineStore('profile', () => {
         profile.value = { name: '', image: '' }
       }
       profile.value.name = name
-
     } catch (err: any) {
       console.error('setName error:', err)
       error.value = err.message || 'Failed to set name'
@@ -195,7 +194,7 @@ export const useProfileStore = defineStore('profile', () => {
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'UserProfile',
         'setImage',
-        { user: currentUserId.value, image },
+        { profile: image },
       )
 
       if ('error' in response) {
@@ -224,7 +223,7 @@ export const useProfileStore = defineStore('profile', () => {
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'UserProfile',
         'setHobby',
-        { user: currentUserId.value, hobby },
+        { hobby },
       )
 
       if ('error' in response) {
@@ -236,7 +235,7 @@ export const useProfileStore = defineStore('profile', () => {
         const hobbyResponse = await ApiService.callConceptAction<any[]>(
           'UserProfile',
           '_getActiveHobbies',
-          { user: currentUserId.value },
+          {},
         )
         if (Array.isArray(hobbyResponse)) {
           if (
@@ -272,7 +271,7 @@ export const useProfileStore = defineStore('profile', () => {
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'UserProfile',
         'closeHobby',
-        { user: currentUserId.value, hobby },
+        { hobby },
       )
 
       if ('error' in response) {

@@ -232,7 +232,6 @@ async function chooseMethod(selected: 'generate' | 'manual') {
       }
       // 1. Create the goal first
       const goalResult = await ApiService.callConceptAction<any>('MilestoneTracker', 'createGoal', {
-        user: userId,
         description: goalDescription.value,
         hobby: props.hobby,
       })
@@ -248,7 +247,7 @@ async function chooseMethod(selected: 'generate' | 'manual') {
         'MilestoneTracker',
         'generateSteps',
         {
-          goal: goalId,
+          goalId: goalId,
         },
       )
       if (genResult && Array.isArray(genResult.steps)) {
@@ -257,7 +256,7 @@ async function chooseMethod(selected: 'generate' | 'manual') {
           'MilestoneTracker',
           '_getSteps',
           {
-            goal: goalId,
+            goalId: goalId,
           },
         )
         if (stepsResult && Array.isArray(stepsResult)) {
@@ -324,7 +323,6 @@ async function saveGoal() {
     // 1. Find the active goal for this user/hobby (should exist already)
     let goalId: string | undefined
     const existingGoals = await ApiService.callConceptAction<any>('MilestoneTracker', '_getGoal', {
-      user: userId,
       hobby: props.hobby,
     })
     if (Array.isArray(existingGoals) && existingGoals.length > 0) {
@@ -332,7 +330,6 @@ async function saveGoal() {
     } else {
       // fallback: try to create if not found (should not happen in normal flow)
       const goalResult = await ApiService.callConceptAction<any>('MilestoneTracker', 'createGoal', {
-        user: userId,
         description: goalDescription.value,
         hobby: props.hobby,
       })
@@ -345,19 +342,19 @@ async function saveGoal() {
     if (!goalId) throw new Error('Failed to find or create goal.')
     // 2. Remove all existing steps for this goal
     const existingSteps = await ApiService.callConceptAction<any>('MilestoneTracker', '_getSteps', {
-      goal: goalId,
+      goalId: goalId,
     })
     if (Array.isArray(existingSteps)) {
       for (const step of existingSteps) {
         await ApiService.callConceptAction<any>('MilestoneTracker', 'removeStep', {
-          step: step.id,
+          stepId: step.id,
         })
       }
     }
     // 3. Add all steps in the current order/content
     for (const stepDesc of steps.value) {
       await ApiService.callConceptAction<any>('MilestoneTracker', 'addStep', {
-        goal: goalId,
+        goalId: goalId,
         description: stepDesc,
       })
     }

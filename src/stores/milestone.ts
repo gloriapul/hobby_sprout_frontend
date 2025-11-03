@@ -45,7 +45,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
   })
 
   // Actions
-  const loadUserGoals = async (userId: string) => {
+  const loadUserGoals = async () => {
     loading.value = true
     error.value = null
 
@@ -53,7 +53,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
       const response = await ApiService.callConceptAction<Goal[] | { error: string }>(
         'MilestoneTracker',
         '_getGoal',
-        { user: userId },
+        {},
       )
 
       if ('error' in response) {
@@ -80,7 +80,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
     }
   }
 
-  const createGoal = async (userId: string, description: string, hobby: string) => {
+  const createGoal = async (description: string, hobby: string) => {
     loading.value = true
     error.value = null
 
@@ -88,7 +88,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
       const response = await ApiService.callConceptAction<{ goal: string } | { error: string }>(
         'MilestoneTracker',
         'createGoal',
-        { user: userId, description, hobby },
+        { description, hobby },
       )
 
       if ('error' in response) {
@@ -112,7 +112,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
       goals.value.push(newGoal)
       currentGoal.value = newGoal
       // Reload all goals from backend to ensure state is up to date
-      await loadUserGoals(userId)
+      await loadUserGoals()
       return newGoal
     } catch (err: any) {
       error.value = err.message || 'Failed to create goal'
@@ -148,7 +148,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
       const response = await ApiService.callConceptAction<Step[] | { error: string }>(
         'MilestoneTracker',
         '_getSteps',
-        { goal: goalId },
+        { goalId },
       )
 
       if ('error' in response) {
@@ -175,7 +175,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
       const response = await ApiService.callConceptAction<{ steps: string[] } | { error: string }>(
         'MilestoneTracker',
         'generateSteps',
-        { goal: goalId },
+        { goalId },
       )
 
       if ('error' in response) {
@@ -200,7 +200,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
       const response = await ApiService.callConceptAction<{ step: string } | { error: string }>(
         'MilestoneTracker',
         'addStep',
-        { goal: goalId, description },
+        { goalId, description },
       )
 
       if ('error' in response) {
@@ -232,7 +232,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
       const response = await ApiService.callConceptAction<{ steps: string[] } | { error: string }>(
         'MilestoneTracker',
         'regenerateSteps',
-        { goal: goalId },
+        { goalId },
       )
       if ('error' in response) {
         throw new Error(response.error)
@@ -255,7 +255,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'MilestoneTracker',
         'completeStep',
-        { step: stepId },
+        { stepId },
       )
 
       if ('error' in response) {
@@ -297,7 +297,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'MilestoneTracker',
         'closeGoal',
-        { goal: goalId },
+        { goalId },
       )
 
       if ('error' in response) {
@@ -330,7 +330,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'MilestoneTracker',
         'removeStep',
-        { step: stepId },
+        { stepId },
       )
 
       if ('error' in response) {
