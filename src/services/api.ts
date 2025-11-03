@@ -1,14 +1,10 @@
 import axios, { type AxiosInstance, type AxiosResponse } from 'axios'
 
-// Base configuration for the API client
-// In development, use the proxy (/api) to avoid CORS issues
-// In production, this would be set to your actual API URL
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? '/api' : 'http://localhost:8000/api')
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
 // Create axios instance with default configuration
 const apiClient: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_BASE,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
