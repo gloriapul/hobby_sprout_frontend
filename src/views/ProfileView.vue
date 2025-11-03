@@ -315,7 +315,7 @@ const fetchQuizHistory = async () => {
     const result = await ApiService.callConceptAction<any>(
       'QuizMatchmaker',
       '_getAllHobbyMatches',
-      { user: user.value.id },
+      {},
     )
     if (Array.isArray(result)) {
       quizHistory.value = result.map((m: any) => ({
@@ -400,9 +400,9 @@ const clearQuizHistory = async () => {
   if (!user.value) return
   if (!confirm('Are you sure you want to clear your quiz history? This cannot be undone.')) return
   try {
-    await ApiService.callConceptAction('QuizMatchmaker', 'deleteHobbyMatches', {
-      user: user.value.id,
-    })
+    await ApiService.callConceptAction('QuizMatchmaker', 'deleteHobbyMatches', 
+      {},
+    )
     quizHistory.value = []
   } catch (err) {
     alert('Failed to clear quiz history.')
@@ -418,8 +418,7 @@ const handleHobbyClick = async (hobby: string) => {
   try {
     // Fetch all goals for this user and hobby from backend (backend filters by hobby)
     const result = await ApiService.callConceptAction('MilestoneTracker', '_getAllGoals', {
-      user: user.value.id,
-      hobby,
+      hobby
     })
     if (Array.isArray(result)) {
       // For each goal, fetch its steps and attach as 'steps' property

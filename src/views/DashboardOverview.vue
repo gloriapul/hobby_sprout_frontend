@@ -11,7 +11,7 @@
         <div class="stat-content">
           <h3>
             <span v-if="allGoalsLoading" class="spinner"></span>
-            <span v-else>{{ allGoals.length === 0 ? '' : allGoals.length }}</span>
+            <span v-else>{{ allGoals.length ? allGoals.length : 0 }}</span>
           </h3>
           <p>Total Goals</p>
         </div>
@@ -20,7 +20,7 @@
       <div class="stat-card">
         <div class="stat-icon">🎨</div>
         <div class="stat-content">
-          <h3>{{ hobbies.length }}</h3>
+          <h3>{{ hobbies.length ? hobbies.length : 0 }}</h3>
           <p>Hobbies</p>
         </div>
       </div>
@@ -99,7 +99,7 @@ async function reloadAllGoals() {
       const response = await ApiService.callConceptAction<any[]>(
         'MilestoneTracker',
         '_getAllGoals',
-        { user: user.value.id },
+        { },
       )
       if (Array.isArray(response)) {
         allGoals.value = response
