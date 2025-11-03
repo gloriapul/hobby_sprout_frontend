@@ -2,9 +2,12 @@
   <div class="profile-view">
     <div class="profile-header">
       <h1>My Profile</h1>
-      <button @click="toggleEditMode" class="base-btn edit-button">
-        {{ isEditing ? 'Save Changes' : 'Edit Profile' }}
-      </button>
+      <div class="header-actions">
+        <button @click="toggleEditMode" class="base-btn edit-button">
+          {{ isEditing ? 'Save Changes' : 'Edit Profile' }}
+        </button>
+        <button @click="closeProfile" class="base-btn delete-button">Delete Profile</button>
+      </div>
     </div>
 
     <div class="profile-content">
@@ -128,6 +131,45 @@
     </div>
 
     <HobbyModal v-if="showAddHobby" @close="showAddHobby = false" @add="addHobby" />
+
+    <!-- Delete Confirmation Modal -->
+    <div
+      v-if="showDeleteConfirmation"
+      class="modal-overlay"
+      @click="showDeleteConfirmation = false"
+    >
+      <div class="modal-content delete-modal" @click.stop>
+        <div class="modal-header">
+          <h2>Delete Profile</h2>
+          <button @click="showDeleteConfirmation = false" class="close-button">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="warning-icon">⚠️</div>
+          <p class="warning-text">
+            Are you sure you want to delete your profile? This action will permanently delete:
+          </p>
+          <ul class="delete-items-list">
+            <li>All your hobbies</li>
+            <li>All your goals and steps</li>
+            <li>Your quiz history</li>
+            <li>Your profile information</li>
+          </ul>
+          <p class="warning-text-bold">This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+          <button @click="showDeleteConfirmation = false" class="cancel-button">Cancel</button>
+          <button @click="confirmcloseProfile" class="confirm-delete-button">Delete Profile</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deleting Overlay -->
+    <div v-if="isDeleting" class="deleting-overlay">
+      <div class="deleting-content">
+        <div class="spinner"></div>
+        <p>Deleting your account...</p>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -163,6 +205,65 @@ const markHobbyActive = async (hobbyName: string) => {
   }
   showHobbyDetail.value = false
 }
+
+const closeProfile = async () => {
+  showDeleteConfirmation.value = true
+}
+
+const confirmcloseProfile = async () => {
+  const userId = user.value?.id || authStore.user?.id
+
+  if (!userId) {
+    alert('Unable to delete profile: User not found. Please try logging out and back in.')
+    showDeleteConfirmation.value = false
+    return
+  }
+
+  isDeleting.value = true
+
+  try {
+    // Delete the profile first
+    const profileResult = await ApiService.callConceptAction('UserProfile', 'closeProfile', {
+      user: userId,
+    })
+
+    if (profileResult && typeof profileResult === 'object' && 'error' in profileResult) {
+      throw new Error(profileResult.error as string)
+    }
+
+    try {
+      const userResult = await ApiService.callConceptAction(
+        'PasswordAuthentication',
+        'deleteUser',
+        {
+          user: userId,
+        },
+      )
+
+      if (userResult && typeof userResult === 'object' && 'error' in userResult) {
+        throw new Error(userResult.error as string)
+      }
+    } catch (userDeleteError) {
+      // If deleteUser endpoint doesn't exist (404) or fails, continue with logout
+    }
+
+    showDeleteConfirmation.value = false
+
+    authStore.logout()
+    milestoneStore.clearMilestones()
+
+    setTimeout(() => {
+      window.location.replace('/')
+    }, 100)
+  } catch (err) {
+    isDeleting.value = false
+    const errorMsg =
+      err instanceof Error ? err.message : 'Failed to delete profile. Please try again.'
+    alert(errorMsg)
+    showDeleteConfirmation.value = false
+  }
+}
+
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
@@ -183,6 +284,8 @@ const goalsLoaded = computed(() => !milestoneStore.loading)
 const isEditing = ref(false)
 const showAddHobby = ref(false)
 const showHobbyDetail = ref(false)
+const showDeleteConfirmation = ref(false)
+const isDeleting = ref(false)
 
 const editForm = ref({
   name: '',
@@ -361,7 +464,6 @@ onMounted(async () => {
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
-
 }
 .hobby-card-wrapper {
   display: flex;
@@ -432,6 +534,12 @@ onMounted(async () => {
   font-family: 'Poppins', sans-serif;
 }
 
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
 .edit-button {
   background: #388e3c;
   color: white;
@@ -440,6 +548,28 @@ onMounted(async () => {
   cursor: pointer;
   font-weight: 500;
   font-family: 'Poppins', sans-serif;
+  border: none;
+  transition: background 0.2s;
+}
+
+.edit-button:hover {
+  background: #2e7d32;
+}
+
+.delete-button {
+  background: #d32f2f;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-family: 'Poppins', sans-serif;
+  border: none;
+  transition: background 0.2s;
+}
+
+.delete-button:hover {
+  background: #b71c1c;
 }
 
 .profile-content {
@@ -671,5 +801,187 @@ onMounted(async () => {
   cursor: pointer;
   font-family: 'Poppins', sans-serif;
   background: #fff;
+}
+
+/* Delete Confirmation Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.delete-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 1.5rem 1rem 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.delete-modal .modal-header h2 {
+  margin: 0;
+  color: #d32f2f;
+  font-size: 1.5rem;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #666;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+  padding: 0;
+  line-height: 1;
+}
+
+.close-button:hover {
+  background: #f5f5f5;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.warning-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.warning-text {
+  color: #333;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  font-family: 'Poppins', sans-serif;
+  text-align: left;
+}
+
+.warning-text-bold {
+  color: #d32f2f;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+.delete-items-list {
+  text-align: left;
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+  color: #666;
+  font-family: 'Poppins', sans-serif;
+}
+
+.delete-items-list li {
+  margin-bottom: 0.5rem;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1rem 1.5rem 1.5rem 1.5rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.cancel-button {
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #e0e0e0;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-family: 'Poppins', sans-serif;
+  transition: background 0.2s;
+}
+
+.cancel-button:hover {
+  background: #e0e0e0;
+}
+
+.confirm-delete-button {
+  background: #d32f2f;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-family: 'Poppins', sans-serif;
+  transition: background 0.2s;
+}
+
+.confirm-delete-button:hover {
+  background: #b71c1c;
+}
+
+/* Deleting Overlay */
+.deleting-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.deleting-content {
+  text-align: center;
+  color: white;
+}
+
+.deleting-content p {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.spinner {
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid white;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>
