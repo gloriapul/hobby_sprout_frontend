@@ -1,5 +1,5 @@
 import axios, { type AxiosInstance, type AxiosResponse } from 'axios'
-import { getFromStorage } from '@/utils'
+import { getFromStorage, removeFromStorage } from '@/utils'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
 
@@ -39,10 +39,16 @@ apiClient.interceptors.response.use(
     // Handle error responses
     console.error('Response error:', error)
 
-    // You can add common error handling here
+    // Clear stale session only on authentication failures (not timeouts)
     if (error.response?.status === 401) {
-      // Handle unauthorized access
-      console.error('Unauthorized access - redirecting to login')
+      console.error('Authentication error - clearing session')
+      removeFromStorage('token')
+      removeFromStorage('user')
+
+      // Redirect to login if not already there
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+        window.location.href = '/login'
+      }
     }
 
     return Promise.reject(error)

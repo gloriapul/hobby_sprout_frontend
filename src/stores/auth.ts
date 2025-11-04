@@ -98,6 +98,23 @@ export const useAuthStore = defineStore('auth', () => {
     return false
   }
 
+  const validateSession = async (): Promise<boolean> => {
+    if (!token.value) {
+      return false
+    }
+
+    try {
+      // Try to fetch user profile to validate session
+      await ApiService.callConceptAction('Profile', 'loadProfile', {})
+      return true
+    } catch (error) {
+      // Session is invalid, clear it
+      console.error('Session validation failed:', error)
+      logout()
+      return false
+    }
+  }
+
   return {
     // State
     user,
@@ -111,5 +128,6 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     logout,
     checkAuth,
+    validateSession,
   }
 })
