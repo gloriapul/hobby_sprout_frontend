@@ -50,28 +50,22 @@ export const useMilestoneStore = defineStore('milestone', () => {
     error.value = null
 
     try {
-      const response = await ApiService.callConceptAction<Goal[] | { error: string }>(
-        'MilestoneTracker',
-        '_getGoal',
-        {},
-      )
-
-      if ('error' in response) {
-        throw new Error(response.error)
-      }
-
-      if (Array.isArray(response)) {
-        // Ensure completed and createdAt properties are present and defaulted
-        goals.value = response.map((g) => ({
-          ...g,
-          completed: g.completed ?? false,
-          isActive: g.completed ? false : g.isActive,
-          createdAt: g.createdAt ?? new Date().toISOString(),
-        }))
-        // Only set currentGoal to an active goal (not completed)
-        const activeGoal = goals.value.find((g) => g.isActive && !g.completed)
-        currentGoal.value = activeGoal || null
-      }
+      // Use getGoals endpoint to fetch all user goals
+      const response = await ApiService.callConceptAction<any>('MilestoneTracker', '_getGoals', {})
+      console.log('DEBUG _getGoals response:', response)
+      const goalsArray = Array.isArray(response.goals) ? response.goals : []
+      goals.value = goalsArray.map((g: any) => ({
+        id: g.goalId || g.id,
+        description: g.goalDescription || g.description,
+        hobby: g.goalHobby || g.hobby,
+        isActive: g.goalIsActive ?? g.isActive ?? true,
+        completed: g.completed ?? false,
+        createdAt: g.createdAt ?? new Date().toISOString(),
+      }))
+      console.log('DEBUG mapped goals:', goals.value)
+      // Set currentGoal to the first active, not completed goal
+      const activeGoal = goals.value.find((g) => g.isActive && !g.completed)
+      currentGoal.value = activeGoal || null
     } catch (err: any) {
       error.value = err.message || 'Failed to load goals'
       console.error('Goals load error:', err)
@@ -85,11 +79,13 @@ export const useMilestoneStore = defineStore('milestone', () => {
     error.value = null
 
     try {
+      console.log('[createGoal] Sending request:', { description, hobby })
       const response = await ApiService.callConceptAction<{ goal: string } | { error: string }>(
         'MilestoneTracker',
         'createGoal',
         { description, hobby },
       )
+      console.log('[createGoal] Received response:', response)
 
       if ('error' in response) {
         throw new Error(response.error)
@@ -145,22 +141,31 @@ export const useMilestoneStore = defineStore('milestone', () => {
 
   const loadGoalSteps = async (goalId: string) => {
     try {
-      const response = await ApiService.callConceptAction<Step[] | { error: string }>(
-        'MilestoneTracker',
-        '_getSteps',
-        { goalId },
-      )
+      const response = await ApiService.callConceptAction<any>('MilestoneTracker', '_getSteps', {
+        goalId,
+      })
+
+      console.log('🔍 loadGoalSteps - _getSteps response for goalId', goalId, ':', response)
 
       if ('error' in response) {
         throw new Error(response.error)
       }
 
-      if (Array.isArray(response)) {
-        steps.value = response
+      // Extract steps array from response object
+      const stepsArray = response?.steps || response
+      if (Array.isArray(stepsArray)) {
+        steps.value = stepsArray
+        console.log('✅ loadGoalSteps - loaded', stepsArray.length, 'steps:', stepsArray)
+        // Debug: print isComplete for each step
+        stepsArray.forEach((s, i) =>
+          console.log(`Step[${i}] id=${s.id} isComplete=${s.isComplete}`),
+        )
         // Check if all steps for this goal are complete and update completed status
         const allComplete = steps.value.length > 0 && steps.value.every((s) => s.isComplete)
         const goal = goals.value.find((g) => g.id === goalId)
         if (goal) goal.completed = allComplete
+      } else {
+        console.warn('Steps response is not an array:', stepsArray)
       }
     } catch (err: any) {
       console.error('Failed to load steps:', err)
@@ -168,6 +173,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
   }
 
   const generateSteps = async (goalId: string) => {
+    console.log('🔍 generateSteps called with goalId:', goalId)
     loading.value = true
     error.value = null
 
@@ -177,6 +183,8 @@ export const useMilestoneStore = defineStore('milestone', () => {
         'generateSteps',
         { goalId },
       )
+
+      console.log('📊 generateSteps response:', response)
 
       if ('error' in response) {
         throw new Error(response.error)
@@ -262,24 +270,9 @@ export const useMilestoneStore = defineStore('milestone', () => {
         throw new Error(response.error)
       }
 
-      // Update the step in our list
-      const step = steps.value.find((s) => s.id === stepId)
-      if (step) {
-        step.isComplete = true
-        step.completion = new Date().toISOString()
-      }
-      // Work in progress, will continue to iterate for rest of assignment
-      // If all steps for the current goal are complete, mark the goal as completed
+      // After completing a step, reload steps from backend to ensure state is in sync
       if (currentGoal.value) {
-        // Use currentGoalSteps to get all steps for the current goal
-        const allComplete =
-          currentGoalSteps.value.length > 0 && currentGoalSteps.value.every((s) => s.isComplete)
-        const goal = goals.value.find((g) => g.id === currentGoal.value?.id)
-        if (goal && allComplete) {
-          goal.completed = true
-          goal.isActive = false // Mark goal as inactive when completed
-          // Do NOT mark hobby as inactive automatically
-        }
+        await loadGoalSteps(currentGoal.value.id)
       }
     } catch (err: any) {
       error.value = err.message || 'Failed to complete step'
@@ -314,6 +307,9 @@ export const useMilestoneStore = defineStore('milestone', () => {
         currentGoal.value = null
         steps.value = []
       }
+
+      // After closing a goal, reload all goals (not just active)
+      await loadUserGoals()
     } catch (err: any) {
       error.value = err.message || 'Failed to close goal'
       throw err

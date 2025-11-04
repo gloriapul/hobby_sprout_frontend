@@ -108,7 +108,7 @@
               </div>
               <div class="step-actions">
                 <button
-                  v-if="!step.isComplete"
+                  v-if="!step.isComplete && step.id"
                   @click="completeStep(step.id)"
                   class="complete-button"
                 >
@@ -138,9 +138,19 @@
       class="close-goal-actions"
       style="margin-bottom: 2rem"
     >
-      <button @click="closeActiveGoal" class="close-goal">
+      <button @click="showAbandonGoalModal = true" class="close-goal">
         <span>Abandon Goal</span>
       </button>
+      <ConfirmationModal
+        v-if="showAbandonGoalModal"
+        :show="showAbandonGoalModal"
+        title="Abandon Goal"
+        message="Are you sure you want to abandon this goal? This will mark it as closed and cannot be undone."
+        confirmText="Abandon Goal"
+        cancelText="Cancel"
+        @confirm="handleConfirmAbandonGoal"
+        @cancel="showAbandonGoalModal = false"
+      />
     </div>
 
     <!-- Loading State -->
@@ -160,19 +170,32 @@
 </template>
 
 <script setup lang="ts">
+import ConfirmationModal from '@/components/shared/ConfirmationModal.vue'
+const showAbandonGoalModal = ref(false)
+
+const handleConfirmAbandonGoal = async () => {
+  console.log('handleConfirmAbandonGoal called')
+  await closeActiveGoal()
+  showAbandonGoalModal.value = false
+}
 const closeActiveGoal = async () => {
+  console.log('closeActiveGoal called')
   if (currentGoal.value) {
+    console.log('closeActiveGoal: currentGoal.value.id =', currentGoal.value.id)
     await milestoneStore.deleteGoal(currentGoal.value.id)
     milestoneStore.clearCurrentGoal()
     milestoneStore.currentGoal = null
     showCreateGoal.value = false
     selectedHobbyForGoal.value = undefined
-    // No need to reload - deleteGoal already updates store state
     await nextTick()
   }
 }
 // Reset page and allow user to pick a new hobby for next goal
 const resetForNewGoal = async () => {
+  console.log('resetForNewGoal called')
+  if (milestoneStore.currentGoal) {
+    console.log('resetForNewGoal: milestoneStore.currentGoal.id =', milestoneStore.currentGoal.id)
+  }
   // Mark the current goal as inactive and completed, and update backend
   if (milestoneStore.currentGoal) {
     milestoneStore.currentGoal.isActive = false
@@ -228,6 +251,19 @@ const createGoalForHobby = async (hobby: string) => {
 }
 
 const completeStep = async (stepId: string) => {
+  console.log('Attempting to complete step with id:', stepId)
+  // Debug: print all current steps and the stepId being sent
+  console.log('Current steps:', currentGoalSteps.value)
+  const found = currentGoalSteps.value.find((s) => s.id === stepId)
+  if (!found) {
+    console.warn('Step with id', stepId, 'not found in currentGoalSteps!')
+  } else {
+    console.log('Step to complete:', found)
+  }
+  if (!stepId) {
+    console.error('Attempted to complete a step with undefined id!')
+    return
+  }
   try {
     await milestoneStore.completeStep(stepId)
     // completeStep already updates the local state, no need to reload

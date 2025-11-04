@@ -239,21 +239,53 @@ onMounted(async () => {
   loading.value = true
   try {
     // 1. Get all goals for this user and hobby
-    const allGoals = await ApiService.callConceptAction<any[]>('MilestoneTracker', '_getAllGoals', {
+    const result = await ApiService.callConceptAction<any>('MilestoneTracker', '_getGoal', {
       user: userId.value,
       hobby: hobbyName.value,
     })
+
+    console.log('🔍 HobbyStepHistory - _getGoal response:', result)
+
+    // Extract goals array from response object
+    const allGoals = result?.goals || result
+
+    if (!Array.isArray(allGoals)) {
+      goals.value = []
+      return
+    }
+
+    // Map backend field names to frontend field names
+    const mappedGoals = allGoals.map((g) => ({
+      id: g.goalId || g.id,
+      description: g.goalDescription || g.description,
+      hobby: g.goalHobby || g.hobby,
+      isActive: g.goalIsActive ?? g.isActive ?? true,
+      completed: g.completed ?? false,
+    }))
+
     // 2. For each goal, get its steps
     const goalsWithSteps = await Promise.all(
-      (allGoals || []).map(async (goal) => {
-        const steps = await ApiService.callConceptAction<any[]>('MilestoneTracker', '_getSteps', {
-          goal: goal.id,
-        })
-        return { ...goal, steps: steps || [] }
+      mappedGoals.map(async (goal) => {
+        try {
+          const stepsResult = await ApiService.callConceptAction<any>(
+            'MilestoneTracker',
+            '_getSteps',
+            {
+              goalId: goal.id,
+            },
+          )
+          const stepsArray = stepsResult?.steps || stepsResult
+          return { ...goal, steps: Array.isArray(stepsArray) ? stepsArray : [] }
+        } catch (err) {
+          console.error('Failed to load steps for goal', goal.id, err)
+          return { ...goal, steps: [] }
+        }
       }),
     )
     goals.value = goalsWithSteps
+    console.log('✅ HobbyStepHistory - loaded goals:', goals.value)
   } catch (err) {
+    console.error('Failed to load hobby history:', err)
     goals.value = []
   } finally {
     loading.value = false

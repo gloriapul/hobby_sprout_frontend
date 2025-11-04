@@ -90,6 +90,8 @@ const showAddStep = ref(false)
 
 const generateSteps = async () => {
   if (!goal.value) return
+  console.log('🔍 generateSteps - goal.value:', goal.value)
+  console.log('🔍 generateSteps - goal.value.id:', goal.value.id)
   await milestoneStore.generateSteps(goal.value.id)
 }
 

@@ -61,6 +61,7 @@ export const useProfileStore = defineStore('profile', () => {
     }
   }
   const loadProfile = async (userId?: string) => {
+    console.log('🔄 loadProfile called')
     loading.value = true
     error.value = null
     if (userId) {
@@ -68,29 +69,42 @@ export const useProfileStore = defineStore('profile', () => {
     }
 
     try {
-      const response = await ApiService.callConceptAction<any[]>(
+      const response = await ApiService.callConceptAction<any>(
         'UserProfile',
         '_getUserProfile',
         {}, // Session token is automatically added by ApiService
       )
 
-      if (Array.isArray(response) && response.length > 0) {
+      console.log('🔍 loadProfile - _getUserProfile response:', response)
+
+      // Extract userProfile array from response object
+      const userProfileArray = response?.userProfile || response
+
+      if (Array.isArray(userProfileArray) && userProfileArray.length > 0) {
         // The response is an array with profile data
-        const profileData = response[0]
+        const profileData = userProfileArray[0]
         profile.value = {
           name: profileData.displayname || '',
           image: profileData.profile || '',
         }
 
         // Load all hobbies (active and inactive) after profile loads
-        const hobbyResponse = await ApiService.callConceptAction<any[]>(
+        const hobbyResponse = await ApiService.callConceptAction<any>(
           'UserProfile',
           '_getUserHobbies',
           {}, // Session token is automatically added by ApiService
         )
-        if (Array.isArray(hobbyResponse)) {
-          hobbies.value = hobbyResponse.map((h) => h.hobby)
-          activeHobbies.value = hobbyResponse.filter((h) => h.active).map((h) => h.hobby)
+
+        console.log('🔍 loadProfile - _getUserHobbies response:', hobbyResponse)
+
+        // Extract hobbies array from response object
+        const hobbiesArray = hobbyResponse?.hobbies || hobbyResponse
+
+        if (Array.isArray(hobbiesArray)) {
+          hobbies.value = hobbiesArray.map((h) => h.hobby)
+          activeHobbies.value = hobbiesArray.filter((h) => h.active).map((h) => h.hobby)
+          console.log('✅ loadProfile - hobbies:', hobbies.value)
+          console.log('✅ loadProfile - activeHobbies:', activeHobbies.value)
         }
       } else {
         // Profile doesn't exist yet - this means the CreateProfileAfterRegister sync hasn't completed
@@ -176,7 +190,7 @@ export const useProfileStore = defineStore('profile', () => {
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'UserProfile',
         'setImage',
-        { profile: image }, // Session token added automatically by ApiService
+        { image }, // Backend sync expects 'image', not 'profile'
       )
 
       if ('error' in response) {
@@ -212,22 +226,27 @@ export const useProfileStore = defineStore('profile', () => {
         throw new Error(response.error)
       }
 
-      // Reload active hobbies from backend after adding
-      const hobbyResponse = await ApiService.callConceptAction<any[]>(
+      // Reload all hobbies from backend after adding
+      const hobbyResponse = await ApiService.callConceptAction<any>(
         'UserProfile',
-        '_getActiveHobbies',
+        '_getUserHobbies',
         {}, // Session token added automatically by ApiService
       )
-      if (Array.isArray(hobbyResponse)) {
-        if (
-          hobbyResponse.length > 0 &&
-          typeof hobbyResponse[0] === 'object' &&
-          'hobby' in hobbyResponse[0]
-        ) {
-          hobbies.value = hobbyResponse.filter((h) => h.active).map((h) => h.hobby)
-        } else {
-          hobbies.value = hobbyResponse.filter((h) => typeof h === 'string')
-        }
+      console.log('🔍 setHobby - _getUserHobbies response:', hobbyResponse)
+
+      // Extract hobbies array from response object
+      const hobbiesArray = hobbyResponse?.hobbies || hobbyResponse
+
+      if (Array.isArray(hobbiesArray)) {
+        // Response is array of objects with {hobby, active}
+        console.log('🔍 First hobby object:', hobbiesArray[0])
+        console.log('🔍 hobbiesArray structure:', hobbiesArray)
+
+        hobbies.value = hobbiesArray.map((h) => h.hobby)
+        activeHobbies.value = hobbiesArray.filter((h) => h.active).map((h) => h.hobby)
+
+        console.log('✅ setHobby - Updated hobbies:', hobbies.value)
+        console.log('✅ setHobby - Updated activeHobbies:', activeHobbies.value)
       }
     } catch (err: any) {
       console.error('setHobby error:', err)
@@ -253,7 +272,20 @@ export const useProfileStore = defineStore('profile', () => {
         throw new Error(response.error)
       }
 
-      hobbies.value = hobbies.value.filter((h) => h !== hobby)
+      // Reload all hobbies from backend after closing
+      const hobbyResponse = await ApiService.callConceptAction<any>(
+        'UserProfile',
+        '_getUserHobbies',
+        {}, // Session token added automatically by ApiService
+      )
+
+      // Extract hobbies array from response object
+      const hobbiesArray = hobbyResponse?.hobbies || hobbyResponse
+
+      if (Array.isArray(hobbiesArray)) {
+        hobbies.value = hobbiesArray.map((h) => h.hobby)
+        activeHobbies.value = hobbiesArray.filter((h) => h.active).map((h) => h.hobby)
+      }
     } catch (err: any) {
       console.error('closeHobby error:', err)
       error.value = err.message || 'Failed to close hobby'

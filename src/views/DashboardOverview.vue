@@ -89,26 +89,29 @@ const displayName = computed(() => {
 })
 
 const recentGoals = computed(() => {
-  return goals.value.slice(0, 1)
+  return goals.value.filter((g) => g.isActive).slice(0, 1)
 })
 
 async function reloadAllGoals() {
   allGoalsLoading.value = true
-  if (user.value) {
-    try {
-      const response = await ApiService.callConceptAction<any[]>(
-        'MilestoneTracker',
-        '_getAllGoals',
-        {},
-      )
-      if (Array.isArray(response)) {
-        allGoals.value = response
-      } else {
-        allGoals.value = []
-      }
-    } catch (err) {
-      allGoals.value = []
-    }
+  try {
+    // Use the new getGoals query to fetch all goals for the user
+    const response = await ApiService.callConceptAction<any>('MilestoneTracker', '_getGoals', {})
+    console.log('DEBUG _getGoals response:', response)
+    // The backend returns an array directly (not {goals: [...]})
+    const goalsArray = Array.isArray(response.goals) ? response.goals : []
+    console.log('DEBUG _getGoals first element:', goalsArray[0])
+    allGoals.value = goalsArray.map((g: any) => ({
+      id: g.goalId || g.id,
+      description: g.goalDescription || g.description,
+      hobby: g.goalHobby || g.hobby,
+      isActive: g.goalIsActive ?? g.isActive ?? true,
+      completed: g.completed ?? false,
+    }))
+    console.log('✅ Dashboard - loaded total goals:', allGoals.value.length)
+  } catch (err) {
+    console.error('Failed to reload all goals:', err)
+    allGoals.value = []
   }
   allGoalsLoading.value = false
 }

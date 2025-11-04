@@ -133,35 +133,15 @@
     <HobbyModal v-if="showAddHobby" @close="showAddHobby = false" @add="addHobby" />
 
     <!-- Delete Confirmation Modal -->
-    <div
-      v-if="showDeleteConfirmation"
-      class="modal-overlay"
-      @click="showDeleteConfirmation = false"
-    >
-      <div class="modal-content delete-modal" @click.stop>
-        <div class="modal-header">
-          <h2>Delete Profile</h2>
-          <button @click="showDeleteConfirmation = false" class="close-button">×</button>
-        </div>
-        <div class="modal-body">
-          <div class="warning-icon">⚠️</div>
-          <p class="warning-text">
-            Are you sure you want to delete your profile? This action will permanently delete:
-          </p>
-          <ul class="delete-items-list">
-            <li>All your hobbies</li>
-            <li>All your goals and steps</li>
-            <li>Your quiz history</li>
-            <li>Your profile information</li>
-          </ul>
-          <p class="warning-text-bold">This action cannot be undone.</p>
-        </div>
-        <div class="modal-footer">
-          <button @click="showDeleteConfirmation = false" class="cancel-button">Cancel</button>
-          <button @click="confirmcloseProfile" class="confirm-delete-button">Delete Profile</button>
-        </div>
-      </div>
-    </div>
+    <ConfirmationModal
+      :show="showDeleteConfirmation"
+      title="Delete Profile"
+      message="Are you sure you want to delete your profile? This will permanently delete all your hobbies, goals, steps, quiz history, and profile information. This action cannot be undone."
+      confirmText="Delete Profile"
+      cancelText="Cancel"
+      @confirm="confirmcloseProfile"
+      @cancel="showDeleteConfirmation = false"
+    />
 
     <!-- Deleting Overlay -->
     <div v-if="isDeleting" class="deleting-overlay">
@@ -170,6 +150,17 @@
         <p>Deleting your account...</p>
       </div>
     </div>
+
+    <!-- Clear Quiz History Confirmation Modal -->
+    <ConfirmationModal
+      :show="showClearHistoryConfirmation"
+      title="Clear Quiz History"
+      message="Are you sure you want to clear your quiz history? This cannot be undone."
+      confirmText="Clear History"
+      cancelText="Cancel"
+      @confirm="confirmClearQuizHistory"
+      @cancel="showClearHistoryConfirmation = false"
+    />
   </div>
 </template>
 
@@ -192,21 +183,18 @@ const sortedQuizHistory = computed(() => {
 
 const markHobbyInactive = async (hobbyName: string) => {
   await profileStore.closeHobby(hobbyName)
-  if (user.value) {
-    await profileStore.loadProfile()
-  }
+  // closeHobby already updates the store, no need to reload
   showHobbyDetail.value = false
 }
 
 const markHobbyActive = async (hobbyName: string) => {
   await profileStore.setHobby(hobbyName)
-  if (user.value) {
-    await profileStore.loadProfile()
-  }
+  // setHobby already reloads hobbies, no need to call loadProfile
   showHobbyDetail.value = false
 }
 
 const closeProfile = async () => {
+  console.log('🗑️ closeProfile called')
   showDeleteConfirmation.value = true
 }
 
@@ -317,16 +305,25 @@ const fetchQuizHistory = async () => {
       '_getAllHobbyMatches',
       {},
     )
-    if (Array.isArray(result)) {
-      quizHistory.value = result.map((m: any) => ({
+
+    console.log('🔍 fetchQuizHistory - _getAllHobbyMatches response:', result)
+
+    // Extract matches array from response object
+    const matchesArray = result?.matches || result?.hobbyMatches || result
+
+    if (Array.isArray(matchesArray)) {
+      quizHistory.value = matchesArray.map((m: any) => ({
         id: m.id || m._id || m.matchedAt,
-        hobby: m.hobby,
-        matchedAt: m.matchedAt,
+        hobby: m.hobby || m.matchedHobby,
+        matchedAt: m.matchedAt || m.createdAt,
       }))
+      console.log('✅ fetchQuizHistory - loaded', quizHistory.value.length, 'quiz matches')
     } else {
+      console.warn('⚠️ fetchQuizHistory - result is not an array:', matchesArray)
       quizHistory.value = []
     }
   } catch (err) {
+    console.error('❌ fetchQuizHistory error:', err)
     quizHistory.value = []
   } finally {
     quizHistoryLoading.value = false
@@ -351,13 +348,51 @@ const getInitials = (name: string) => {
 const toggleEditMode = async () => {
   if (isEditing.value) {
     try {
-      // Save changes
-      if (editForm.value.name !== profile.value?.name) {
-        await profileStore.setName(editForm.value.name)
+      console.log('=== Saving Profile Changes ===')
+      console.log('Current profile:', profile.value)
+      console.log('Edit form values:', editForm.value)
+
+      // Save changes - run API calls in parallel for better performance
+      const updates = []
+
+      const nameChanged = editForm.value.name !== profile.value?.name
+      const imageChanged = editForm.value.image !== profile.value?.image
+
+      console.log(
+        'Name changed?',
+        nameChanged,
+        'New:',
+        editForm.value.name,
+        'Old:',
+        profile.value?.name,
+      )
+      console.log(
+        'Image changed?',
+        imageChanged,
+        'New:',
+        editForm.value.image,
+        'Old:',
+        profile.value?.image,
+      )
+
+      if (editForm.value.name && nameChanged) {
+        console.log('✓ Queuing name update:', editForm.value.name)
+        updates.push(profileStore.setName(editForm.value.name))
       }
-      if (editForm.value.image !== profile.value?.image) {
-        await profileStore.setImage(editForm.value.image)
+
+      if (editForm.value.image && imageChanged) {
+        console.log('✓ Queuing image update:', editForm.value.image)
+        updates.push(profileStore.setImage(editForm.value.image))
       }
+
+      if (updates.length > 0) {
+        console.log(`Executing ${updates.length} update(s)...`)
+        await Promise.all(updates)
+        console.log('✓ All updates completed')
+      } else {
+        console.log('No changes detected')
+      }
+
       isEditing.value = false
     } catch (error) {
       console.error('Failed to save profile changes:', error)
@@ -393,53 +428,75 @@ const addHobby = async (hobbyName: string) => {
 const selectedHobby = ref<string | null>(null)
 const selectedHobbyGoals = ref<any[] | null>(null)
 const selectedHobbyIsActive = ref(false)
+const errorMessage = ref('')
 
 import { ApiService } from '@/services/api'
 
+import ConfirmationModal from '@/components/shared/ConfirmationModal.vue'
+const showClearHistoryConfirmation = ref(false)
 const clearQuizHistory = async () => {
   if (!user.value) return
-  if (!confirm('Are you sure you want to clear your quiz history? This cannot be undone.')) return
+  showClearHistoryConfirmation.value = true
+}
+const confirmClearQuizHistory = async () => {
   try {
     await ApiService.callConceptAction('QuizMatchmaker', 'deleteHobbyMatches', {})
     quizHistory.value = []
   } catch (err) {
     alert('Failed to clear quiz history.')
+  } finally {
+    showClearHistoryConfirmation.value = false
   }
 }
 
 const handleHobbyClick = async (hobby: string) => {
+  errorMessage.value = '' // Clear previous error
   selectedHobby.value = hobby
   showHobbyDetail.value = true
   selectedHobbyIsActive.value = activeHobbies.value.includes(hobby)
   selectedHobbyGoals.value = null // null means loading
-  if (!user.value) return
   try {
-    // Fetch all goals for this user and hobby from backend (backend filters by hobby)
-    const result = await ApiService.callConceptAction('MilestoneTracker', '_getAllGoals', {
-      hobby,
-    })
-    if (Array.isArray(result)) {
-      // For each goal, fetch its steps and attach as 'steps' property
-      const goalsWithSteps = await Promise.all(
-        result.map(async (goal) => {
-          try {
-            const steps = await ApiService.callConceptAction('MilestoneTracker', '_getSteps', {
-              goal: goal.id,
-            })
-            return { ...goal, steps: Array.isArray(steps) ? steps : [] }
-          } catch (e) {
-            return { ...goal, steps: [] }
-          }
-        }),
-      )
-      selectedHobbyGoals.value = goalsWithSteps
-    } else {
-      selectedHobbyGoals.value = []
+    // Wait for goals to be loaded if not already
+    if (milestoneStore.loading) {
+      await milestoneStore.loadUserGoals()
     }
+    // Filter all goals for this hobby (active and closed)
+    const allGoals = milestoneStore.goals.filter((g: any) => g.hobby === hobby)
+    // For each goal, fetch its steps and attach as 'steps' property
+    const goalsWithSteps = await Promise.all(
+      allGoals.map(async (goal: any) => {
+        try {
+          const steps = await ApiService.callConceptAction('MilestoneTracker', '_getSteps', {
+            goalId: goal.id,
+          })
+          const stepsArray = steps?.steps || steps
+          // Use step objects directly if present
+          if (Array.isArray(stepsArray) && typeof stepsArray[0] === 'object') {
+            return { ...goal, steps: stepsArray }
+          } else {
+            // fallback: treat as array of IDs
+            return {
+              ...goal,
+              steps: (Array.isArray(stepsArray) ? stepsArray : []).map((id) => ({ id })),
+            }
+          }
+        } catch (e) {
+          return { ...goal, steps: [] }
+        }
+      }),
+    )
+    selectedHobbyGoals.value = goalsWithSteps
   } catch (err) {
+    errorMessage.value = 'Failed to fetch all goals.'
     console.error('Failed to fetch all goals:', err)
     selectedHobbyGoals.value = []
   }
+}
+
+// Example: clear error on regenerate steps
+const regenerateSteps = async (goalId: string) => {
+  errorMessage.value = '' // Clear previous error
+  // ...existing code for regenerating steps...
 }
 
 onMounted(async () => {
