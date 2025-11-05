@@ -165,14 +165,57 @@
 </template>
 
 <script setup lang="ts">
-// Helper to check if a hobby has at least one goal
-const hobbyHasGoals = (hobby: string) => {
-  if (Array.isArray(milestoneStore.goals)) {
-    return milestoneStore.goals.some((g: any) => g.hobby === hobby)
-  }
-  return false
-}
+import { ref, computed, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { useProfileStore } from '@/stores/profile'
+import { useMilestoneStore } from '@/stores/milestone'
+import { ApiService } from '@/services/api'
+import HobbyCard from '@/components/shared/HobbyCard.vue'
+import HobbyModal from '@/components/modals/HobbyModal.vue'
+import HobbyDetailModal from '@/components/shared/HobbyDetailModal.vue'
+import ConfirmationModal from '@/components/shared/ConfirmationModal.vue'
+
+// Store instances
+const authStore = useAuthStore()
+const profileStore = useProfileStore()
+const milestoneStore = useMilestoneStore()
+
+// Component State
+const isEditing = ref(false)
+const showAddHobby = ref(false)
+const showHobbyDetail = ref(false)
+const showDeleteConfirmation = ref(false)
+const isDeleting = ref(false)
+const showClearHistoryConfirmation = ref(false)
+const editForm = ref({ name: '', image: '' })
+const hobbyFilter = ref('active')
 const quizSortOrder = ref<'desc' | 'asc'>('desc')
+
+// Hobby Detail State
+const selectedHobby = ref<string | null>(null)
+const selectedHobbyGoals = ref<any[] | null>(null)
+const selectedHobbyIsActive = ref(false)
+const errorMessage = ref('')
+
+// Quiz History State
+const quizHistory = ref<Array<{ id: string; hobby: string; matchedAt: string }>>([])
+const quizHistoryLoading = ref(false)
+
+// Computed Properties
+const user = computed(() => authStore.user)
+const profile = computed(() => profileStore.profile)
+const loading = computed(() => profileStore.loading)
+const goalsLoaded = computed(() => !milestoneStore.loading)
+const allHobbies = computed(() => profileStore.hobbies)
+const activeHobbies = computed(() => profileStore.activeHobbies)
+const inactiveHobbies = computed(() =>
+  allHobbies.value.filter((h) => !activeHobbies.value.includes(h)),
+)
+const filteredHobbies = computed(() => {
+  if (hobbyFilter.value === 'active') return activeHobbies.value
+  if (hobbyFilter.value === 'inactive') return inactiveHobbies.value
+  return allHobbies.value
+})
 const sortedQuizHistory = computed(() => {
   return [...quizHistory.value].sort((a, b) => {
     const aTime = new Date(a.matchedAt).getTime()
@@ -181,20 +224,33 @@ const sortedQuizHistory = computed(() => {
   })
 })
 
-const markHobbyInactive = async (hobbyName: string) => {
-  await profileStore.closeHobby(hobbyName)
-  // closeHobby already updates the store, no need to reload
-  showHobbyDetail.value = false
+// Helper Functions
+const getInitials = (name: string) => {
+  return name
+    .split(' ')
+    .map((word) => word.charAt(0))
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
 }
 
-const markHobbyActive = async (hobbyName: string) => {
-  await profileStore.setHobby(hobbyName)
-  // setHobby already reloads hobbies, no need to call loadProfile
-  showHobbyDetail.value = false
+const formatDate = (dateStr: string) => {
+  const d = new Date(dateStr)
+  const date = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+  const time = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+  return `${date} at ${time}`
 }
 
-const closeProfile = async () => {
-  console.log('🗑️ closeProfile called')
+const hobbyHasGoals = (hobby: string) => {
+  if (Array.isArray(milestoneStore.goals)) {
+    return milestoneStore.goals.some((g: any) => g.hobby === hobby)
+  }
+  return false
+}
+
+// API Functions / Event Handlers
+const closeProfile = () => {
+  console.log('🗑️ closeProfile called, user id:', user.value?.id)
   showDeleteConfirmation.value = true
 }
 
@@ -210,33 +266,17 @@ const confirmcloseProfile = async () => {
   isDeleting.value = true
 
   try {
-    // Delete the profile first
-    const profileResult = await ApiService.callConceptAction('UserProfile', 'closeProfile', {
+    // Make a single call to the backend. The backend's chained sync will handle the rest.
+    const result = await ApiService.callConceptAction('UserProfile', 'closeProfile', {
       user: userId,
     })
 
-    if (profileResult && typeof profileResult === 'object' && 'error' in profileResult) {
-      throw new Error(profileResult.error as string)
+    if (result && typeof result === 'object' && 'error' in result) {
+      throw new Error(result.error as string)
     }
 
-    try {
-      const userResult = await ApiService.callConceptAction(
-        'PasswordAuthentication',
-        'deleteUser',
-        {
-          user: userId,
-        },
-      )
-
-      if (userResult && typeof userResult === 'object' && 'error' in userResult) {
-        throw new Error(userResult.error as string)
-      }
-    } catch (userDeleteError) {
-      // If deleteUser endpoint doesn't exist (404) or fails, continue with logout
-    }
-
+    // On success, update UI and redirect
     showDeleteConfirmation.value = false
-
     authStore.logout()
     milestoneStore.clearMilestones()
 
@@ -252,154 +292,39 @@ const confirmcloseProfile = async () => {
   }
 }
 
-import { ref, computed, onMounted } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-import { useProfileStore } from '@/stores/profile'
-import { useMilestoneStore } from '@/stores/milestone'
-import HobbyCard from '@/components/shared/HobbyCard.vue'
-import HobbyModal from '@/components/modals/HobbyModal.vue'
-import HobbyDetailModal from '@/components/shared/HobbyDetailModal.vue'
-
-const authStore = useAuthStore()
-const profileStore = useProfileStore()
-const milestoneStore = useMilestoneStore()
-
-const user = computed(() => authStore.user)
-const profile = computed(() => profileStore.profile)
-const loading = computed(() => profileStore.loading)
-const goalsLoaded = computed(() => !milestoneStore.loading)
-
-const isEditing = ref(false)
-const showAddHobby = ref(false)
-const showHobbyDetail = ref(false)
-const showDeleteConfirmation = ref(false)
-const isDeleting = ref(false)
-
-const editForm = ref({
-  name: '',
-  image: '',
-})
-
-const hobbyFilter = ref('active')
-const allHobbies = computed(() => profileStore.hobbies)
-const activeHobbies = computed(() => profileStore.activeHobbies)
-const inactiveHobbies = computed(() =>
-  allHobbies.value.filter((h) => !activeHobbies.value.includes(h)),
-)
-const filteredHobbies = computed(() => {
-  if (hobbyFilter.value === 'active') return activeHobbies.value
-  if (hobbyFilter.value === 'inactive') return inactiveHobbies.value
-  return allHobbies.value
-})
-
-// Quiz History State
-const quizHistory = ref<Array<{ id: string; hobby: string; matchedAt: string }>>([])
-const quizHistoryLoading = ref(false)
-
-const fetchQuizHistory = async () => {
-  if (!user.value) return
-  quizHistoryLoading.value = true
-  try {
-    const result = await ApiService.callConceptAction<any>(
-      'QuizMatchmaker',
-      '_getAllHobbyMatches',
-      {},
-    )
-
-    console.log('🔍 fetchQuizHistory - _getAllHobbyMatches response:', result)
-
-    // Extract matches array from response object
-    const matchesArray = result?.matches || result?.hobbyMatches || result
-
-    if (Array.isArray(matchesArray)) {
-      quizHistory.value = matchesArray.map((m: any) => ({
-        id: m.id || m._id || m.matchedAt,
-        hobby: m.hobby || m.matchedHobby,
-        matchedAt: m.matchedAt || m.createdAt,
-      }))
-      console.log('✅ fetchQuizHistory - loaded', quizHistory.value.length, 'quiz matches')
-    } else {
-      console.warn('⚠️ fetchQuizHistory - result is not an array:', matchesArray)
-      quizHistory.value = []
-    }
-  } catch (err) {
-    console.error('❌ fetchQuizHistory error:', err)
-    quizHistory.value = []
-  } finally {
-    quizHistoryLoading.value = false
-  }
+const markHobbyInactive = async (hobbyName: string) => {
+  await profileStore.closeHobby(hobbyName)
+  showHobbyDetail.value = false
 }
 
-function formatDate(dateStr: string) {
-  const d = new Date(dateStr)
-  const date = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
-  const time = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-  return `${date} at ${time}`
-}
-const getInitials = (name: string) => {
-  return name
-    .split(' ')
-    .map((word) => word.charAt(0))
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
+const markHobbyActive = async (hobbyName: string) => {
+  await profileStore.setHobby(hobbyName)
+  showHobbyDetail.value = false
 }
 
 const toggleEditMode = async () => {
   if (isEditing.value) {
     try {
-      console.log('=== Saving Profile Changes ===')
-      console.log('Current profile:', profile.value)
-      console.log('Edit form values:', editForm.value)
-
-      // Save changes - run API calls in parallel for better performance
       const updates = []
-
       const nameChanged = editForm.value.name !== profile.value?.name
       const imageChanged = editForm.value.image !== profile.value?.image
 
-      console.log(
-        'Name changed?',
-        nameChanged,
-        'New:',
-        editForm.value.name,
-        'Old:',
-        profile.value?.name,
-      )
-      console.log(
-        'Image changed?',
-        imageChanged,
-        'New:',
-        editForm.value.image,
-        'Old:',
-        profile.value?.image,
-      )
-
       if (editForm.value.name && nameChanged) {
-        console.log('✓ Queuing name update:', editForm.value.name)
         updates.push(profileStore.setName(editForm.value.name))
       }
-
       if (editForm.value.image && imageChanged) {
-        console.log('✓ Queuing image update:', editForm.value.image)
         updates.push(profileStore.setImage(editForm.value.image))
       }
 
       if (updates.length > 0) {
-        console.log(`Executing ${updates.length} update(s)...`)
         await Promise.all(updates)
-        console.log('✓ All updates completed')
-      } else {
-        console.log('No changes detected')
       }
-
       isEditing.value = false
     } catch (error) {
       console.error('Failed to save profile changes:', error)
       alert('Failed to save profile changes. Please try again.')
     }
   } else {
-    // Enter edit mode
     editForm.value = {
       name: profile.value?.name || '',
       image: profile.value?.image || '',
@@ -425,19 +350,38 @@ const addHobby = async (hobbyName: string) => {
   }
 }
 
-const selectedHobby = ref<string | null>(null)
-const selectedHobbyGoals = ref<any[] | null>(null)
-const selectedHobbyIsActive = ref(false)
-const errorMessage = ref('')
+const fetchQuizHistory = async () => {
+  if (!user.value) return
+  quizHistoryLoading.value = true
+  try {
+    const result = await ApiService.callConceptAction<any>(
+      'QuizMatchmaker',
+      '_getAllHobbyMatches',
+      {},
+    )
+    const matchesArray = result?.matches || result?.hobbyMatches || result
+    if (Array.isArray(matchesArray)) {
+      quizHistory.value = matchesArray.map((m: any) => ({
+        id: m.id || m._id || m.matchedAt,
+        hobby: m.hobby || m.matchedHobby,
+        matchedAt: m.matchedAt || m.createdAt,
+      }))
+    } else {
+      quizHistory.value = []
+    }
+  } catch (err) {
+    console.error('❌ fetchQuizHistory error:', err)
+    quizHistory.value = []
+  } finally {
+    quizHistoryLoading.value = false
+  }
+}
 
-import { ApiService } from '@/services/api'
-
-import ConfirmationModal from '@/components/shared/ConfirmationModal.vue'
-const showClearHistoryConfirmation = ref(false)
-const clearQuizHistory = async () => {
+const clearQuizHistory = () => {
   if (!user.value) return
   showClearHistoryConfirmation.value = true
 }
+
 const confirmClearQuizHistory = async () => {
   try {
     await ApiService.callConceptAction('QuizMatchmaker', 'deleteHobbyMatches', {})
@@ -450,36 +394,24 @@ const confirmClearQuizHistory = async () => {
 }
 
 const handleHobbyClick = async (hobby: string) => {
-  errorMessage.value = '' // Clear previous error
+  errorMessage.value = ''
   selectedHobby.value = hobby
   showHobbyDetail.value = true
   selectedHobbyIsActive.value = activeHobbies.value.includes(hobby)
-  selectedHobbyGoals.value = null // null means loading
+  selectedHobbyGoals.value = null // Set to loading state
   try {
-    // Wait for goals to be loaded if not already
     if (milestoneStore.loading) {
       await milestoneStore.loadUserGoals()
     }
-    // Filter all goals for this hobby (active and closed)
     const allGoals = milestoneStore.goals.filter((g: any) => g.hobby === hobby)
-    // For each goal, fetch its steps and attach as 'steps' property
     const goalsWithSteps = await Promise.all(
       allGoals.map(async (goal: any) => {
         try {
-          const steps = await ApiService.callConceptAction('MilestoneTracker', '_getSteps', {
+          const stepsResult = await ApiService.callConceptAction('MilestoneTracker', '_getSteps', {
             goalId: goal.id,
           })
-          const stepsArray = steps?.steps || steps
-          // Use step objects directly if present
-          if (Array.isArray(stepsArray) && typeof stepsArray[0] === 'object') {
-            return { ...goal, steps: stepsArray }
-          } else {
-            // fallback: treat as array of IDs
-            return {
-              ...goal,
-              steps: (Array.isArray(stepsArray) ? stepsArray : []).map((id) => ({ id })),
-            }
-          }
+          const stepsArray = stepsResult?.steps || stepsResult
+          return { ...goal, steps: Array.isArray(stepsArray) ? stepsArray : [] }
         } catch (e) {
           return { ...goal, steps: [] }
         }
@@ -487,22 +419,16 @@ const handleHobbyClick = async (hobby: string) => {
     )
     selectedHobbyGoals.value = goalsWithSteps
   } catch (err) {
-    errorMessage.value = 'Failed to fetch all goals.'
-    console.error('Failed to fetch all goals:', err)
+    errorMessage.value = 'Failed to fetch hobby goals.'
+    console.error('Failed to fetch hobby goals:', err)
     selectedHobbyGoals.value = []
   }
 }
 
-// Example: clear error on regenerate steps
-const regenerateSteps = async (goalId: string) => {
-  errorMessage.value = '' // Clear previous error
-  // ...existing code for regenerating steps...
-}
-
+// Lifecycle Hook
 onMounted(async () => {
   if (user.value) {
     await profileStore.loadProfile()
-    // Ensure user's goals are loaded so hobbyHasGoals can return accurate results
     await milestoneStore.loadUserGoals()
     await fetchQuizHistory()
   }
