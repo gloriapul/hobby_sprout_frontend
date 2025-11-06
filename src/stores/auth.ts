@@ -30,7 +30,6 @@ export const useAuthStore = defineStore('auth', () => {
       >('PasswordAuthentication', 'authenticate', { username, password })
 
       if ('error' in response) {
-        console.error('Login failed:', response.error)
         return false
       }
 
@@ -49,7 +48,6 @@ export const useAuthStore = defineStore('auth', () => {
 
       return true
     } catch (error) {
-      console.error('Login error:', error)
       return false
     }
   }
@@ -63,7 +61,6 @@ export const useAuthStore = defineStore('auth', () => {
       )
 
       if ('error' in response) {
-        console.error('Registration failed:', response.error)
         return false
       }
 
@@ -71,7 +68,6 @@ export const useAuthStore = defineStore('auth', () => {
 
       return await login(username, password)
     } catch (error) {
-      console.error('Registration error:', error)
       return false
     }
   }
@@ -109,7 +105,6 @@ export const useAuthStore = defineStore('auth', () => {
       return true
     } catch (error) {
       // Session is invalid, clear it
-      console.error('Session validation failed:', error)
       logout()
       return false
     }

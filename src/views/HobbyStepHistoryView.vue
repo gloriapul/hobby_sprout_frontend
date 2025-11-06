@@ -244,8 +244,6 @@ onMounted(async () => {
       hobby: hobbyName.value,
     })
 
-    console.log('🔍 HobbyStepHistory - _getGoal response:', result)
-
     // Extract goals array from response object
     const allGoals = result?.goals || result
 
@@ -277,15 +275,12 @@ onMounted(async () => {
           const stepsArray = stepsResult?.steps || stepsResult
           return { ...goal, steps: Array.isArray(stepsArray) ? stepsArray : [] }
         } catch (err) {
-          console.error('Failed to load steps for goal', goal.id, err)
           return { ...goal, steps: [] }
         }
       }),
     )
     goals.value = goalsWithSteps
-    console.log('✅ HobbyStepHistory - loaded goals:', goals.value)
   } catch (err) {
-    console.error('Failed to load hobby history:', err)
     goals.value = []
   } finally {
     loading.value = false

@@ -24,7 +24,6 @@ apiClient.interceptors.request.use(
     return config
   },
   (error) => {
-    console.error('Request error:', error)
     return Promise.reject(error)
   },
 )
@@ -37,11 +36,9 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     // Handle error responses
-    console.error('Response error:', error)
 
     // Clear stale session only on authentication failures (not timeouts)
     if (error.response?.status === 401) {
-      console.error('Authentication error - clearing session')
       removeFromStorage('token')
       removeFromStorage('user')
 
@@ -86,7 +83,6 @@ export class ApiService {
       const response = await apiClient.post(endpoint, requestData)
       return response.data
     } catch (error) {
-      console.error(`Error calling ${conceptName}/${actionName}:`, error)
       throw error
     }
   }
@@ -99,7 +95,6 @@ export class ApiService {
       const response = await apiClient.get(endpoint)
       return response.data
     } catch (error) {
-      console.error(`Error making GET request to ${endpoint}:`, error)
       throw error
     }
   }
@@ -112,7 +107,6 @@ export class ApiService {
       const response = await apiClient.post(endpoint, data)
       return response.data
     } catch (error) {
-      console.error(`Error making POST request to ${endpoint}:`, error)
       throw error
     }
   }

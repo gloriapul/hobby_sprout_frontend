@@ -67,6 +67,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+const error = ref<string | null>(null)
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
 import { useMilestoneStore } from '@/stores/milestone'
@@ -97,10 +98,8 @@ async function reloadAllGoals() {
   try {
     // Use the new getGoals query to fetch all goals for the user
     const response = await ApiService.callConceptAction<any>('MilestoneTracker', '_getGoals', {})
-    console.log('DEBUG _getGoals response:', response)
     // The backend returns an array directly (not {goals: [...]})
     const goalsArray = Array.isArray(response.goals) ? response.goals : []
-    console.log('DEBUG _getGoals first element:', goalsArray[0])
     allGoals.value = goalsArray.map((g: any) => ({
       id: g.goalId || g.id,
       description: g.goalDescription || g.description,
@@ -108,9 +107,7 @@ async function reloadAllGoals() {
       isActive: g.goalIsActive ?? g.isActive ?? true,
       completed: g.completed ?? false,
     }))
-    console.log('✅ Dashboard - loaded total goals:', allGoals.value.length)
   } catch (err) {
-    console.error('Failed to reload all goals:', err)
     allGoals.value = []
   }
   allGoalsLoading.value = false
@@ -122,15 +119,15 @@ onMounted(async () => {
     try {
       await profileStore.loadProfile() // Session token is used, not user ID
     } catch (err) {
-      console.error('Failed to load profile on mount:', err)
       // Continue loading goals even if profile fails
+      error.value = 'Failed to load profile'
     }
 
     try {
       await milestoneStore.loadUserGoals()
       await reloadAllGoals()
     } catch (err) {
-      console.error('Failed to load goals on mount:', err)
+      error.value = 'Failed to load goals'
     }
   }
 })
@@ -142,7 +139,6 @@ watch(
   async (newLength, oldLength) => {
     // Only reload if length actually changed and it's not the initial load
     if (oldLength !== undefined && newLength !== oldLength) {
-      console.log('Goals length changed, reloading all goals...')
       await reloadAllGoals()
     }
   },

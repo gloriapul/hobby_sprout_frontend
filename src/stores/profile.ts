@@ -61,7 +61,6 @@ export const useProfileStore = defineStore('profile', () => {
     }
   }
   const loadProfile = async (userId?: string) => {
-    console.log('🔄 loadProfile called')
     loading.value = true
     error.value = null
     if (userId) {
@@ -74,8 +73,6 @@ export const useProfileStore = defineStore('profile', () => {
         '_getUserProfile',
         {}, // Session token is automatically added by ApiService
       )
-
-      console.log('🔍 loadProfile - _getUserProfile response:', response)
 
       // Extract userProfile array from response object
       const userProfileArray = response?.userProfile || response
@@ -95,16 +92,12 @@ export const useProfileStore = defineStore('profile', () => {
           {}, // Session token is automatically added by ApiService
         )
 
-        console.log('🔍 loadProfile - _getUserHobbies response:', hobbyResponse)
-
         // Extract hobbies array from response object
         const hobbiesArray = hobbyResponse?.hobbies || hobbyResponse
 
         if (Array.isArray(hobbiesArray)) {
           hobbies.value = hobbiesArray.map((h) => h.hobby)
           activeHobbies.value = hobbiesArray.filter((h) => h.active).map((h) => h.hobby)
-          console.log('✅ loadProfile - hobbies:', hobbies.value)
-          console.log('✅ loadProfile - activeHobbies:', activeHobbies.value)
         }
       } else {
         // Profile doesn't exist yet - this means the CreateProfileAfterRegister sync hasn't completed
@@ -121,7 +114,6 @@ export const useProfileStore = defineStore('profile', () => {
       } else {
         error.value = err.message || 'Failed to load profile'
       }
-      console.error('Profile load error:', err)
     } finally {
       loading.value = false
     }
@@ -148,8 +140,7 @@ export const useProfileStore = defineStore('profile', () => {
       profile.value = { name: '', image: '' }
       hobbies.value = []
     } catch (err: any) {
-      console.warn('Manual profile creation failed:', err.message)
-      // Don't throw - profile should be created by sync
+      error.value = err?.message || 'Failed to create profile'
     }
   }
 
@@ -174,7 +165,6 @@ export const useProfileStore = defineStore('profile', () => {
       }
       profile.value.name = name
     } catch (err: any) {
-      console.error('setName error:', err)
       error.value = err.message || 'Failed to set name'
       throw err
     } finally {
@@ -203,7 +193,6 @@ export const useProfileStore = defineStore('profile', () => {
       }
       profile.value.image = image
     } catch (err: any) {
-      console.error('setImage error:', err)
       error.value = err.message || 'Failed to set image'
       throw err
     } finally {
@@ -232,24 +221,15 @@ export const useProfileStore = defineStore('profile', () => {
         '_getUserHobbies',
         {}, // Session token added automatically by ApiService
       )
-      console.log('🔍 setHobby - _getUserHobbies response:', hobbyResponse)
-
       // Extract hobbies array from response object
       const hobbiesArray = hobbyResponse?.hobbies || hobbyResponse
 
       if (Array.isArray(hobbiesArray)) {
         // Response is array of objects with {hobby, active}
-        console.log('🔍 First hobby object:', hobbiesArray[0])
-        console.log('🔍 hobbiesArray structure:', hobbiesArray)
-
         hobbies.value = hobbiesArray.map((h) => h.hobby)
         activeHobbies.value = hobbiesArray.filter((h) => h.active).map((h) => h.hobby)
-
-        console.log('✅ setHobby - Updated hobbies:', hobbies.value)
-        console.log('✅ setHobby - Updated activeHobbies:', activeHobbies.value)
       }
     } catch (err: any) {
-      console.error('setHobby error:', err)
       error.value = err.message || 'Failed to set hobby'
       throw err
     } finally {
@@ -287,7 +267,6 @@ export const useProfileStore = defineStore('profile', () => {
         activeHobbies.value = hobbiesArray.filter((h) => h.active).map((h) => h.hobby)
       }
     } catch (err: any) {
-      console.error('closeHobby error:', err)
       error.value = err.message || 'Failed to close hobby'
       throw err
     } finally {

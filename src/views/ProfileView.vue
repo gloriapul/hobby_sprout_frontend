@@ -250,7 +250,6 @@ const hobbyHasGoals = (hobby: string) => {
 
 // API Functions / Event Handlers
 const closeProfile = () => {
-  console.log('🗑️ closeProfile called, user id:', user.value?.id)
   showDeleteConfirmation.value = true
 }
 
@@ -321,7 +320,6 @@ const toggleEditMode = async () => {
       }
       isEditing.value = false
     } catch (error) {
-      console.error('Failed to save profile changes:', error)
       alert('Failed to save profile changes. Please try again.')
     }
   } else {
@@ -377,7 +375,6 @@ const fetchQuizHistory = async () => {
       quizHistory.value = []
     }
   } catch (err) {
-    console.error('❌ fetchQuizHistory error:', err)
     quizHistory.value = []
   } finally {
     quizHistoryLoading.value = false
@@ -427,7 +424,6 @@ const handleHobbyClick = async (hobby: string) => {
     selectedHobbyGoals.value = goalsWithSteps
   } catch (err) {
     errorMessage.value = 'Failed to fetch hobby goals.'
-    console.error('Failed to fetch hobby goals:', err)
     selectedHobbyGoals.value = []
   }
 }

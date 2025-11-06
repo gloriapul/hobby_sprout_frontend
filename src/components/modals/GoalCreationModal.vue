@@ -268,7 +268,6 @@ async function chooseMethod(selected: 'generate' | 'manual') {
     ) {
       step.value = 2
     }
-    console.error('[GoalCreationModal] Error in chooseMethod:', err)
   } finally {
     generating.value = false
   }
@@ -343,7 +342,6 @@ async function saveGoal() {
     emit('close')
   } catch (err: any) {
     generationError.value = 'Failed to save goal. Please try again or manually enter steps.'
-    console.error('[GoalCreationModal] Error saving goal:', err)
   }
 }
 

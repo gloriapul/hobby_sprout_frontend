@@ -238,13 +238,11 @@ const createGoalForHobby = async (hobby: string) => {
 
 const completeStep = async (stepId: string) => {
   if (!stepId) {
-    console.error('Attempted to complete a step with undefined id!')
     return
   }
   try {
     await milestoneStore.completeStep(stepId)
   } catch (error) {
-    console.error('Failed to complete step:', error)
     alert('Failed to complete step. Please try again.')
   }
 }

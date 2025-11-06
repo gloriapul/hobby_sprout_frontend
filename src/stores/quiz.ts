@@ -76,7 +76,6 @@ export const useQuizStore = defineStore('quiz', () => {
       }
     } catch (err: any) {
       error.value = err.message || 'Failed to load quiz questions'
-      console.error('Questions load error:', err)
     } finally {
       loading.value = false
     }
@@ -138,7 +137,6 @@ export const useQuizStore = defineStore('quiz', () => {
       quizCompleted.value = true
     } catch (err: any) {
       error.value = err.message || 'Failed to generate hobby match'
-      console.error('generateHobbyMatch error:', err)
       quizCompleted.value = true
     } finally {
       loading.value = false

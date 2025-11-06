@@ -117,7 +117,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
@@ -137,44 +137,6 @@ const selectedAnswer = ref<any>(null)
 const freeResponseText = ref('')
 const answers = ref<any[]>([])
 const hobbyMatch = ref<string | null>(null)
-
-// Debug watchers to track state changes
-watch(quizStarted, (newVal) => {
-  console.log('🔄 quizStarted changed to:', newVal)
-})
-
-watch(quizCompleted, (newVal) => {
-  console.log('🔄 quizCompleted changed to:', newVal)
-  console.log(
-    '🔄 Current state - quizStarted:',
-    quizStarted.value,
-    'hobbyMatch:',
-    hobbyMatch.value,
-    'loadingMatch:',
-    loadingMatch.value,
-  )
-})
-
-watch(hobbyMatch, (newVal) => {
-  console.log('🔄 hobbyMatch changed to:', newVal)
-})
-
-watch(loadingMatch, (newVal) => {
-  console.log('🔄 loadingMatch changed to:', newVal)
-})
-
-// Log template condition evaluations
-watch([quizStarted, quizCompleted, hobbyMatch, loadingMatch], () => {
-  console.log('📊 Template conditions:')
-  console.log('  - Intro (should show):', !quizStarted.value && !quizCompleted.value)
-  console.log('  - Quiz questions (should show):', quizStarted.value && !quizCompleted.value)
-  console.log('  - Results section (should show):', quizCompleted.value)
-  console.log('  - Loading spinner (should show):', quizCompleted.value && loadingMatch.value)
-  console.log(
-    '  - Hobby match (should show):',
-    quizCompleted.value && !loadingMatch.value && hobbyMatch.value,
-  )
-})
 
 // Official quiz questions from backend spec, with custom answer choices
 const quizQuestions = ref([
@@ -290,7 +252,6 @@ const nextQuestion = async () => {
 
     // Wait for Vue to update the DOM
     await nextTick()
-    console.log('🔄 After setting quizCompleted - template should now show results section')
 
     // Generate hobby match with all answers
     if (authStore.user) {
@@ -344,38 +305,26 @@ const generateHobbyMatch = async () => {
   }
 
   loadingMatch.value = true
-  console.log('=== Generating Hobby Match ===')
-  console.log('Params:', params)
 
   try {
     const response = await ApiService.callConceptAction<
       { matchedHobby: string } | { error: string }
     >('QuizMatchmaker', 'generateHobbyMatch', params)
 
-    console.log('Quiz match response:', response)
-
     if ('error' in response) {
       alert(`Failed to generate hobby match: ${response.error}`)
-      console.error('Backend error:', response.error)
     } else if ('matchedHobby' in response) {
       hobbyMatch.value = response.matchedHobby
-      console.log('✅ Matched hobby set to:', hobbyMatch.value)
-      console.log('quizCompleted:', quizCompleted.value)
-      console.log('loadingMatch:', loadingMatch.value)
 
       // Force Vue to process the update
       await nextTick()
-      console.log('🔄 After nextTick - hobbyMatch:', hobbyMatch.value)
     } else {
-      console.error('Unexpected response format:', response)
       alert('Unable to generate a hobby match. Please try again.')
     }
   } catch (error: any) {
-    console.error('Failed to generate hobby match:', error)
     alert(`Error: ${error.message || 'Failed to generate hobby match'}`)
   } finally {
     loadingMatch.value = false
-    console.log('=== Done - loadingMatch set to false ===')
   }
 }
 
@@ -391,9 +340,9 @@ const addHobbyToProfile = async () => {
   try {
     await profileStore.setHobby(hobbyMatch.value)
     await profileStore.loadProfile()
-    router.push('/dashboard/profile')
+    alert(`${hobbyMatch.value} has been added to your hobbies!`)
+    router.push('/dashboard/milestones')
   } catch (error: any) {
-    console.error('Failed to add hobby to profile:', error)
     alert('Failed to add hobby to profile. Please try again.')
   }
 }

@@ -52,7 +52,6 @@ export const useMilestoneStore = defineStore('milestone', () => {
     try {
       // Use getGoals endpoint to fetch all user goals
       const response = await ApiService.callConceptAction<any>('MilestoneTracker', '_getGoals', {})
-      console.log('DEBUG _getGoals response:', response)
       const goalsArray = Array.isArray(response.goals) ? response.goals : []
       goals.value = goalsArray.map((g: any) => ({
         id: g.goalId || g.id,
@@ -62,13 +61,11 @@ export const useMilestoneStore = defineStore('milestone', () => {
         completed: g.completed ?? false,
         createdAt: g.createdAt ?? new Date().toISOString(),
       }))
-      console.log('DEBUG mapped goals:', goals.value)
       // Set currentGoal to the first active, not completed goal
       const activeGoal = goals.value.find((g) => g.isActive && !g.completed)
       currentGoal.value = activeGoal || null
     } catch (err: any) {
       error.value = err.message || 'Failed to load goals'
-      console.error('Goals load error:', err)
     } finally {
       loading.value = false
     }
@@ -79,13 +76,11 @@ export const useMilestoneStore = defineStore('milestone', () => {
     error.value = null
 
     try {
-      console.log('[createGoal] Sending request:', { description, hobby })
       const response = await ApiService.callConceptAction<{ goal: string } | { error: string }>(
         'MilestoneTracker',
         'createGoal',
         { description, hobby },
       )
-      console.log('[createGoal] Received response:', response)
 
       if ('error' in response) {
         throw new Error(response.error)
@@ -144,9 +139,6 @@ export const useMilestoneStore = defineStore('milestone', () => {
       const response = await ApiService.callConceptAction<any>('MilestoneTracker', '_getSteps', {
         goalId,
       })
-
-      console.log('🔍 loadGoalSteps - _getSteps response for goalId', goalId, ':', response)
-
       if ('error' in response) {
         throw new Error(response.error)
       }
@@ -155,25 +147,17 @@ export const useMilestoneStore = defineStore('milestone', () => {
       const stepsArray = response?.steps || response
       if (Array.isArray(stepsArray)) {
         steps.value = stepsArray
-        console.log('✅ loadGoalSteps - loaded', stepsArray.length, 'steps:', stepsArray)
-        // Debug: print isComplete for each step
-        stepsArray.forEach((s, i) =>
-          console.log(`Step[${i}] id=${s.id} isComplete=${s.isComplete}`),
-        )
         // Check if all steps for this goal are complete and update completed status
         const allComplete = steps.value.length > 0 && steps.value.every((s) => s.isComplete)
         const goal = goals.value.find((g) => g.id === goalId)
         if (goal) goal.completed = allComplete
-      } else {
-        console.warn('Steps response is not an array:', stepsArray)
       }
     } catch (err: any) {
-      console.error('Failed to load steps:', err)
+      error.value = err.message || 'Failed to load steps'
     }
   }
 
   const generateSteps = async (goalId: string) => {
-    console.log('🔍 generateSteps called with goalId:', goalId)
     loading.value = true
     error.value = null
 
@@ -183,8 +167,6 @@ export const useMilestoneStore = defineStore('milestone', () => {
         'generateSteps',
         { goalId },
       )
-
-      console.log('📊 generateSteps response:', response)
 
       if ('error' in response) {
         throw new Error(response.error)
