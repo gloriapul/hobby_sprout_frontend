@@ -335,17 +335,24 @@ const toggleEditMode = async () => {
 
 const addHobby = async (hobbyName: string) => {
   try {
-    await profileStore.setHobby(hobbyName)
-    if (user.value) {
-      await profileStore.loadProfile()
+    // Validate hobby name
+    if (!hobbyName || typeof hobbyName !== 'string') {
+      throw new Error('Invalid hobby name. Please try again.')
     }
-    showAddHobby.value = false
+
+    // Attempt to add the hobby
+    await profileStore.setHobby(hobbyName)
+
+    // Close the hobby detail modal on success
+    showHobbyDetail.value = false
   } catch (err: any) {
-    let msg = err?.message || 'Failed to add hobby.'
-    if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('active')) {
+    // Handle specific errors
+    let errorMsg = err?.message || 'Failed to add hobby.'
+
+    if (errorMsg.toLowerCase().includes('already') || errorMsg.toLowerCase().includes('active')) {
       alert('You already have this hobby in your list.')
     } else {
-      alert(msg)
+      alert(errorMsg)
     }
   }
 }

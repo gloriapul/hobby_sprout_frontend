@@ -205,91 +205,74 @@ const milestoneStore = useMilestoneStore()
 const goalIdRef = ref<string | null>(null)
 
 async function chooseMethod(selected: 'generate' | 'manual') {
+  if (!goalDescription.value.trim()) {
+    manualStepError.value = 'Goal description is required.'
+    return
+  }
+
   method.value = selected
-  step.value = 2
-  if (selected === 'generate') {
-    if (!props.hobby) {
-      manualStepError.value = 'No hobby selected. Please select a hobby before creating a goal.'
-      console.error('[GoalCreationModal] Attempted to create goal without hobby')
+  generating.value = true // Show spinner for both paths initially
+  manualStepError.value = ''
+  steps.value = []
+
+  try {
+    const { ApiService } = await import('@/services/api')
+    const userId = authStore.user?.id
+    if (!userId) throw new Error('User not found')
+
+    // Check for existing active goal for this user and hobby
+    const existingGoals = await ApiService.callConceptAction<any>('MilestoneTracker', '_getGoal', {
+      user: userId,
+      hobby: props.hobby,
+    })
+    if (Array.isArray(existingGoals) && existingGoals.length > 0) {
+      manualStepError.value =
+        'You already have an active goal for this hobby. Please close it before creating a new one.'
+      generating.value = false
       return
     }
-    generating.value = true
-    manualStepError.value = ''
-    steps.value = []
-    try {
-      const { ApiService } = await import('@/services/api')
-      const userId = authStore.user?.id
-      if (!userId) throw new Error('User not found')
-      // Check for existing active goal for this user and hobby
-      const existingGoals = await ApiService.callConceptAction<any>(
-        'MilestoneTracker',
-        '_getGoal',
-        {
-          user: userId,
-          hobby: props.hobby,
-        },
-      )
-      if (Array.isArray(existingGoals) && existingGoals.length > 0) {
-        manualStepError.value =
-          'You already have an active goal for this hobby. Please close it before creating a new one.'
-        generating.value = false
-        return
-      }
-      // 1. Create the goal first
-      const payload = {
-        description: goalDescription.value,
-        hobby: props.hobby,
-        session: authStore.token,
-      }
-      console.log('[GoalCreationModal] Sending createGoal:', payload)
-      const goalResult = await ApiService.callConceptAction<any>(
-        'MilestoneTracker',
-        'createGoal',
-        payload,
-      )
-      console.log('[GoalCreationModal] Received createGoal response:', goalResult)
-      if (goalResult && typeof goalResult.error === 'string') {
-        manualStepError.value = goalResult.error
-        throw new Error(goalResult.error)
-      }
-      const goalId = goalResult.goal
-      if (!goalId) throw new Error('Failed to create goal.')
-      goalIdRef.value = goalId
-      // 2. Generate steps for the new goal
-      const genResult = await ApiService.callConceptAction<any>(
-        'MilestoneTracker',
-        'generateSteps',
-        {
-          goalId: goalId,
-        },
-      )
-      console.log('[GoalCreationModal] generateSteps response:', genResult)
-      if (genResult && Array.isArray(genResult.steps)) {
-        // 3. Fetch the generated steps' details
-        const stepsResult = await ApiService.callConceptAction<any>(
-          'MilestoneTracker',
-          '_getSteps',
-          {
-            goalId: goalId,
-          },
-        )
-        console.log('[GoalCreationModal] _getSteps response:', stepsResult)
-        if (stepsResult && Array.isArray(stepsResult)) {
-          steps.value = stepsResult.map((s: any) => s.description)
-        } else {
-          manualStepError.value = 'Failed to fetch generated steps.'
-        }
-      } else if (genResult && typeof genResult.error === 'string') {
-        manualStepError.value = genResult.error
-      } else {
-        manualStepError.value = 'Failed to generate steps. Please try again.'
-      }
-    } catch (err) {
-      manualStepError.value = 'Failed to generate steps. Please try again.'
-      console.error('[GoalCreationModal] Error generating steps:', err)
-    } finally {
-      generating.value = false
+
+    // 1. Create the goal, telling the backend whether to auto-generate steps
+    const payload = {
+      description: goalDescription.value,
+      hobby: props.hobby,
+      autoGenerate: selected === 'generate', // This will be true for 'generate', false for 'manual'
     }
+    const goalResult = await ApiService.callConceptAction<any>(
+      'MilestoneTracker',
+      'createGoal',
+      payload,
+    )
+    if (goalResult && typeof goalResult.error === 'string') {
+      throw new Error(goalResult.error)
+    }
+    const goalId = goalResult.goalId // Use goalId from the response
+    if (!goalId) throw new Error('Failed to create goal.')
+    goalIdRef.value = goalId
+
+    step.value = 2 // Move to next step
+
+    // 2. If we auto-generated, we now need to fetch the steps.
+    if (selected === 'generate') {
+      // The separate call to `generateSteps` is no longer needed.
+      // We just need to fetch the results after a delay.
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+      const stepsResult = await ApiService.callConceptAction<any>('MilestoneTracker', '_getSteps', {
+        goalId: goalId,
+      })
+      const stepsArray = stepsResult?.steps || stepsResult
+      if (stepsArray && Array.isArray(stepsArray) && stepsArray.length > 0) {
+        steps.value = stepsArray.map((s: any) => s.description)
+      } else {
+        manualStepError.value = 'Could not retrieve generated steps.'
+      }
+    }
+    // If 'manual', we do nothing more here, just move to step 2 for manual entry.
+  } catch (err: any) {
+    manualStepError.value = err.message || 'An error occurred. Please try again.'
+    console.error('[GoalCreationModal] Error in chooseMethod:', err)
+  } finally {
+    generating.value = false
   }
 }
 
@@ -320,55 +303,25 @@ function removeStep(idx: number) {
 
 async function saveGoal() {
   try {
-    if (!props.hobby) {
-      manualStepError.value = 'No hobby selected. Please select a hobby before creating a goal.'
-      return
-    }
-    if (!goalDescription.value || !goalDescription.value.trim()) {
-      manualStepError.value = 'Goal description is required.'
+    const goalId = goalIdRef.value
+    if (!goalId) {
+      manualStepError.value = 'Goal ID is missing. Cannot save steps. Please start over.'
       return
     }
     if (!steps.value || steps.value.length === 0) {
       manualStepError.value = 'You must add at least one step before saving your goal.'
       return
     }
-    const userId = authStore.user?.id
-    if (!userId) throw new Error('User not found')
+
     const { ApiService } = await import('@/services/api')
-    // 1. Find the active goal for this user/hobby (should exist already)
-    let goalId: string | undefined
-    console.log('[GoalCreationModal] Checking for existing goal:', { hobby: props.hobby })
-    const existingGoals = await ApiService.callConceptAction<any>('MilestoneTracker', '_getGoal', {
-      hobby: props.hobby,
-    })
-    console.log('[GoalCreationModal] _getGoal response:', existingGoals)
-    if (Array.isArray(existingGoals) && existingGoals.length > 0) {
-      goalId = existingGoals[0].id
-    } else {
-      // fallback: try to create if not found (should not happen in normal flow)
-      const payload = {
-        description: goalDescription.value,
-        hobby: props.hobby,
-        session: authStore.token,
-      }
-      console.log('[GoalCreationModal] Sending createGoal payload:', payload)
-      const goalResult = await ApiService.callConceptAction<any>(
-        'MilestoneTracker',
-        'createGoal',
-        payload,
-      )
-      console.log('[GoalCreationModal] Received createGoal response:', goalResult)
-      if (goalResult && typeof goalResult.error === 'string') {
-        manualStepError.value = goalResult.error
-        throw new Error(goalResult.error)
-      }
-      goalId = goalResult.goal
-    }
-    if (!goalId) throw new Error('Failed to find or create goal.')
-    // 2. Remove all existing steps for this goal
-    const existingSteps = await ApiService.callConceptAction<any>('MilestoneTracker', '_getSteps', {
-      goalId: goalId,
-    })
+
+    // 1. Remove all existing steps for this goal (if any were generated)
+    const existingStepsResult = await ApiService.callConceptAction<any>(
+      'MilestoneTracker',
+      '_getSteps',
+      { goalId: goalId },
+    )
+    const existingSteps = existingStepsResult?.steps || existingStepsResult
     if (Array.isArray(existingSteps)) {
       for (const step of existingSteps) {
         await ApiService.callConceptAction<any>('MilestoneTracker', 'removeStep', {
@@ -376,20 +329,16 @@ async function saveGoal() {
         })
       }
     }
-    // 3. Add all steps in the current order/content
+
+    // 2. Add all steps from the UI
     for (const stepDesc of steps.value) {
-      try {
-        await ApiService.callConceptAction<any>('MilestoneTracker', 'addStep', {
-          goalId: goalId,
-          description: stepDesc,
-          session: authStore.token,
-        })
-      } catch (err) {
-        console.error('[GoalCreationModal] Error adding step:', stepDesc, err)
-        manualStepError.value = 'Failed to add step: ' + stepDesc
-        throw err
-      }
+      await ApiService.callConceptAction<any>('MilestoneTracker', 'addStep', {
+        goalId: goalId,
+        description: stepDesc,
+        session: authStore.token,
+      })
     }
+
     emit('goalCreated', {
       description: goalDescription.value,
       steps: steps.value.filter((s) => s.trim()),
@@ -397,15 +346,8 @@ async function saveGoal() {
     })
     resetModalState()
     emit('close')
-  } catch (err) {
-    // Show backend error to user
-    let errorMsg = 'Failed to save goal. Please try again.'
-    if (err && typeof err === 'object' && 'message' in err) {
-      errorMsg = (err as any).message
-    } else if (typeof err === 'string') {
-      errorMsg = err
-    }
-    manualStepError.value = errorMsg
+  } catch (err: any) {
+    manualStepError.value = err.message || 'Failed to save goal. Please try again.'
     console.error('[GoalCreationModal] Error saving goal:', err)
   }
 }

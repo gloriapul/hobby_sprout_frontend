@@ -82,9 +82,13 @@
         <div class="steps-header">
           <h3>Your Steps</h3>
 
-          <div v-if="generatingSteps" class="generating-steps">
+          <div v-if="generatingSteps || stepsLoading" class="generating-steps">
             <div class="loading-spinner"></div>
-            <p>Creating personalized steps for your goal...</p>
+            <p>{{ generatingSteps ? 'Creating personalized steps...' : 'Loading steps...' }}</p>
+          </div>
+
+          <div v-else-if="currentGoalSteps.length === 0" class="empty-state">
+            <p>No steps have been created for this goal yet.</p>
           </div>
 
           <div v-else class="steps-list">
@@ -223,6 +227,7 @@ const milestoneStore = useMilestoneStore()
 const showCreateGoal = ref(false)
 const selectedHobbyForGoal = ref<string | undefined>(undefined)
 const generatingSteps = ref(false)
+const stepsLoading = ref(false)
 
 // Computed properties
 const currentGoal = computed(() => milestoneStore.currentGoal)
@@ -303,12 +308,14 @@ const handleGoalCreated = async (goalData: {
   showCreateGoal.value = false
   selectedHobbyForGoal.value = undefined
   if (authStore.user) {
-    // createGoal already updates the store, just load steps for the new goal
+    // The goal and steps were created in the modal.
+    // Now, we need to reload the store's state to reflect these changes.
+    await milestoneStore.loadUserGoals() // This will fetch the new goal and set it as currentGoal
+
+    // After loading goals, the new goal should be the current one. Load its steps.
     if (milestoneStore.currentGoal && milestoneStore.currentGoal.id) {
       await milestoneStore.loadGoalSteps(milestoneStore.currentGoal.id)
     }
-    // Optionally, navigate to milestones/progress page
-    router.push('/dashboard/milestones')
   }
 }
 
@@ -320,7 +327,21 @@ onMounted(async () => {
 
     // If there's an active goal, load its steps
     if (currentGoal.value) {
-      await milestoneStore.loadGoalSteps(currentGoal.value.id)
+      stepsLoading.value = true
+      try {
+        await milestoneStore.loadGoalSteps(currentGoal.value.id)
+        // If the goal has no steps, generate them
+        if (currentGoalSteps.value.length === 0) {
+          generatingSteps.value = true
+          try {
+            await milestoneStore.generateSteps(currentGoal.value.id)
+          } finally {
+            generatingSteps.value = false
+          }
+        }
+      } finally {
+        stepsLoading.value = false
+      }
     }
   }
 })
