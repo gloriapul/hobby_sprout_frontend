@@ -156,7 +156,7 @@ const goalSortOrder = ref<
   | 'leastRecentCompletion'
   | 'activeFirst'
   | 'inactiveFirst'
->('mostSteps')
+>('recentCompletion')
 
 const sortedGoals = computed(() => {
   if (!goals.value) return []

@@ -18,20 +18,23 @@
             required
           ></textarea>
           <div class="form-help">Be specific! E.g. "Learn to play 5 songs on guitar"</div>
+          <span v-if="manualStepError" class="error-message">{{ manualStepError }}</span>
           <div class="choose-method">
             <button
               @click="chooseMethod('generate')"
-              :disabled="!goalDescription.trim()"
+              :disabled="!goalDescription.trim() || generating"
               class="next-button"
             >
-              Generate Steps
+              <span v-if="generating && method === 'generate'" class="button-spinner"></span>
+              <span v-else>Generate Steps</span>
             </button>
             <button
               @click="chooseMethod('manual')"
-              :disabled="!goalDescription.trim()"
+              :disabled="!goalDescription.trim() || generating"
               class="next-button"
             >
-              Enter Steps Manually
+              <span v-if="generating && method === 'manual'"></span>
+              <span v-else>Enter Steps Manually</span>
             </button>
           </div>
         </div>
@@ -172,8 +175,30 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-
 import draggable from 'vuedraggable'
+import { useAuthStore } from '@/stores/auth'
+import { useMilestoneStore } from '@/stores/milestone'
+
+// Props and Emits
+const props = defineProps<{ hobby: string }>()
+const emit = defineEmits(['close', 'goalCreated'])
+
+// Store instances
+const authStore = useAuthStore()
+const milestoneStore = useMilestoneStore()
+
+// Component State
+const step = ref(1)
+const method = ref<'generate' | 'manual' | null>(null)
+const goalDescription = ref('')
+const steps = ref<string[]>([])
+const manualStepInput = ref('')
+const manualStepError = ref('')
+const generating = ref(false)
+const goalIdRef = ref<string | null>(null)
+
+// Functions
+
 function resetModalState() {
   step.value = 1
   method.value = null
@@ -182,27 +207,13 @@ function resetModalState() {
   manualStepInput.value = ''
   manualStepError.value = ''
   generating.value = false
+  goalIdRef.value = null
 }
 
 function handleClose() {
   resetModalState()
   emit('close')
 }
-const props = defineProps<{ hobby: string }>()
-
-const emit = defineEmits(['close', 'goalCreated'])
-const step = ref(1)
-const method = ref<'generate' | 'manual' | null>(null)
-const goalDescription = ref('')
-const steps = ref<string[]>([])
-const manualStepInput = ref('')
-const manualStepError = ref('')
-const generating = ref(false)
-import { useAuthStore } from '@/stores/auth'
-const authStore = useAuthStore()
-import { useMilestoneStore } from '@/stores/milestone'
-const milestoneStore = useMilestoneStore()
-const goalIdRef = ref<string | null>(null)
 
 async function chooseMethod(selected: 'generate' | 'manual') {
   if (!goalDescription.value.trim()) {
@@ -236,7 +247,7 @@ async function chooseMethod(selected: 'generate' | 'manual') {
     const payload = {
       description: goalDescription.value,
       hobby: props.hobby,
-      autoGenerate: selected === 'generate', // This will be true for 'generate', false for 'manual'
+      autoGenerate: selected === 'generate',
     }
     const goalResult = await ApiService.callConceptAction<any>(
       'MilestoneTracker',
@@ -246,7 +257,7 @@ async function chooseMethod(selected: 'generate' | 'manual') {
     if (goalResult && typeof goalResult.error === 'string') {
       throw new Error(goalResult.error)
     }
-    const goalId = goalResult.goalId // Use goalId from the response
+    const goalId = goalResult.goalId
     if (!goalId) throw new Error('Failed to create goal.')
     goalIdRef.value = goalId
 
@@ -254,8 +265,6 @@ async function chooseMethod(selected: 'generate' | 'manual') {
 
     // 2. If we auto-generated, we now need to fetch the steps.
     if (selected === 'generate') {
-      // The separate call to `generateSteps` is no longer needed.
-      // We just need to fetch the results after a delay.
       await new Promise((resolve) => setTimeout(resolve, 2000))
       const stepsResult = await ApiService.callConceptAction<any>('MilestoneTracker', '_getSteps', {
         goalId: goalId,
@@ -267,9 +276,11 @@ async function chooseMethod(selected: 'generate' | 'manual') {
         manualStepError.value = 'Could not retrieve generated steps.'
       }
     }
-    // If 'manual', we do nothing more here, just move to step 2 for manual entry.
   } catch (err: any) {
-    manualStepError.value = err.message || 'An error occurred. Please try again.'
+    // If we get a verbose error, we should still proceed to step 2 to show the error and allow regeneration.
+    if (err.message.includes('too detailed') || err.message.includes('too verbose')) {
+      step.value = 2
+    }
     console.error('[GoalCreationModal] Error in chooseMethod:', err)
   } finally {
     generating.value = false
@@ -315,7 +326,7 @@ async function saveGoal() {
 
     const { ApiService } = await import('@/services/api')
 
-    // 1. Remove all existing steps for this goal (if any were generated)
+    // 1. Remove all existing steps for this goal
     const existingStepsResult = await ApiService.callConceptAction<any>(
       'MilestoneTracker',
       '_getSteps',
@@ -335,7 +346,6 @@ async function saveGoal() {
       await ApiService.callConceptAction<any>('MilestoneTracker', 'addStep', {
         goalId: goalId,
         description: stepDesc,
-        session: authStore.token,
       })
     }
 
@@ -357,12 +367,16 @@ async function confirmRegenerateSteps() {
     manualStepError.value = 'No goal to regenerate steps for.'
     return
   }
+  generating.value = true
   try {
     await milestoneStore.regenerateSteps(goalIdRef.value)
+    await new Promise((resolve) => setTimeout(resolve, 2000))
     await milestoneStore.loadGoalSteps(goalIdRef.value)
     steps.value = milestoneStore.steps.map((s) => s.description)
   } catch (err) {
     manualStepError.value = 'Failed to regenerate steps.'
+  } finally {
+    generating.value = false
   }
 }
 </script>
@@ -517,6 +531,10 @@ async function confirmRegenerateSteps() {
   font-weight: 500;
   box-shadow: none;
   transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 150px; /* Ensure button doesn't shrink when showing spinner */
 }
 .next-button:disabled,
 .primary-button:disabled {
@@ -570,6 +588,16 @@ async function confirmRegenerateSteps() {
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 2rem auto;
+}
+
+.button-spinner {
+  width: 1.2em;
+  height: 1.2em;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 1s linear infinite;
 }
 
 .edit-step-input {

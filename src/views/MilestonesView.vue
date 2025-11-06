@@ -82,13 +82,21 @@
         <div class="steps-header">
           <h3>Your Steps</h3>
 
-          <div v-if="generatingSteps || stepsLoading" class="generating-steps">
+          <div v-if="stepsLoading" class="generating-steps">
             <div class="loading-spinner"></div>
-            <p>{{ generatingSteps ? 'Creating personalized steps...' : 'Loading steps...' }}</p>
+            <p>Loading steps...</p>
           </div>
 
           <div v-else-if="currentGoalSteps.length === 0" class="empty-state">
             <p>No steps have been created for this goal yet.</p>
+            <button
+              @click="manuallyGenerateSteps"
+              class="primary-button"
+              :disabled="generatingSteps"
+            >
+              <span v-if="generatingSteps" class="button-spinner"></span>
+              <span v-else>Generate Steps</span>
+            </button>
           </div>
 
           <div v-else class="steps-list">
@@ -174,67 +182,29 @@
 </template>
 
 <script setup lang="ts">
-import ConfirmationModal from '@/components/shared/ConfirmationModal.vue'
-const showAbandonGoalModal = ref(false)
-
-const handleConfirmAbandonGoal = async () => {
-  console.log('handleConfirmAbandonGoal called')
-  await closeActiveGoal()
-  showAbandonGoalModal.value = false
-}
-const closeActiveGoal = async () => {
-  console.log('closeActiveGoal called')
-  if (currentGoal.value) {
-    console.log('closeActiveGoal: currentGoal.value.id =', currentGoal.value.id)
-    await milestoneStore.deleteGoal(currentGoal.value.id)
-    milestoneStore.clearCurrentGoal()
-    milestoneStore.currentGoal = null
-    showCreateGoal.value = false
-    selectedHobbyForGoal.value = undefined
-    await nextTick()
-  }
-}
-// Reset page and allow user to pick a new hobby for next goal
-const resetForNewGoal = async () => {
-  console.log('resetForNewGoal called')
-  if (milestoneStore.currentGoal) {
-    console.log('resetForNewGoal: milestoneStore.currentGoal.id =', milestoneStore.currentGoal.id)
-  }
-  // Mark the current goal as inactive and completed, and update backend
-  if (milestoneStore.currentGoal) {
-    milestoneStore.currentGoal.isActive = false
-    milestoneStore.currentGoal.completed = true
-    await milestoneStore.deleteGoal(milestoneStore.currentGoal.id)
-  }
-  milestoneStore.clearCurrentGoal()
-  milestoneStore.currentGoal = null
-  showCreateGoal.value = false
-  selectedHobbyForGoal.value = undefined
-  // No need to reload - deleteGoal already updates store state
-  await nextTick()
-}
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
 import { useMilestoneStore } from '@/stores/milestone'
 import GoalCreationModal from '@/components/modals/GoalCreationModal.vue'
+import ConfirmationModal from '@/components/shared/ConfirmationModal.vue'
 import { useRouter } from 'vue-router'
 
 const authStore = useAuthStore()
 const profileStore = useProfileStore()
 const milestoneStore = useMilestoneStore()
+const router = useRouter()
 
 const showCreateGoal = ref(false)
 const selectedHobbyForGoal = ref<string | undefined>(undefined)
 const generatingSteps = ref(false)
 const stepsLoading = ref(false)
+const showAbandonGoalModal = ref(false)
 
-// Computed properties
 const currentGoal = computed(() => milestoneStore.currentGoal)
 const currentGoalSteps = computed(() => milestoneStore.currentGoalSteps)
 const loading = computed(() => milestoneStore.loading)
 const userHobbies = computed(() => profileStore.activeHobbies || [])
-
 const totalSteps = computed(() => currentGoalSteps.value.length)
 const completedSteps = computed(
   () => currentGoalSteps.value.filter((step) => step.isComplete).length,
@@ -242,11 +212,21 @@ const completedSteps = computed(
 const remainingSteps = computed(() => totalSteps.value - completedSteps.value)
 const goalProgress = computed(() => milestoneStore.goalProgress)
 
-// Methods
+const handleConfirmAbandonGoal = async () => {
+  if (currentGoal.value) {
+    await milestoneStore.closeGoal(currentGoal.value.id)
+  }
+  showAbandonGoalModal.value = false
+}
+
+const resetForNewGoal = async () => {
+  if (milestoneStore.currentGoal) {
+    await milestoneStore.closeGoal(milestoneStore.currentGoal.id)
+  }
+}
+
 const createGoalForHobby = async (hobby: string) => {
-  // Prevent opening modal until goals are loaded and no active goal exists
   if (loading.value) return
-  // Check store state directly - no need to reload
   if (milestoneStore.currentGoal && milestoneStore.currentGoal.isActive) {
     alert('You already have an active goal. Please complete or close it first.')
     return
@@ -256,22 +236,12 @@ const createGoalForHobby = async (hobby: string) => {
 }
 
 const completeStep = async (stepId: string) => {
-  console.log('Attempting to complete step with id:', stepId)
-  // Debug: print all current steps and the stepId being sent
-  console.log('Current steps:', currentGoalSteps.value)
-  const found = currentGoalSteps.value.find((s) => s.id === stepId)
-  if (!found) {
-    console.warn('Step with id', stepId, 'not found in currentGoalSteps!')
-  } else {
-    console.log('Step to complete:', found)
-  }
   if (!stepId) {
     console.error('Attempted to complete a step with undefined id!')
     return
   }
   try {
     await milestoneStore.completeStep(stepId)
-    // completeStep already updates the local state, no need to reload
   } catch (error) {
     console.error('Failed to complete step:', error)
     alert('Failed to complete step. Please try again.')
@@ -279,18 +249,12 @@ const completeStep = async (stepId: string) => {
 }
 
 const isNextStep = (index: number) => {
-  // The next step is the first incomplete step
-  const steps = currentGoalSteps.value
-  for (let i = 0; i < steps.length; i++) {
-    const step = steps[i]
-    if (step && step.isComplete === false) {
-      return i === index
-    }
-  }
-  return false
+  const firstIncompleteIndex = currentGoalSteps.value.findIndex((step) => !step.isComplete)
+  return index === firstIncompleteIndex
 }
 
 const formatDate = (dateString: string) => {
+  if (!dateString) return ''
   const date = new Date(dateString)
   return (
     date.toLocaleDateString() +
@@ -299,46 +263,41 @@ const formatDate = (dateString: string) => {
   )
 }
 
-const router = useRouter()
-const handleGoalCreated = async (goalData: {
-  description: string
-  steps: string[]
-  hobby: string
-}) => {
+const handleGoalCreated = async () => {
   showCreateGoal.value = false
   selectedHobbyForGoal.value = undefined
   if (authStore.user) {
-    // The goal and steps were created in the modal.
-    // Now, we need to reload the store's state to reflect these changes.
-    await milestoneStore.loadUserGoals() // This will fetch the new goal and set it as currentGoal
-
-    // After loading goals, the new goal should be the current one. Load its steps.
-    if (milestoneStore.currentGoal && milestoneStore.currentGoal.id) {
-      await milestoneStore.loadGoalSteps(milestoneStore.currentGoal.id)
+    stepsLoading.value = true
+    try {
+      await milestoneStore.loadUserGoals()
+      if (milestoneStore.currentGoal && milestoneStore.currentGoal.id) {
+        await milestoneStore.loadGoalSteps(milestoneStore.currentGoal.id)
+      }
+    } finally {
+      stepsLoading.value = false
     }
   }
 }
 
-// Load data on mount
+const manuallyGenerateSteps = async () => {
+  if (currentGoal.value) {
+    generatingSteps.value = true
+    try {
+      await milestoneStore.generateSteps(currentGoal.value.id)
+      await milestoneStore.loadGoalSteps(currentGoal.value.id)
+    } finally {
+      generatingSteps.value = false
+    }
+  }
+}
+
 onMounted(async () => {
   if (authStore.user) {
-    // Load goals and profile data
     await Promise.all([milestoneStore.loadUserGoals(), profileStore.loadProfile()])
-
-    // If there's an active goal, load its steps
     if (currentGoal.value) {
       stepsLoading.value = true
       try {
         await milestoneStore.loadGoalSteps(currentGoal.value.id)
-        // If the goal has no steps, generate them
-        if (currentGoalSteps.value.length === 0) {
-          generatingSteps.value = true
-          try {
-            await milestoneStore.generateSteps(currentGoal.value.id)
-          } finally {
-            generatingSteps.value = false
-          }
-        }
       } finally {
         stepsLoading.value = false
       }
@@ -807,5 +766,37 @@ onMounted(async () => {
   font-size: 1.3em;
   display: flex;
   align-items: center;
+}
+
+.primary-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 150px;
+  background: #388e3c;
+  color: white;
+  border: none;
+  padding: 0.85rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.primary-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.primary-button:hover:not(:disabled) {
+  background: #256b28;
+}
+.button-spinner {
+  width: 1.2em;
+  height: 1.2em;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 1s linear infinite;
 }
 </style>
