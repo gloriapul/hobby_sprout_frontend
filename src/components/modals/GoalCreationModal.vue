@@ -551,23 +551,6 @@ async function confirmRegenerateSteps() {
   background: #388e3c;
   color: #fff;
 }
-.cancel-button {
-  background: transparent;
-  color: #256b28;
-  border: 2px solid #256b28;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  cursor: pointer;
-  font-weight: 500;
-  transition:
-    background 0.2s,
-    color 0.2s;
-}
-.cancel-button:hover {
-  background: #256b28;
-  color: #fff;
-}
 .next-button {
   display: flex;
   align-items: center;

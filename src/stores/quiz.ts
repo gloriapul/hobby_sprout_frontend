@@ -49,10 +49,6 @@ export const useQuizStore = defineStore('quiz', () => {
     return currentQuestionIndex.value > 0
   })
 
-  const hasResponded = computed(() => {
-    return responses.value.some((r) => r.question === currentQuestion.value?.id)
-  })
-
   // Actions
   const loadQuestions = async () => {
     loading.value = true

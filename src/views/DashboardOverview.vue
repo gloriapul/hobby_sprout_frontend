@@ -86,7 +86,7 @@ const goals = computed(() => milestoneStore.goals)
 
 // Display name: use profile name if available, otherwise fallback to username
 const displayName = computed(() => {
-  return profileStore.profile?.name || user.value?.username || 'User'
+  return profileStore.profile?.name || user.value?.username
 })
 
 const recentGoals = computed(() => {
@@ -284,27 +284,5 @@ watch(
   margin: 0;
   color: #666;
   font-size: 0.85rem;
-}
-
-.status-badge {
-  background: #e8f5e9;
-  color: #256b28;
-  padding: 0.25rem 0.75rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border: 1.2px solid #bce7bd;
-  transition:
-    background 0.2s,
-    color 0.2s,
-    border 0.2s;
-}
-
-.status-badge.completed {
-  background: #388e3c;
-  color: #fff;
-  border-color: #388e3c;
 }
 </style>

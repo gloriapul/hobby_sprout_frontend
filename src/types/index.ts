@@ -15,40 +15,6 @@ export interface User {
   updatedAt: string
 }
 
-export interface CreateUserData {
-  name: string
-  password: string
-}
-
-export interface UpdateUserData {
-  name?: string
-}
-
-/**
- * Hobby related types
- */
-export interface Hobby {
-  id: string
-  name: string
-  description: string
-  userId: string
-  createdAt: string
-  updatedAt: string
-  isActive: boolean
-}
-
-export interface CreateHobbyData {
-  name: string
-  description: string
-  userId: string
-}
-
-export interface UpdateHobbyData {
-  name?: string
-  description?: string
-  isActive?: boolean
-}
-
 /**
  * API Response wrapper types
  */
@@ -59,13 +25,4 @@ export type ApiResponse<T> = T | ApiError
  */
 export function isApiError(response: any): response is ApiError {
   return response && typeof response.error === 'string'
-}
-
-/**
- * Navigation and routing types
- */
-export interface RouteInfo {
-  name: string
-  path: string
-  title: string
 }

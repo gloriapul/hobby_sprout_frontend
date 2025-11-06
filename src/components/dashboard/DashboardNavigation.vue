@@ -68,7 +68,6 @@
   align-items: center;
   gap: 2rem;
   overflow-x: auto;
-  font-family: 'Poppins', sans-serif;
 }
 
 .nav-section {

@@ -8,12 +8,6 @@ interface User {
   username: string
 }
 
-interface AuthState {
-  user: User | null
-  token: string | null
-  isAuthenticated: boolean
-}
-
 export const useAuthStore = defineStore('auth', () => {
   // State
   const user = ref<User | null>(getFromStorage('user', null))

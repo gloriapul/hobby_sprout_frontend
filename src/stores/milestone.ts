@@ -264,7 +264,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
     }
   }
 
-  const deleteGoal = async (goalId: string) => {
+  const closeGoal = async (goalId: string) => {
     loading.value = true
     error.value = null
 
@@ -325,10 +325,6 @@ export const useMilestoneStore = defineStore('milestone', () => {
     }
   }
 
-  const closeGoal = async (goalId: string) => {
-    return deleteGoal(goalId) // Alias for deleteGoal
-  }
-
   const clearMilestones = () => {
     goals.value = []
     currentGoal.value = null
@@ -359,7 +355,6 @@ export const useMilestoneStore = defineStore('milestone', () => {
     completeStep,
     removeStep,
     closeGoal,
-    deleteGoal,
     clearMilestones,
     clearCurrentGoal,
   }

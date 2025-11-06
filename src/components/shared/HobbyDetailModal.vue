@@ -84,14 +84,7 @@ watch(
   font-size: 1rem;
   text-align: right;
 }
-.close-error-btn {
-  background: none;
-  border: none;
-  color: #c62828;
-  font-size: 1.2rem;
-  margin-left: 0.5rem;
-  cursor: pointer;
-}
+
 .modal-overlay {
   position: fixed;
   top: 0;

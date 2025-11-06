@@ -311,17 +311,6 @@ onMounted(async () => {
   font-size: 1.13rem;
   font-weight: 600;
 }
-.step-status {
-  font-size: 0.98rem;
-  color: #888;
-  font-weight: 500;
-}
-.step-status.done {
-  color: #388e3c;
-}
-.step-body {
-  margin-bottom: 0.2rem;
-}
 .step-desc {
   font-size: 1.05rem;
 }

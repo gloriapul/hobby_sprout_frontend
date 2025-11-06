@@ -470,7 +470,6 @@ onMounted(async () => {
 .quiz-sort-control label {
   font-weight: 500;
   color: #256b28;
-  font-family: 'Poppins', sans-serif;
 }
 .quiz-sort-control select,
 .hobby-filter-label select {
@@ -479,7 +478,6 @@ onMounted(async () => {
   border-radius: 6px;
   font-size: 1rem;
   cursor: pointer;
-  font-family: 'Poppins', sans-serif;
   background: #fff;
 }
 .clear-history-btn {
@@ -494,7 +492,6 @@ onMounted(async () => {
 .profile-view {
   max-width: 1000px;
   margin: 0 auto;
-  font-family: 'Poppins', sans-serif;
 }
 
 .profile-header {
@@ -508,7 +505,6 @@ onMounted(async () => {
   margin: 0;
   font-weight: 500;
   color: #256b28;
-  font-family: 'Poppins', sans-serif;
 }
 
 .header-actions {
@@ -524,7 +520,6 @@ onMounted(async () => {
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
-  font-family: 'Poppins', sans-serif;
   border: none;
   transition: background 0.2s;
 }
@@ -540,7 +535,6 @@ onMounted(async () => {
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
-  font-family: 'Poppins', sans-serif;
   border: none;
   transition: background 0.2s;
 }
@@ -591,7 +585,6 @@ onMounted(async () => {
   justify-content: center;
   color: white;
   font-size: 2rem;
-  font-family: 'Poppins', sans-serif;
 }
 
 .user-details {
@@ -601,21 +594,18 @@ onMounted(async () => {
 .view-mode h2 {
   margin: 0 0 0.5rem 0;
   color: #256b28;
-  font-family: 'Poppins', sans-serif;
 }
 
 .username {
   color: #666;
   margin: 0 0 0.5rem 0;
   font-size: 0.9rem;
-  font-family: 'Poppins', sans-serif;
 }
 
 .bio {
   color: #888;
   margin: 0;
   font-style: italic;
-  font-family: 'Poppins', sans-serif;
 }
 
 .edit-mode {
@@ -634,7 +624,6 @@ onMounted(async () => {
   margin-bottom: 0.5rem;
   color: #256b28;
   border: none;
-  font-family: 'Poppins', sans-serif;
 }
 
 .form-group input {
@@ -642,7 +631,6 @@ onMounted(async () => {
   border-radius: 6px;
   font-size: 1rem;
   border: none;
-  font-family: 'Poppins', sans-serif;
 }
 
 .hobbies-section {
@@ -662,7 +650,6 @@ onMounted(async () => {
   margin: 0;
   font-weight: 500;
   color: #256b28;
-  font-family: 'Poppins', sans-serif;
 }
 
 .add-button,
@@ -675,7 +662,6 @@ onMounted(async () => {
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
-  font-family: 'Poppins', sans-serif;
 }
 
 .edit-button:hover,
@@ -689,7 +675,6 @@ onMounted(async () => {
   text-align: center;
   padding: 2rem;
   color: #666;
-  font-family: 'Poppins', sans-serif;
 }
 
 .hobbies-grid {
@@ -709,7 +694,6 @@ onMounted(async () => {
 .hobby-filter-label {
   font-weight: 500;
   color: #256b28;
-  font-family: 'Poppins', sans-serif;
   margin-right: 0.5rem;
 }
 .hobby-filter {
@@ -719,7 +703,6 @@ onMounted(async () => {
   font-size: 1rem;
   cursor: pointer;
   background: #fff;
-  font-family: 'Poppins', sans-serif;
   margin-right: 1rem;
 }
 .quiz-history-section {
@@ -754,12 +737,10 @@ onMounted(async () => {
   font-weight: 600;
   color: #388e3c;
   margin-bottom: 0.5rem;
-  font-family: 'Poppins', sans-serif;
 }
 .quiz-history-date {
   font-size: 0.95rem;
   color: #666;
-  font-family: 'Poppins', sans-serif;
 }
 .hobby-sort-control {
   display: flex;
@@ -770,7 +751,6 @@ onMounted(async () => {
 .hobby-sort-control label {
   font-weight: 500;
   color: #256b28;
-  font-family: 'Poppins', sans-serif;
 }
 .hobby-sort-control select {
   padding: 0.3rem 0.7rem;
@@ -778,7 +758,6 @@ onMounted(async () => {
   border-radius: 6px;
   font-size: 1rem;
   cursor: pointer;
-  font-family: 'Poppins', sans-serif;
   background: #fff;
 }
 
@@ -818,7 +797,6 @@ onMounted(async () => {
   color: #d32f2f;
   font-size: 1.5rem;
   font-weight: 600;
-  font-family: 'Poppins', sans-serif;
 }
 
 .close-button {
@@ -856,7 +834,6 @@ onMounted(async () => {
   color: #333;
   font-size: 1rem;
   margin-bottom: 1rem;
-  font-family: 'Poppins', sans-serif;
   text-align: left;
 }
 
@@ -865,7 +842,6 @@ onMounted(async () => {
   font-size: 1.1rem;
   font-weight: 600;
   margin-top: 1.5rem;
-  font-family: 'Poppins', sans-serif;
 }
 
 .delete-items-list {
@@ -873,7 +849,6 @@ onMounted(async () => {
   margin: 1rem 0;
   padding-left: 1.5rem;
   color: #666;
-  font-family: 'Poppins', sans-serif;
 }
 
 .delete-items-list li {
@@ -896,7 +871,6 @@ onMounted(async () => {
   border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
-  font-family: 'Poppins', sans-serif;
   transition: background 0.2s;
 }
 
@@ -912,7 +886,6 @@ onMounted(async () => {
   border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
-  font-family: 'Poppins', sans-serif;
   transition: background 0.2s;
 }
 

@@ -208,8 +208,6 @@ const completedSteps = computed(
 const remainingSteps = computed(() => totalSteps.value - completedSteps.value)
 const goalProgress = computed(() => milestoneStore.goalProgress)
 
-// Methods
-
 const handleConfirmAbandonGoal = async () => {
   await closeActiveGoal()
   showAbandonGoalModal.value = false
@@ -217,14 +215,14 @@ const handleConfirmAbandonGoal = async () => {
 
 const closeActiveGoal = async () => {
   if (currentGoal.value) {
-    await milestoneStore.deleteGoal(currentGoal.value.id)
+    await milestoneStore.closeGoal(currentGoal.value.id)
     milestoneStore.clearCurrentGoal()
   }
 }
 
 const resetForNewGoal = async () => {
   if (milestoneStore.currentGoal) {
-    await milestoneStore.deleteGoal(milestoneStore.currentGoal.id)
+    await milestoneStore.closeGoal(milestoneStore.currentGoal.id)
   }
   milestoneStore.clearCurrentGoal()
 }
@@ -387,30 +385,6 @@ onMounted(async () => {
   background: #388e3c;
 }
 
-.or-divider {
-  color: #999;
-  margin: 1rem 0;
-  font-style: italic;
-}
-
-.create-goal-button {
-  background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
-  color: white;
-  border: none;
-  padding: 1rem 2rem;
-  border-radius: 50px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background 0.2s,
-    color 0.2s;
-}
-
-.create-goal-button:hover {
-  transform: translateY(-2px);
-}
-
 .get-started-tips {
   margin-top: 2rem;
   padding-top: 2rem;
@@ -480,21 +454,6 @@ onMounted(async () => {
 .step-count {
   color: #666;
   font-size: 0.9rem;
-}
-
-.new-goal-button {
-  background: transparent;
-  color: #667eea;
-  border: 2px solid #388e3c;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.new-goal-button:hover {
-  background: #388e3c;
-  color: white;
 }
 
 .progress-overview {
@@ -577,21 +536,6 @@ onMounted(async () => {
   100% {
     transform: rotate(360deg);
   }
-}
-
-.add-step-button {
-  background: transparent;
-  color: #388e3c;
-  border: 2px solid #388e3c;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.add-step-button:hover {
-  background: #388e3c;
-  color: white;
 }
 
 .steps-list {
@@ -752,42 +696,5 @@ onMounted(async () => {
 }
 .close-goal:hover {
   background: #9a3333;
-}
-.close-goal-icon {
-  font-size: 1.3em;
-  display: flex;
-  align-items: center;
-}
-
-.primary-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 150px;
-  background: #388e3c;
-  color: white;
-  border: none;
-  padding: 0.85rem 1.5rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s;
-}
-.primary-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.primary-button:hover:not(:disabled) {
-  background: #256b28;
-}
-.button-spinner {
-  width: 1.2em;
-  height: 1.2em;
-  border: 2px solid rgba(255, 255, 255, 0.5);
-  border-top: 2px solid white;
-  border-radius: 50%;
-  display: inline-block;
-  animation: spin 1s linear infinite;
 }
 </style>

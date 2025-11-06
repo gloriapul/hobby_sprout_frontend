@@ -117,7 +117,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
@@ -130,7 +130,6 @@ const profileStore = useProfileStore()
 // Quiz state
 const quizStarted = ref(false)
 const quizCompleted = ref(false)
-const loading = ref(false)
 const loadingMatch = ref(false)
 const currentQuestionIndex = ref(0)
 const selectedAnswer = ref<any>(null)
@@ -247,7 +246,6 @@ const nextQuestion = async () => {
 
   if (isLastQuestion.value) {
     // Complete the quiz and generate hobby match
-    loading.value = true
     quizCompleted.value = true
 
     // Wait for Vue to update the DOM
@@ -257,7 +255,6 @@ const nextQuestion = async () => {
     if (authStore.user) {
       await generateHobbyMatch()
     }
-    loading.value = false
   } else {
     // Move to next question
     currentQuestionIndex.value++
@@ -356,14 +353,6 @@ const retakeQuiz = async () => {
   hobbyMatch.value = null
   loadingMatch.value = false
 }
-
-onMounted(() => {
-  // Check if user has existing quiz results
-  const existingResults = localStorage.getItem('quizResults')
-  if (existingResults) {
-    // Could show option to view previous results
-  }
-})
 </script>
 
 <style scoped>
@@ -415,20 +404,6 @@ onMounted(() => {
   font-size: 1.1rem;
   line-height: 1.6;
   margin-bottom: 2rem;
-}
-
-.quiz-features {
-  list-style: none;
-  padding: 0;
-  margin: 2rem 0;
-  display: grid;
-  gap: 1rem;
-}
-
-.quiz-features li {
-  color: #555;
-  font-size: 1rem;
-  padding: 0.5rem;
 }
 
 .start-quiz-button {
@@ -568,55 +543,6 @@ onMounted(() => {
   background: white;
   border-radius: 16px;
   padding: 3rem;
-}
-
-.results-header h2 {
-  margin: 0 0 1rem 0;
-  color: #333;
-  font-size: 2rem;
-}
-
-.results-header p {
-  color: #666;
-  font-size: 1.1rem;
-  line-height: 1.6;
-  margin-bottom: 2rem;
-}
-
-.results-actions {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.view-recommendations-button {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
-  border: none;
-  padding: 1rem 2rem;
-  border-radius: 50px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.retake-button {
-  background: transparent;
-  color: #388e3c;
-  border: 2px solid #388e3c;
-  padding: 1rem 2rem;
-  border-radius: 50px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.retake-button:hover {
-  background: #388e3c;
-  color: white;
 }
 
 .loading-match {

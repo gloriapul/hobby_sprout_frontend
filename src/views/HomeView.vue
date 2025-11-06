@@ -128,11 +128,9 @@ onMounted(() => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 @import '@/assets/fonts/floras-display.css';
 
 .home-view {
-  font-family: 'Poppins', sans-serif;
   min-height: 100vh;
   font-weight: 400;
 }
@@ -211,8 +209,7 @@ onMounted(() => {
     color 0.2s;
 }
 
-.cta-button.primary:hover,
-.cta-button.large.primary:hover {
+.cta-button.primary:hover {
   background: #256b28;
   color: white;
 }

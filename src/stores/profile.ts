@@ -1,7 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { ApiService } from '@/services/api'
-import { getFromStorage } from '@/utils'
 
 interface Profile {
   name: string
@@ -21,45 +20,6 @@ export const useProfileStore = defineStore('profile', () => {
   const hasProfile = computed(() => profile.value !== null)
 
   // Actions
-  // Toggle hobby active/inactive
-  async function setHobbyActive(hobby: string) {
-    loading.value = true
-    error.value = null
-    try {
-      await ApiService.callConceptAction('UserProfile', 'setHobby', {
-        hobby, // Session token is automatically added by ApiService
-      })
-      // Optimistically update local state
-      if (!activeHobbies.value.includes(hobby)) {
-        activeHobbies.value.push(hobby)
-      }
-      if (!hobbies.value.includes(hobby)) {
-        hobbies.value.push(hobby)
-      }
-    } catch (err: any) {
-      error.value = err.message || 'Failed to activate hobby'
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function setHobbyInactive(hobby: string) {
-    loading.value = true
-    error.value = null
-    try {
-      await ApiService.callConceptAction('UserProfile', 'closeHobby', {
-        hobby, // Session token is automatically added by ApiService
-      })
-      // Optimistically update local state
-      activeHobbies.value = activeHobbies.value.filter((h) => h !== hobby)
-    } catch (err: any) {
-      error.value = err.message || 'Failed to deactivate hobby'
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
   const loadProfile = async (userId?: string) => {
     loading.value = true
     error.value = null
@@ -119,31 +79,6 @@ export const useProfileStore = defineStore('profile', () => {
     }
   }
 
-  // Internal helper - profile creation should happen via backend sync after registration
-  // This is kept for legacy/admin purposes only
-  const createProfile = async () => {
-    try {
-      const response = await ApiService.callConceptAction<{} | { error: string }>(
-        'UserProfile',
-        'createProfile',
-        {}, // Session token added automatically by ApiService
-      )
-
-      if ('error' in response) {
-        // If profile already exists, that's ok - the sync already created it
-        if (!response.error.includes('already exists')) {
-          throw new Error(response.error)
-        }
-      }
-
-      // Initialize empty profile
-      profile.value = { name: '', image: '' }
-      hobbies.value = []
-    } catch (err: any) {
-      error.value = err?.message || 'Failed to create profile'
-    }
-  }
-
   const setName = async (name: string) => {
     loading.value = true
     error.value = null
@@ -180,7 +115,7 @@ export const useProfileStore = defineStore('profile', () => {
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'UserProfile',
         'setImage',
-        { image }, // Backend sync expects 'image', not 'profile'
+        { image },
       )
 
       if ('error' in response) {
@@ -274,13 +209,6 @@ export const useProfileStore = defineStore('profile', () => {
     }
   }
 
-  const clearProfile = () => {
-    profile.value = null
-    hobbies.value = []
-    currentUserId.value = null
-    error.value = null
-  }
-
   return {
     // State
     profile,
@@ -295,13 +223,9 @@ export const useProfileStore = defineStore('profile', () => {
 
     // Actions
     loadProfile,
-    createProfile,
     setName,
     setImage,
     setHobby,
     closeHobby,
-    clearProfile,
-    setHobbyActive,
-    setHobbyInactive,
   }
 })

@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 @import './fonts/floras-display.css';
 :root {
   --vt-c-white: #f6fff4;
@@ -68,16 +69,13 @@
 
 body {
   min-height: 100vh;
-  color: var(--color-text);
-  background: var(--color-background);
+  color: var(--vt-c-text-light-1);
+  background: var(--vt-c-white);
   transition:
     color 0.5s,
     background-color 0.5s;
   line-height: 1.6;
-  font-family:
-    'Poppins',
-    Arial,
-    sans-serif;
+  font-family: 'Poppins', Arial, sans-serif;
   font-size: 15px;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
