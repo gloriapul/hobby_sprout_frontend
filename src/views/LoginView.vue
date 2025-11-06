@@ -189,40 +189,6 @@ input:disabled {
 
 .auth-button {
   background: #388e3c;
-  color: white;
-  border: none;
-  padding: 0.75rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  margin-top: 1rem;
-}
-
-.error-message {
-  color: #e74c3c;
-  font-size: 0.85rem;
-  margin-top: 0.25rem;
-}
-
-.general-error {
-  margin-top: 1rem;
-  padding: 0.5rem;
-  background-color: #fee;
-  border: 1px solid #fcc;
-  border-radius: 4px;
-  text-align: center;
-}
-
-.auth-footer {
-  text-align: center;
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid #eee;
-}
-
-.auth-button {
-  background: #388e3c;
   color: #fff;
   border: none;
   padding: 1rem 2.5rem;
@@ -262,23 +228,5 @@ input:disabled {
   color: #666;
   font-size: 0.9rem;
   margin: 0;
-}
-
-.auth-link {
-  color: #388e3c;
-  text-decoration: none;
-  font-weight: 600;
-  padding: 0.7rem 1.7rem;
-  border-radius: 999px;
-  transition:
-    background 0.2s,
-    color 0.2s;
-  background: transparent;
-  display: inline-block;
-}
-.auth-link:hover {
-  background: #e8f5e9;
-  color: #256b28;
-  text-decoration: none;
 }
 </style>
