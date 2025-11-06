@@ -1,9 +1,9 @@
 <template>
-  <div class="modal-overlay" @click="step === 1 || manualStepError ? handleClose() : null">
+  <div class="modal-overlay" @click="step === 1 || generationError ? handleClose() : null">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
         <h2>Create New Goal</h2>
-        <button v-if="step === 1 || manualStepError" @click="handleClose" class="close-button">
+        <button v-if="step === 1 || generationError" @click="handleClose" class="close-button">
           ×
         </button>
       </div>
@@ -18,7 +18,9 @@
             required
           ></textarea>
           <div class="form-help">Be specific! E.g. "Learn to play 5 songs on guitar"</div>
-          <span v-if="manualStepError" class="error-message">{{ manualStepError }}</span>
+          <div v-if="generationError" class="error-message" style="margin-top: 1rem">
+            {{ generationError }}
+          </div>
           <div class="choose-method">
             <button
               @click="chooseMethod('generate')"
@@ -33,7 +35,7 @@
               :disabled="!goalDescription.trim() || generating"
               class="next-button"
             >
-              <span v-if="generating && method === 'manual'"></span>
+              <span v-if="generating && method === 'manual'" class="button-spinner"></span>
               <span v-else>Enter Steps Manually</span>
             </button>
           </div>
@@ -45,10 +47,13 @@
           </div>
           <div v-else>
             <h3>Review & Approve Steps</h3>
+            <div v-if="generationError" class="error-message" style="margin-bottom: 1rem">
+              {{ generationError }}
+            </div>
             <draggable
               v-model="steps"
               class="steps-list"
-              item-key="idx"
+              item-key="id"
               :animation="200"
               handle=".drag-handle"
             >
@@ -61,10 +66,10 @@
                     >☰</span
                   >
                   <input
-                    v-model="steps[idx]"
+                    v-model="step.description"
                     class="edit-step-input"
                     :placeholder="`Step ${idx + 1}`"
-                    @input="manualStepError = ''"
+                    @input="validationError = ''"
                     style="flex: 1; margin-right: 0.5em; min-width: 0"
                   />
                   <button @click="removeStep(idx)" class="delete-step">Delete</button>
@@ -80,7 +85,7 @@
                 placeholder="Describe what needs to be done for this step..."
                 rows="3"
               ></textarea>
-              <span v-if="manualStepError" class="error-message">{{ manualStepError }}</span>
+              <span v-if="validationError" class="error-message">{{ validationError }}</span>
               <button
                 type="button"
                 @click="handleAddStep"
@@ -110,12 +115,12 @@
                 placeholder="Describe what needs to be done for this step..."
                 rows="3"
                 required
-                @input="manualStepError = ''"
+                @input="validationError = ''"
               ></textarea>
-              <span v-if="manualStepError" class="error-message">{{ manualStepError }}</span>
+              <span v-if="validationError" class="error-message">{{ validationError }}</span>
             </div>
             <div class="form-actions">
-              <button type="submit" class="next-button" :disabled="!!manualStepError">
+              <button type="submit" class="next-button" :disabled="!!validationError">
                 Add Manual Step
               </button>
             </div>
@@ -123,7 +128,7 @@
           <draggable
             v-model="steps"
             class="steps-list"
-            item-key="idx"
+            item-key="id"
             :animation="200"
             handle=".drag-handle"
           >
@@ -135,7 +140,7 @@
                   style="cursor: grab; margin-right: 0.5em"
                   >☰</span
                 >
-                {{ step }}
+                {{ step.description }}
                 <button @click="removeStep(idx)" class="delete-step">Delete</button>
               </li>
             </template>
@@ -143,30 +148,6 @@
           <button @click="saveGoal" :disabled="steps.length === 0" class="primary-button">
             Save Goal & Steps
           </button>
-        </div>
-        <div v-else-if="step === 3" class="step-content">
-          <h3>Finalize Your Goal</h3>
-          <draggable
-            v-model="steps"
-            class="steps-list"
-            item-key="idx"
-            :animation="200"
-            handle=".drag-handle"
-          >
-            <template #item="{ element: step, index: idx }">
-              <li>
-                <span
-                  class="drag-handle"
-                  title="Drag to reorder"
-                  style="cursor: grab; margin-right: 0.5em"
-                  >☰</span
-                >
-                {{ step }}
-                <button @click="removeStep(idx)" class="delete-step">Delete</button>
-              </li>
-            </template>
-          </draggable>
-          <button @click="saveGoal" class="primary-button">Save Goal & Steps</button>
         </div>
       </div>
     </div>
@@ -191,9 +172,10 @@ const milestoneStore = useMilestoneStore()
 const step = ref(1)
 const method = ref<'generate' | 'manual' | null>(null)
 const goalDescription = ref('')
-const steps = ref<string[]>([])
+const steps = ref<{ id: string | number; description: string }[]>([])
 const manualStepInput = ref('')
-const manualStepError = ref('')
+const validationError = ref('')
+const generationError = ref('')
 const generating = ref(false)
 const goalIdRef = ref<string | null>(null)
 
@@ -205,7 +187,8 @@ function resetModalState() {
   goalDescription.value = ''
   steps.value = []
   manualStepInput.value = ''
-  manualStepError.value = ''
+  validationError.value = ''
+  generationError.value = ''
   generating.value = false
   goalIdRef.value = null
 }
@@ -217,13 +200,13 @@ function handleClose() {
 
 async function chooseMethod(selected: 'generate' | 'manual') {
   if (!goalDescription.value.trim()) {
-    manualStepError.value = 'Goal description is required.'
+    validationError.value = 'Goal description is required.'
     return
   }
-
+  validationError.value = ''
+  generationError.value = ''
   method.value = selected
-  generating.value = true // Show spinner for both paths initially
-  manualStepError.value = ''
+  generating.value = true
   steps.value = []
 
   try {
@@ -231,19 +214,17 @@ async function chooseMethod(selected: 'generate' | 'manual') {
     const userId = authStore.user?.id
     if (!userId) throw new Error('User not found')
 
-    // Check for existing active goal for this user and hobby
     const existingGoals = await ApiService.callConceptAction<any>('MilestoneTracker', '_getGoal', {
       user: userId,
       hobby: props.hobby,
     })
     if (Array.isArray(existingGoals) && existingGoals.length > 0) {
-      manualStepError.value =
+      generationError.value =
         'You already have an active goal for this hobby. Please close it before creating a new one.'
       generating.value = false
       return
     }
 
-    // 1. Create the goal, telling the backend whether to auto-generate steps
     const payload = {
       description: goalDescription.value,
       hobby: props.hobby,
@@ -261,9 +242,8 @@ async function chooseMethod(selected: 'generate' | 'manual') {
     if (!goalId) throw new Error('Failed to create goal.')
     goalIdRef.value = goalId
 
-    step.value = 2 // Move to next step
+    step.value = 2
 
-    // 2. If we auto-generated, we now need to fetch the steps.
     if (selected === 'generate') {
       await new Promise((resolve) => setTimeout(resolve, 2000))
       const stepsResult = await ApiService.callConceptAction<any>('MilestoneTracker', '_getSteps', {
@@ -271,14 +251,21 @@ async function chooseMethod(selected: 'generate' | 'manual') {
       })
       const stepsArray = stepsResult?.steps || stepsResult
       if (stepsArray && Array.isArray(stepsArray) && stepsArray.length > 0) {
-        steps.value = stepsArray.map((s: any) => s.description)
+        steps.value = stepsArray.map((s: any, index: number) => ({
+          id: s.id || index,
+          description: s.description,
+        }))
       } else {
-        manualStepError.value = 'Could not retrieve generated steps.'
+        generationError.value = 'Could not retrieve generated steps.'
       }
     }
   } catch (err: any) {
-    // If we get a verbose error, we should still proceed to step 2 to show the error and allow regeneration.
-    if (err.message.includes('too detailed') || err.message.includes('too verbose')) {
+    generationError.value = 'An error occurred. Please try again or manually enter steps.'
+    if (
+      err.message.includes('too detailed') ||
+      err.message.includes('too verbose') ||
+      err.message.includes('Failed to parse')
+    ) {
       step.value = 2
     }
     console.error('[GoalCreationModal] Error in chooseMethod:', err)
@@ -288,13 +275,13 @@ async function chooseMethod(selected: 'generate' | 'manual') {
 }
 
 function validateManualStep() {
-  manualStepError.value = ''
+  validationError.value = ''
   if (!manualStepInput.value.trim()) {
-    manualStepError.value = 'Step description is required'
+    validationError.value = 'Step description is required'
     return false
   }
   if (manualStepInput.value.trim().length < 10) {
-    manualStepError.value = 'Step description should be at least 10 characters'
+    validationError.value = 'Step description should be at least 10 characters'
     return false
   }
   return true
@@ -303,9 +290,9 @@ function validateManualStep() {
 function handleAddStep() {
   if (!validateManualStep()) return
   const stepText = manualStepInput.value.trim()
-  steps.value.push(stepText)
+  steps.value.push({ id: Date.now(), description: stepText })
   manualStepInput.value = ''
-  manualStepError.value = ''
+  validationError.value = ''
 }
 
 function removeStep(idx: number) {
@@ -316,17 +303,16 @@ async function saveGoal() {
   try {
     const goalId = goalIdRef.value
     if (!goalId) {
-      manualStepError.value = 'Goal ID is missing. Cannot save steps. Please start over.'
+      generationError.value = 'Goal ID is missing. Cannot save steps. Please start over.'
       return
     }
     if (!steps.value || steps.value.length === 0) {
-      manualStepError.value = 'You must add at least one step before saving your goal.'
+      validationError.value = 'You must add at least one step before saving your goal.'
       return
     }
 
     const { ApiService } = await import('@/services/api')
 
-    // 1. Remove all existing steps for this goal
     const existingStepsResult = await ApiService.callConceptAction<any>(
       'MilestoneTracker',
       '_getSteps',
@@ -341,40 +327,43 @@ async function saveGoal() {
       }
     }
 
-    // 2. Add all steps from the UI
-    for (const stepDesc of steps.value) {
+    for (const step of steps.value) {
       await ApiService.callConceptAction<any>('MilestoneTracker', 'addStep', {
         goalId: goalId,
-        description: stepDesc,
+        description: step.description,
       })
     }
 
     emit('goalCreated', {
       description: goalDescription.value,
-      steps: steps.value.filter((s) => s.trim()),
+      steps: steps.value.map((s) => s.description).filter((s) => s.trim()),
       hobby: props.hobby,
     })
     resetModalState()
     emit('close')
   } catch (err: any) {
-    manualStepError.value = err.message || 'Failed to save goal. Please try again.'
+    generationError.value = 'Failed to save goal. Please try again or manually enter steps.'
     console.error('[GoalCreationModal] Error saving goal:', err)
   }
 }
 
 async function confirmRegenerateSteps() {
   if (!goalIdRef.value) {
-    manualStepError.value = 'No goal to regenerate steps for.'
+    generationError.value = 'No goal to regenerate steps for.'
     return
   }
   generating.value = true
+  generationError.value = ''
   try {
     await milestoneStore.regenerateSteps(goalIdRef.value)
     await new Promise((resolve) => setTimeout(resolve, 2000))
     await milestoneStore.loadGoalSteps(goalIdRef.value)
-    steps.value = milestoneStore.steps.map((s) => s.description)
-  } catch (err) {
-    manualStepError.value = 'Failed to regenerate steps.'
+    steps.value = milestoneStore.steps.map((s, index) => ({
+      id: s.id || index,
+      description: s.description,
+    }))
+  } catch (err: any) {
+    generationError.value = 'Failed to regenerate steps. Please try again.'
   } finally {
     generating.value = false
   }
@@ -385,6 +374,11 @@ async function confirmRegenerateSteps() {
 .error-message {
   color: #d32f2f;
   margin-top: 0.25em;
+  background-color: #ffcdd2;
+  border: 1px solid #d32f2f;
+  border-radius: 8px;
+  padding: 1rem;
+  font-weight: 500;
 }
 .modal-overlay {
   position: fixed;
@@ -531,10 +525,6 @@ async function confirmRegenerateSteps() {
   font-weight: 500;
   box-shadow: none;
   transition: background 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 150px; /* Ensure button doesn't shrink when showing spinner */
 }
 .next-button:disabled,
 .primary-button:disabled {
@@ -580,14 +570,11 @@ async function confirmRegenerateSteps() {
   background: #256b28;
   color: #fff;
 }
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #a5d6a7;
-  border-top: 4px solid #388e3c;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 2rem auto;
+.next-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 150px; /* Ensure button doesn't shrink when showing spinner */
 }
 
 .button-spinner {
@@ -598,6 +585,16 @@ async function confirmRegenerateSteps() {
   border-radius: 50%;
   display: inline-block;
   animation: spin 1s linear infinite;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #a5d6a7;
+  border-top: 4px solid #388e3c;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 2rem auto;
 }
 
 .edit-step-input {

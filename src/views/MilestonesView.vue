@@ -82,21 +82,13 @@
         <div class="steps-header">
           <h3>Your Steps</h3>
 
-          <div v-if="stepsLoading" class="generating-steps">
+          <div v-if="generatingSteps || stepsLoading" class="generating-steps">
             <div class="loading-spinner"></div>
-            <p>Loading steps...</p>
+            <p>{{ generatingSteps ? 'Creating personalized steps...' : 'Loading steps...' }}</p>
           </div>
 
           <div v-else-if="currentGoalSteps.length === 0" class="empty-state">
-            <p>No steps have been created for this goal yet.</p>
-            <button
-              @click="manuallyGenerateSteps"
-              class="primary-button"
-              :disabled="generatingSteps"
-            >
-              <span v-if="generatingSteps" class="button-spinner"></span>
-              <span v-else>Generate Steps</span>
-            </button>
+            <p>No steps have been created for this goal, an error may have occurred. Abandon goal and try again.</p>
           </div>
 
           <div v-else class="steps-list">
@@ -182,7 +174,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
 import { useMilestoneStore } from '@/stores/milestone'
@@ -193,7 +185,6 @@ import { useRouter } from 'vue-router'
 const authStore = useAuthStore()
 const profileStore = useProfileStore()
 const milestoneStore = useMilestoneStore()
-const router = useRouter()
 
 const showCreateGoal = ref(false)
 const selectedHobbyForGoal = ref<string | undefined>(undefined)
@@ -201,10 +192,12 @@ const generatingSteps = ref(false)
 const stepsLoading = ref(false)
 const showAbandonGoalModal = ref(false)
 
+// Computed properties
 const currentGoal = computed(() => milestoneStore.currentGoal)
 const currentGoalSteps = computed(() => milestoneStore.currentGoalSteps)
 const loading = computed(() => milestoneStore.loading)
 const userHobbies = computed(() => profileStore.activeHobbies || [])
+
 const totalSteps = computed(() => currentGoalSteps.value.length)
 const completedSteps = computed(
   () => currentGoalSteps.value.filter((step) => step.isComplete).length,
@@ -212,17 +205,25 @@ const completedSteps = computed(
 const remainingSteps = computed(() => totalSteps.value - completedSteps.value)
 const goalProgress = computed(() => milestoneStore.goalProgress)
 
+// Methods
+
 const handleConfirmAbandonGoal = async () => {
-  if (currentGoal.value) {
-    await milestoneStore.closeGoal(currentGoal.value.id)
-  }
+  await closeActiveGoal()
   showAbandonGoalModal.value = false
+}
+
+const closeActiveGoal = async () => {
+  if (currentGoal.value) {
+    await milestoneStore.deleteGoal(currentGoal.value.id)
+    milestoneStore.clearCurrentGoal()
+  }
 }
 
 const resetForNewGoal = async () => {
   if (milestoneStore.currentGoal) {
-    await milestoneStore.closeGoal(milestoneStore.currentGoal.id)
+    await milestoneStore.deleteGoal(milestoneStore.currentGoal.id)
   }
+  milestoneStore.clearCurrentGoal()
 }
 
 const createGoalForHobby = async (hobby: string) => {
@@ -249,8 +250,14 @@ const completeStep = async (stepId: string) => {
 }
 
 const isNextStep = (index: number) => {
-  const firstIncompleteIndex = currentGoalSteps.value.findIndex((step) => !step.isComplete)
-  return index === firstIncompleteIndex
+  const steps = currentGoalSteps.value
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i]
+    if (step && step.isComplete === false) {
+      return i === index
+    }
+  }
+  return false
 }
 
 const formatDate = (dateString: string) => {
@@ -263,7 +270,11 @@ const formatDate = (dateString: string) => {
   )
 }
 
-const handleGoalCreated = async () => {
+const handleGoalCreated = async (goalData: {
+  description: string
+  steps: string[]
+  hobby: string
+}) => {
   showCreateGoal.value = false
   selectedHobbyForGoal.value = undefined
   if (authStore.user) {
@@ -279,18 +290,7 @@ const handleGoalCreated = async () => {
   }
 }
 
-const manuallyGenerateSteps = async () => {
-  if (currentGoal.value) {
-    generatingSteps.value = true
-    try {
-      await milestoneStore.generateSteps(currentGoal.value.id)
-      await milestoneStore.loadGoalSteps(currentGoal.value.id)
-    } finally {
-      generatingSteps.value = false
-    }
-  }
-}
-
+// Load data on mount
 onMounted(async () => {
   if (authStore.user) {
     await Promise.all([milestoneStore.loadUserGoals(), profileStore.loadProfile()])
