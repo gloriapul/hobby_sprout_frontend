@@ -248,16 +248,6 @@ onMounted(async () => {
       hobby: hobbyName.value,
     })
 
-onMounted(async () => {
-  if (!userId.value || !hobbyName.value) return
-  loading.value = true
-  try {
-    // 1. Get all goals for this user and hobby
-    const result = await ApiService.callConceptAction<any>('MilestoneTracker', '_getGoal', {
-      user: userId.value,
-      hobby: hobbyName.value,
-    })
-
     // Extract goals array from response object
     const allGoals = result?.goals || result
 
