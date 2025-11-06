@@ -308,7 +308,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'MilestoneTracker',
         'removeStep',
-        { stepId },
+        { step: stepId },
       )
 
       if ('error' in response) {

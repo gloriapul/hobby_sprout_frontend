@@ -356,7 +356,7 @@ const fetchQuizHistory = async () => {
     const result = await ApiService.callConceptAction<any>(
       'QuizMatchmaker',
       '_getAllHobbyMatches',
-      {},
+      { user: user.value.id },
     )
     const matchesArray = result?.matches || result?.hobbyMatches || result
     if (Array.isArray(matchesArray)) {
@@ -381,8 +381,15 @@ const clearQuizHistory = () => {
 }
 
 const confirmClearQuizHistory = async () => {
+  if (!user.value) {
+    alert('User not found. Please log in again.')
+    showClearHistoryConfirmation.value = false
+    return
+  }
   try {
-    await ApiService.callConceptAction('QuizMatchmaker', 'deleteHobbyMatches', {})
+    await ApiService.callConceptAction('QuizMatchmaker', 'deleteHobbyMatches', {
+      user: user.value.id,
+    })
     quizHistory.value = []
   } catch (err) {
     alert('Failed to clear quiz history.')
