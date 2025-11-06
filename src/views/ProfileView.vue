@@ -343,8 +343,8 @@ const addHobby = async (hobbyName: string) => {
     // Attempt to add the hobby
     await profileStore.setHobby(hobbyName)
 
-    // Close the hobby detail modal on success
-    showHobbyDetail.value = false
+    // Close the modal on success
+    showAddHobby.value = false
   } catch (err: any) {
     // Handle specific errors
     let errorMsg = err?.message || 'Failed to add hobby.'
@@ -745,6 +745,8 @@ onMounted(async () => {
   background: #e8f5e9;
   border-radius: 8px;
   padding: 1.2rem 1rem;
+  max-height: 230px;
+  overflow-y: auto;
 }
 .quiz-history-card {
   background: #b2e3b5;

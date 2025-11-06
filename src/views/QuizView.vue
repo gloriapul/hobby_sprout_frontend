@@ -391,10 +391,7 @@ const addHobbyToProfile = async () => {
   try {
     await profileStore.setHobby(hobbyMatch.value)
     await profileStore.loadProfile()
-    alert(
-      `${hobbyMatch.value} has been added to your hobbies! Now you can create goals for it in the Milestones section.`,
-    )
-    router.push('/dashboard/milestones')
+    router.push('/dashboard/profile')
   } catch (error: any) {
     console.error('Failed to add hobby to profile:', error)
     alert('Failed to add hobby to profile. Please try again.')
