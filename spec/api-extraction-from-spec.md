@@ -52,6 +52,50 @@ This document provides the REST API specification for all concepts in the HobbyS
 
 ---
 
+### POST /api/MilestoneTracker/regenerateSteps
+
+**Description:** Deletes all existing steps for a goal and uses the LLM to generate a new set of
+steps.
+
+**Requirements:**
+
+- goal exists and is active
+
+**Effects:**
+
+- Deletes all Steps currently associated with the goal
+- Uses an internal LLM to generate new Step descriptions based on the goal's
+  description
+- Creates new Steps associated with the goal
+- Sets start date to current date and isComplete to false
+- Returns the IDs of the new Steps
+
+**Request Body:**
+
+```json
+{
+  "goal": "string"
+}
+```
+
+**Success Response Body:**
+
+```json
+{
+  "steps": ["string"]
+}
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
 ### POST /api/MilestoneTracker/generateSteps
 
 **Description:** Uses an LLM to generate recommended steps for achieving a goal.
@@ -528,7 +572,7 @@ This document provides the REST API specification for all concepts in the HobbyS
 
 ### POST /api/UserProfile/closeProfile
 
-**Description:** Closes a user profile.
+**Description:** Permanently deletes a user profile and all associated data.
 
 **Requirements:**
 
@@ -536,7 +580,8 @@ This document provides the REST API specification for all concepts in the HobbyS
 
 **Effects:**
 
-- Sets the active status of the user's profile to false
+- Permanently deletes the user's profile and all associated hobby records from the
+  database
 
 **Request Body:**
 
@@ -692,23 +737,27 @@ This document provides the REST API specification for all concepts in the HobbyS
 
 ### POST /api/QuizMatchmaker/generateHobbyMatch
 
-**Description:** Generates a hobby match for a user based on their quiz responses.
+**Description:** Generates a hobby match for a user based on their answers to all quiz questions
+(batch submission).
 
 **Requirements:**
 
-- The user has submitted responses for all predefined Questions
-- No HobbyMatch already exists for this user
+- The answers array must have exactly 5 strings, corresponding to the predefined
+  questions
+- The LLM must be initialized
 
 **Effects:**
 
-- Uses an LLM to analyze the user's responses and generate a matched hobby
-- Stores the match and returns it
+- Uses an LLM to analyze the answers, generates a matched hobby, stores it as a
+  new match, and returns it
+- Users can generate multiple matches over time
 
 **Request Body:**
 
 ```json
 {
-  "user": "string"
+  "user": "string",
+  "answers": ["string", "string", "string", "string", "string"]
 }
 ```
 
