@@ -124,7 +124,7 @@
         <div v-else class="quiz-history-grid">
           <div v-for="match in sortedQuizHistory" :key="match.id" class="quiz-history-card">
             <div class="quiz-history-hobby">{{ match.hobby }}</div>
-            <div class="quiz-history-date">Matched on {{ formatDate(match.matchedAt) }}</div>
+            <div class="quiz-history-date">Matched on {{ formatDateTime(match.matchedAt) }}</div>
           </div>
         </div>
       </div>
@@ -174,6 +174,7 @@ import HobbyCard from '@/components/shared/HobbyCard.vue'
 import HobbyModal from '@/components/modals/HobbyModal.vue'
 import HobbyDetailModal from '@/components/shared/HobbyDetailModal.vue'
 import ConfirmationModal from '@/components/shared/ConfirmationModal.vue'
+import { formatDateTime } from '@/utils'
 
 // Store instances
 const authStore = useAuthStore()
@@ -232,13 +233,6 @@ const getInitials = (name: string) => {
     .join('')
     .toUpperCase()
     .slice(0, 2)
-}
-
-const formatDate = (dateStr: string) => {
-  const d = new Date(dateStr)
-  const date = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
-  const time = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-  return `${date} at ${time}`
 }
 
 const hobbyHasGoals = (hobby: string) => {

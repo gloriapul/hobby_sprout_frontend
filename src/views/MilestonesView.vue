@@ -48,7 +48,7 @@
             class="goal-start-date"
             style="margin-top: 0.5rem; color: #666; font-size: 0.95rem"
           >
-            Started at: {{ formatDate(currentGoal.createdAt) }}
+            Started at: {{ formatDateTime(currentGoal.createdAt) }}
           </div>
         </div>
       </div>
@@ -88,7 +88,10 @@
           </div>
 
           <div v-else-if="currentGoalSteps.length === 0" class="empty-state">
-            <p>No steps have been created for this goal, an error may have occurred. Abandon goal and try again.</p>
+            <p>
+              No steps have been created for this goal, an error may have occurred. Abandon goal and
+              try again.
+            </p>
           </div>
 
           <div v-else class="steps-list">
@@ -106,7 +109,7 @@
                 <h4>{{ step.description }}</h4>
                 <div class="step-meta">
                   <span v-if="step.completion" class="completion-date">
-                    Completed: {{ formatDate(step.completion) }}
+                    Completed: {{ formatDateTime(step.completion) }}
                   </span>
                 </div>
               </div>
@@ -175,12 +178,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { formatDateTime } from '@/utils'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
 import { useMilestoneStore } from '@/stores/milestone'
 import GoalCreationModal from '@/components/modals/GoalCreationModal.vue'
 import ConfirmationModal from '@/components/shared/ConfirmationModal.vue'
-import { useRouter } from 'vue-router'
 
 const authStore = useAuthStore()
 const profileStore = useProfileStore()
@@ -256,16 +259,6 @@ const isNextStep = (index: number) => {
     }
   }
   return false
-}
-
-const formatDate = (dateString: string) => {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  return (
-    date.toLocaleDateString() +
-    ' ' +
-    date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  )
 }
 
 const handleGoalCreated = async (goalData: {

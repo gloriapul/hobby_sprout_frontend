@@ -20,8 +20,13 @@ The check in video follows this user journey carefully and the final video demo 
 #### Check In 
 [Check In Google Drive Link](https://drive.google.com/file/d/1C2_7B3RHrQhVvFLfHhBG9iiOOmLbsRd5/view?usp=sharing)
 
-#### Final
+#### Assignment 4b Final
 [Final Google Drive Link](https://drive.google.com/file/d/13lSqX4Wdi4TWI5wO7vQVDXbDHxCN13eO/view?usp=drive_link)
+
+
+### Assignment 4c Final
+[Assignment 4c Google Drive Link EDIT](https://drive.google.com/file/d/13lSqX4Wdi4TWI5wO7vQVDXbDHxCN13eO/view?usp=drive_link)
+
 
 ## Visual Design Study
 
@@ -31,7 +36,7 @@ This study visually goes into my thought process behind the design process for m
 
 ### Updated Backend
 
-[Backend Document Updates](https://github.com/gloriapul/hobby_sprout/blob/main/design/assignment4b-design-changes.md)
+[Assignment 4b Backend Document Updates](https://github.com/gloriapul/hobby_sprout/blob/main/design/assignment4b-design-changes.md)
 
 ## Setup
 

@@ -32,7 +32,7 @@
             "
             style="margin-left: 1.2rem; font-size: 0.98rem; color: #666; font-weight: 400"
           >
-            Started at: {{ formatDate(goal.steps[0].start || goal.steps[0].createdAt) }}
+            Started at: {{ formatDateTime(goal.steps[0].start || goal.steps[0].createdAt) }}
           </span>
           <span class="goal-duration-label">
             <template v-if="getGoalDuration(goal) !== null">
@@ -74,7 +74,8 @@
                 v-if="step.isComplete && (step.completedAt || step.completion)"
                 class="step-date"
               >
-                <strong>Completed:</strong> {{ formatDate(step.completedAt || step.completion) }}
+                <strong>Completed:</strong>
+                {{ formatDateTime(step.completedAt || step.completion) }}
               </span>
               <span v-else-if="!step.isComplete" class="step-date not-completed"
                 >Not completed</span
@@ -89,6 +90,16 @@
 </template>
 
 <script setup lang="ts">
+const stepColors = [
+  { background: '#f3e5f5', color: '#6a1b9a' },
+  { background: '#fbe9e7', color: '#d84315' },
+  { background: '#e3f2fd', color: '#1565c0' },
+  { background: '#fffde7', color: '#f9a825' },
+  { background: '#fce4ec', color: '#ad1457' },
+  { background: '#e8f5e9', color: '#388e3c' },
+  { background: '#d1f3ff', color: '#38778e' },
+]
+
 // Returns a human readable duration string (e.g. '2d 3h 4m') between two dates
 function formatDuration(ms: number): string {
   if (ms < 0) return ''
@@ -139,6 +150,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { ApiService } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
+import { formatDateTime } from '@/utils'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -226,13 +238,15 @@ function getGoalCompletedDate(goal: any): string | null {
   )
 }
 
-function formatDate(dateStr: string | undefined) {
-  if (!dateStr) return ''
-  const d = new Date(dateStr)
-  const date = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
-  const time = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-  return `${date} at ${time}`
-}
+onMounted(async () => {
+  if (!userId.value || !hobbyName.value) return
+  loading.value = true
+  try {
+    // 1. Get all goals for this user and hobby
+    const result = await ApiService.callConceptAction<any>('MilestoneTracker', '_getGoal', {
+      user: userId.value,
+      hobby: hobbyName.value,
+    })
 
 onMounted(async () => {
   if (!userId.value || !hobbyName.value) return
@@ -286,17 +300,6 @@ onMounted(async () => {
     loading.value = false
   }
 })
-
-// Color pairs for step cards
-const stepColors = [
-  { background: '#f3e5f5', color: '#6a1b9a' },
-  { background: '#fbe9e7', color: '#d84315' },
-  { background: '#e3f2fd', color: '#1565c0' },
-  { background: '#fffde7', color: '#f9a825' },
-  { background: '#fce4ec', color: '#ad1457' },
-  { background: '#e8f5e9', color: '#388e3c' },
-  { background: '#d1f3ff', color: '#38778e' },
-]
 </script>
 
 <style scoped>
