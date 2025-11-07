@@ -12,7 +12,6 @@ export const useProfileStore = defineStore('profile', () => {
   const profile = ref<Profile | null>(null)
   const hobbies = ref<string[]>([])
   const activeHobbies = ref<string[]>([])
-  const currentUserId = ref<string | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -20,12 +19,9 @@ export const useProfileStore = defineStore('profile', () => {
   const hasProfile = computed(() => profile.value !== null)
 
   // Actions
-  const loadProfile = async (userId?: string) => {
+  const loadProfile = async () => {
     loading.value = true
     error.value = null
-    if (userId) {
-      currentUserId.value = userId
-    }
 
     try {
       const response = await ApiService.callConceptAction<any>(
@@ -214,7 +210,6 @@ export const useProfileStore = defineStore('profile', () => {
     profile,
     hobbies,
     activeHobbies,
-    currentUserId,
     loading,
     error,
 
