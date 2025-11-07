@@ -58,49 +58,22 @@ export const useAuthStore = defineStore('auth', () => {
         return false
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
       return await login(username, password)
     } catch (error) {
       return false
     }
   }
 
-  const logout = () => {
-    user.value = null
-    token.value = null
-
-    // Clear localStorage
-    removeFromStorage('user')
-    removeFromStorage('token')
-  }
-
-  const checkAuth = () => {
-    const storedUser = getFromStorage('user', null)
-    const storedToken = getFromStorage('token', null)
-
-    if (storedUser && storedToken) {
-      user.value = storedUser
-      token.value = storedToken
-      return true
-    }
-
-    return false
-  }
-
-  const validateSession = async (): Promise<boolean> => {
-    if (!token.value) {
-      return false
-    }
-
+  const logout = async () => {
     try {
-      // Try to fetch user profile to validate session
-      await ApiService.callConceptAction('Profile', 'loadProfile', {})
-      return true
-    } catch (error) {
-      // Session is invalid, clear it
-      logout()
-      return false
+      // Invalidate session on the backend
+      await ApiService.callConceptAction('logout', '', {})
+    } finally {
+      // Always clear local state regardless of backend call success
+      user.value = null
+      token.value = null
+      removeFromStorage('user')
+      removeFromStorage('token')
     }
   }
 
@@ -116,7 +89,5 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     register,
     logout,
-    checkAuth,
-    validateSession,
   }
 })
