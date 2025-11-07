@@ -155,7 +155,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+type Step = { id: string | number; description: string }
+import { ref, watch } from 'vue'
 import draggable from 'vuedraggable'
 import { useAuthStore } from '@/stores/auth'
 import { useMilestoneStore } from '@/stores/milestone'
@@ -247,7 +248,7 @@ async function chooseMethod(selected: 'generate' | 'manual') {
     if (selected === 'generate') {
       await new Promise((resolve) => setTimeout(resolve, 2000))
       const stepsResult = await ApiService.callConceptAction<any>('MilestoneTracker', '_getSteps', {
-        goalId: goalId,
+        goal: goalId,
       })
       const stepsArray = stepsResult?.steps || stepsResult
       if (stepsArray && Array.isArray(stepsArray) && stepsArray.length > 0) {
@@ -312,26 +313,66 @@ async function saveGoal() {
 
     const { ApiService } = await import('@/services/api')
 
-    const existingStepsResult = await ApiService.callConceptAction<any>(
-      'MilestoneTracker',
-      '_getSteps',
-      { goalId: goalId },
-    )
-    const existingSteps = existingStepsResult?.steps || existingStepsResult
-    if (Array.isArray(existingSteps)) {
-      for (const step of existingSteps) {
-        await ApiService.callConceptAction<any>('MilestoneTracker', 'removeStep', {
-          stepId: step.id,
+    // Only update steps if in manual mode, or if user has edited generated steps
+    if (method.value === 'manual' || (method.value === 'generate' && stepsWereEdited())) {
+      // Remove all existing steps
+      const existingStepsResult = await ApiService.callConceptAction<any>(
+        'MilestoneTracker',
+        '_getSteps',
+        { goal: goalId },
+      )
+      const existingSteps = existingStepsResult?.steps || existingStepsResult
+      if (Array.isArray(existingSteps)) {
+        for (const step of existingSteps) {
+          await ApiService.callConceptAction<any>('MilestoneTracker', 'removeStep', {
+            step: step.id,
+          })
+        }
+      }
+      // Add all steps from UI
+      for (const step of steps.value) {
+        await ApiService.callConceptAction<any>('MilestoneTracker', 'addStep', {
+          goal: goalId,
+          description: step.description,
         })
       }
     }
-
-    for (const step of steps.value) {
-      await ApiService.callConceptAction<any>('MilestoneTracker', 'addStep', {
-        goalId: goalId,
-        description: step.description,
-      })
+    // Helper to check if steps were edited in generate mode
+    function stepsWereEdited() {
+      // If the user is in generate mode, compare the current steps to the originally generated steps
+      // If any step description has changed, or steps were added/removed, return true
+      // For simplicity, we can store the original generated steps when they are first loaded
+      if (!originalGeneratedSteps.value.length) return false
+      if (originalGeneratedSteps.value.length !== steps.value.length) return true
+      for (let i = 0; i < steps.value.length; i++) {
+        if (
+          (steps.value[i]?.description ?? '') !==
+          (originalGeneratedSteps.value[i]?.description ?? '')
+        ) {
+          return true
+        }
+      }
+      return false
     }
+
+    // Store the original generated steps for comparison
+    const originalGeneratedSteps = ref<{ id: string | number; description: string }[]>([])
+
+    // When steps are generated, store them for later comparison
+    watch(
+      () => steps.value,
+      (newSteps, oldSteps) => {
+        if (
+          method.value === 'generate' &&
+          originalGeneratedSteps.value.length === 0 &&
+          newSteps.length > 0
+        ) {
+          // Deep copy
+          originalGeneratedSteps.value = newSteps.map((s) => ({ ...s }))
+        }
+      },
+      { immediate: true, deep: true },
+    )
 
     emit('goalCreated', {
       description: goalDescription.value,

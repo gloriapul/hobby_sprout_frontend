@@ -217,6 +217,8 @@ const closeActiveGoal = async () => {
   if (currentGoal.value) {
     await milestoneStore.closeGoal(currentGoal.value.id)
     milestoneStore.clearCurrentGoal()
+    // Reload profile/hobbies so the user can immediately create a new goal for a hobby
+    await profileStore.loadProfile()
   }
 }
 
@@ -225,6 +227,8 @@ const resetForNewGoal = async () => {
     await milestoneStore.closeGoal(milestoneStore.currentGoal.id)
   }
   milestoneStore.clearCurrentGoal()
+  // Reload profile/hobbies so the user can immediately create a new goal for a hobby
+  await profileStore.loadProfile()
 }
 
 const createGoalForHobby = async (hobby: string) => {
@@ -278,6 +282,23 @@ const handleGoalCreated = async (goalData: {
     }
   }
 }
+
+onMounted(async () => {
+  if (authStore.user) {
+    // Only fetch goals if store is empty (first load or after logout)
+    if (!milestoneStore.goals.length) {
+      await milestoneStore.loadUserGoals()
+    }
+    // Only fetch steps if currentGoal exists and steps are empty
+    if (
+      milestoneStore.currentGoal &&
+      milestoneStore.currentGoal.id &&
+      !milestoneStore.steps.length
+    ) {
+      await milestoneStore.loadGoalSteps(milestoneStore.currentGoal.id)
+    }
+  }
+})
 </script>
 
 <style scoped>

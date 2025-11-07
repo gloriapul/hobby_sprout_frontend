@@ -273,7 +273,7 @@ onMounted(async () => {
             'MilestoneTracker',
             '_getSteps',
             {
-              goalId: goal.id,
+              goal: goal.id,
             },
           )
           const stepsArray = stepsResult?.steps || stepsResult

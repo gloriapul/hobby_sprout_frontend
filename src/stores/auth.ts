@@ -11,92 +11,104 @@ interface User {
 export const useAuthStore = defineStore('auth', () => {
   // State
   const user = ref<User | null>(getFromStorage('user', null))
-  const token = ref<string | null>(getFromStorage('token', null))
+  const session = ref<string | null>(getFromStorage('session', null))
 
   // Computed
-  const isAuthenticated = computed(() => !!token.value && !!user.value)
+  const isAuthenticated = computed(() => !!session.value && !!user.value)
 
   // Actions
-const login = async (username: string, password: string): Promise<boolean> => {
-  try {
-    // The response object itself will contain user and session
-    const response = await ApiService.callConceptAction<{ user: string; session: string } | { error: string }>(
-      'PasswordAuthentication',
-      'authenticate',
-      { username, password },
-    );
-
-    if ('error' in response) {
-      console.error('Login failed:', response.error);
-      return false;
-    }
-
-    // CORRECT: Destructure the 'user' and 'session' properties directly from the response
-    const { user: userId, session: sessionToken } = response;
-
-    const userData = {
-      id: userId,
-      username: username,
-    };
-
-    user.value = userData;
-    token.value = sessionToken;
-
-    setToStorage('user', userData);
-    setToStorage('token', sessionToken);
-
-    return true;
-  } catch (error) {
-    console.error('An unexpected error occurred during login:', error);
-    return false;
-  }
-};
-
-  const register = async (username: string, password: string): Promise<boolean> => {
+  const login = async (username: string, password: string): Promise<boolean> => {
     try {
+      console.log('[auth.ts] login() called with:', { username, password })
       const response = await ApiService.callConceptAction<
-        { msg: { user: string; session: string } } | { error: string }
-      >('PasswordAuthentication', 'register', { username, password })
+        { user: string; session: string } | { error: string }
+      >('PasswordAuthentication', 'authenticate', { username, password })
+      console.log('[auth.ts] login() response:', response)
 
       if ('error' in response) {
-        throw new Error(response.error || 'Registration failed')
+        console.error('[auth.ts] login() error:', response.error)
+        return false
       }
 
-      // Destructure user and session from response.msg
-      const { user: userId, session } = response.msg
+      const { user: userId, session: sessionToken } = response
       const userData = {
         id: userId,
         username: username,
       }
 
       user.value = userData
-      token.value = session
+      session.value = sessionToken
       setToStorage('user', userData)
-      setToStorage('token', session)
+      setToStorage('session', sessionToken)
+      console.log('[auth.ts] login() set user and session:', {
+        user: userData,
+        session: sessionToken,
+      })
 
       return true
     } catch (error) {
+      console.error('[auth.ts] login() exception:', error)
+      return false
+    }
+  }
+
+  const register = async (username: string, password: string): Promise<boolean> => {
+    try {
+      console.log('[auth.ts] register() called with:', { username, password })
+      const response = await ApiService.callConceptAction<
+        { user: string; session: string } | { error: string }
+      >('PasswordAuthentication', 'register', { username, password })
+      console.log('[auth.ts] register() response:', response)
+
+      if ('error' in response) {
+        console.error('[auth.ts] register() error:', response.error)
+        throw new Error(response.error || 'Registration failed')
+      }
+
+      const { user: userId, session: sessionToken } = response
+      const userData = {
+        id: userId,
+        username: username,
+      }
+
+      user.value = userData
+      session.value = sessionToken
+      setToStorage('user', userData)
+      setToStorage('session', sessionToken)
+      console.log('[auth.ts] register() set user and session:', {
+        user: userData,
+        session: sessionToken,
+      })
+
+      return true
+    } catch (error) {
+      console.error('[auth.ts] register() exception:', error)
       throw error
     }
   }
 
   const logout = async () => {
     try {
-      // Invalidate session on the backend
+      console.log('[auth.ts] logout() called')
       await ApiService.callConceptAction('logout', '', {})
+      console.log('[auth.ts] logout() backend call complete')
     } finally {
-      // Always clear local state regardless of backend call success
       user.value = null
-      token.value = null
+      session.value = null
       removeFromStorage('user')
-      removeFromStorage('token')
+      removeFromStorage('session')
+      console.log('[auth.ts] logout() cleared user and session')
+      // Redirect to login page
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
     }
   }
 
   return {
     // State
     user,
-    token,
+    session,
 
     // Computed
     isAuthenticated,

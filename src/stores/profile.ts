@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { ApiService } from '@/services/api'
+import { useAuthStore } from '@/stores/auth'
 
 interface Profile {
   name: string
@@ -8,6 +9,9 @@ interface Profile {
 }
 
 export const useProfileStore = defineStore('profile', () => {
+  // Get user ID from auth store
+  const authStore = useAuthStore()
+  const getSession = () => authStore.session
   // State
   const profile = ref<Profile | null>(null)
   const hobbies = ref<string[]>([])
@@ -30,16 +34,19 @@ export const useProfileStore = defineStore('profile', () => {
         {}, // Session token is automatically added by ApiService
       )
 
-      // Extract userProfile array from response object
-      const userProfileArray = response?.userProfile || response
-
-      if (Array.isArray(userProfileArray) && userProfileArray.length > 0) {
-        // The response is an array with profile data
-        const profileData = userProfileArray[0]
+      // Handle both array and object userProfile responses
+      let profileData = null
+      if (Array.isArray(response?.userProfile)) {
+        profileData = response.userProfile[0]
+      } else if (response?.userProfile && typeof response.userProfile === 'object') {
+        profileData = response.userProfile
+      }
+      if (profileData) {
         profile.value = {
           name: profileData.displayname || '',
           image: profileData.profile || '',
         }
+        console.debug('[profile.ts] loadProfile: set profile.value =', profile.value)
 
         // Load all hobbies (active and inactive) after profile loads
         const hobbyResponse = await ApiService.callConceptAction<any>(
@@ -60,6 +67,7 @@ export const useProfileStore = defineStore('profile', () => {
         // Initialize with empty values and let the user know to refresh
         profile.value = { name: '', image: '' }
         hobbies.value = []
+        console.debug('[profile.ts] loadProfile: set profile.value to empty')
       }
     } catch (err: any) {
       if (err.response?.status === 504) {
@@ -78,19 +86,17 @@ export const useProfileStore = defineStore('profile', () => {
   const setName = async (name: string) => {
     loading.value = true
     error.value = null
-
     try {
+      const session = getSession()
+      if (!session) throw new Error('Session not found')
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'UserProfile',
         'setName',
-        { displayname: name }, // Session token added automatically by ApiService
+        { session, displayname: name },
       )
-
       if ('error' in response) {
         throw new Error(response.error)
       }
-
-      // Update local state
       if (!profile.value) {
         profile.value = { name: '', image: '' }
       }
@@ -106,19 +112,17 @@ export const useProfileStore = defineStore('profile', () => {
   const setImage = async (image: string) => {
     loading.value = true
     error.value = null
-
     try {
+      const session = getSession()
+      if (!session) throw new Error('Session not found')
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'UserProfile',
         'setImage',
-        { image },
+        { session, image },
       )
-
       if ('error' in response) {
         throw new Error(response.error)
       }
-
-      // Update local state
       if (!profile.value) {
         profile.value = { name: '', image: '' }
       }
@@ -134,29 +138,25 @@ export const useProfileStore = defineStore('profile', () => {
   const setHobby = async (hobby: string) => {
     loading.value = true
     error.value = null
-
     try {
+      const session = getSession()
+      if (!session) throw new Error('Session not found')
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'UserProfile',
         'setHobby',
-        { hobby }, // Session token added automatically by ApiService
+        { session, hobby },
       )
-
       if ('error' in response) {
         throw new Error(response.error)
       }
-
       // Reload all hobbies from backend after adding
       const hobbyResponse = await ApiService.callConceptAction<any>(
         'UserProfile',
         '_getUserHobbies',
-        {}, // Session token added automatically by ApiService
+        {},
       )
-      // Extract hobbies array from response object
       const hobbiesArray = hobbyResponse?.hobbies || hobbyResponse
-
       if (Array.isArray(hobbiesArray)) {
-        // Response is array of objects with {hobby, active}
         hobbies.value = hobbiesArray.map((h) => h.hobby)
         activeHobbies.value = hobbiesArray.filter((h) => h.active).map((h) => h.hobby)
       }
@@ -171,28 +171,24 @@ export const useProfileStore = defineStore('profile', () => {
   const closeHobby = async (hobby: string) => {
     loading.value = true
     error.value = null
-
     try {
+      const session = getSession()
+      if (!session) throw new Error('Session not found')
       const response = await ApiService.callConceptAction<{} | { error: string }>(
         'UserProfile',
         'closeHobby',
-        { hobby }, // Session token added automatically by ApiService
+        { session, hobby },
       )
-
       if ('error' in response) {
         throw new Error(response.error)
       }
-
       // Reload all hobbies from backend after closing
       const hobbyResponse = await ApiService.callConceptAction<any>(
         'UserProfile',
         '_getUserHobbies',
-        {}, // Session token added automatically by ApiService
+        {},
       )
-
-      // Extract hobbies array from response object
       const hobbiesArray = hobbyResponse?.hobbies || hobbyResponse
-
       if (Array.isArray(hobbiesArray)) {
         hobbies.value = hobbiesArray.map((h) => h.hobby)
         activeHobbies.value = hobbiesArray.filter((h) => h.active).map((h) => h.hobby)

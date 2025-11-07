@@ -134,9 +134,10 @@ export const useMilestoneStore = defineStore('milestone', () => {
   }
 
   const loadGoalSteps = async (goalId: string) => {
+    loading.value = true
     try {
       const response = await ApiService.callConceptAction<any>('MilestoneTracker', '_getSteps', {
-        goalId,
+        goal: goalId,
       })
       if ('error' in response) {
         throw new Error(response.error)
@@ -153,6 +154,8 @@ export const useMilestoneStore = defineStore('milestone', () => {
       }
     } catch (err: any) {
       error.value = err.message || 'Failed to load steps'
+    } finally {
+      loading.value = false
     }
   }
 
@@ -164,7 +167,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
       const response = await ApiService.callConceptAction<{ steps: string[] } | { error: string }>(
         'MilestoneTracker',
         'generateSteps',
-        { goalId },
+        { goal: goalId },
       )
 
       if ('error' in response) {
@@ -189,7 +192,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
       const response = await ApiService.callConceptAction<{ step: string } | { error: string }>(
         'MilestoneTracker',
         'addStep',
-        { goalId, description },
+        { goal: goalId, description },
       )
 
       if ('error' in response) {
@@ -221,7 +224,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
       const response = await ApiService.callConceptAction<{ steps: string[] } | { error: string }>(
         'MilestoneTracker',
         'regenerateSteps',
-        { goalId },
+        { goal: goalId },
       )
       if ('error' in response) {
         throw new Error(response.error)
@@ -284,13 +287,13 @@ export const useMilestoneStore = defineStore('milestone', () => {
         goal.isActive = false
       }
 
+      // After closing a goal, reload all goals (not just active)
+      await loadUserGoals()
+      // Only clear currentGoal/steps after reload
       if (currentGoal.value?.id === goalId) {
         currentGoal.value = null
         steps.value = []
       }
-
-      // After closing a goal, reload all goals (not just active)
-      await loadUserGoals()
     } catch (err: any) {
       error.value = err.message || 'Failed to close goal'
       throw err
@@ -314,8 +317,13 @@ export const useMilestoneStore = defineStore('milestone', () => {
         throw new Error(response.error)
       }
 
-      // Remove the step from our list
-      steps.value = steps.value.filter((s) => s.id !== stepId)
+      // Reload steps from backend to ensure state is in sync
+      if (currentGoal.value) {
+        await loadGoalSteps(currentGoal.value.id)
+      } else {
+        // Fallback: Remove the step from our list if no goal is selected
+        steps.value = steps.value.filter((s) => s.id !== stepId)
+      }
     } catch (err: any) {
       error.value = err.message || 'Failed to remove step'
       throw err

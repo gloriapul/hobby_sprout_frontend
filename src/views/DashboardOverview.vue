@@ -10,8 +10,8 @@
         <div class="stat-icon">🥇</div>
         <div class="stat-content">
           <h3>
-            <span v-if="allGoalsLoading" class="spinner"></span>
-            <span v-else>{{ allGoals.length ? allGoals.length : 0 }}</span>
+            <span v-if="activeGoalLoading" class="spinner"></span>
+            <span v-else>{{ goals.length ? goals.length : 0 }}</span>
           </h3>
           <p>Total Goals</p>
         </div>
@@ -48,10 +48,19 @@
       </div>
     </div>
 
-    <div v-if="recentGoals.length > 0" class="recent-activity">
+    <div v-if="recentGoals.length > 0 || activeGoalLoading" class="recent-activity">
       <h2>Active Goal</h2>
       <div class="goals-list">
-        <div v-if="recentGoals[0]" class="goal-item" @click="$router.push('/dashboard/milestones')">
+        <div v-if="activeGoalLoading" class="goal-item">
+          <div class="goal-info">
+            <h4><span class="spinner"></span> Loading...</h4>
+          </div>
+        </div>
+        <div
+          v-else-if="recentGoals[0]"
+          class="goal-item"
+          @click="$router.push('/dashboard/milestones')"
+        >
           <div class="goal-info">
             <h4>{{ recentGoals[0].description }}</h4>
             <p>
@@ -66,15 +75,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-const error = ref<string | null>(null)
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
 import { useMilestoneStore } from '@/stores/milestone'
 import { ApiService } from '@/services/api'
 import { formatDate } from '@/utils'
-const allGoals = ref<any[]>([])
-const allGoalsLoading = ref(true)
+const activeGoalLoading = ref(false)
 
 const authStore = useAuthStore()
 const profileStore = useProfileStore()
@@ -93,37 +102,25 @@ const recentGoals = computed(() => {
   return goals.value.filter((g) => g.isActive).slice(0, 1)
 })
 
-async function reloadAllGoals() {
-  allGoalsLoading.value = true
+async function reloadActiveGoal() {
+  activeGoalLoading.value = true
   try {
-    // Use the new getGoals query to fetch all goals for the user
-    const response = await ApiService.callConceptAction<any>('MilestoneTracker', '_getGoals', {})
-    // The backend returns an array directly (not {goals: [...]})
-    const goalsArray = Array.isArray(response.goals) ? response.goals : []
-    allGoals.value = goalsArray.map((g: any) => ({
-      id: g.goalId || g.id,
-      description: g.goalDescription || g.description,
-      hobby: g.goalHobby || g.hobby,
-      isActive: g.goalIsActive ?? g.isActive ?? true,
-      completed: g.completed ?? false,
-    }))
-  } catch (err) {
-    allGoals.value = []
+    await milestoneStore.loadUserGoals()
+  } finally {
+    activeGoalLoading.value = false
   }
-  allGoalsLoading.value = false
 }
 
-// Only watch for changes in the goals array length, not deep changes
-// This prevents infinite loops while still detecting when goals are added/removed
-watch(
-  () => milestoneStore.goals.length,
-  async (newLength, oldLength) => {
-    // Only reload if length actually changed and it's not the initial load
-    if (oldLength !== undefined && newLength !== oldLength) {
-      await reloadAllGoals()
-    }
-  },
-)
+onMounted(() => {
+  // Only fetch goals if store is empty (first load or after logout)
+  if (!goals.value.length) {
+    reloadActiveGoal()
+  }
+  // Optionally, fetch profile if needed (same logic can be applied)
+  if (!profileStore.profile) {
+    profileStore.loadProfile()
+  }
+})
 </script>
 
 <style scoped>

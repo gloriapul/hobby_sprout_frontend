@@ -204,6 +204,7 @@ const quizHistoryLoading = ref(false)
 
 // Computed Properties
 const user = computed(() => authStore.user)
+const session = computed(() => authStore.session)
 const profile = computed(() => profileStore.profile)
 const loading = computed(() => profileStore.loading)
 const goalsLoaded = computed(() => !milestoneStore.loading)
@@ -350,13 +351,13 @@ const addHobby = async (hobbyName: string) => {
 }
 
 const fetchQuizHistory = async () => {
-  if (!user.value) return
+  if (!session.value) return // Use your session/auth store to get the session token
   quizHistoryLoading.value = true
   try {
     const result = await ApiService.callConceptAction<any>(
       'QuizMatchmaker',
       '_getAllHobbyMatches',
-      { user: user.value.id },
+      { session: session.value }, // Only send session!
     )
     const matchesArray = result?.matches || result?.hobbyMatches || result
     if (Array.isArray(matchesArray)) {
@@ -432,8 +433,12 @@ const handleHobbyClick = async (hobby: string) => {
 // Lifecycle Hook
 onMounted(async () => {
   if (user.value) {
-    await profileStore.loadProfile()
-    await milestoneStore.loadUserGoals()
+    if (!profileStore.profile) {
+      await profileStore.loadProfile()
+    }
+    if (!milestoneStore.goals.length) {
+      await milestoneStore.loadUserGoals()
+    }
     await fetchQuizHistory()
   }
 })
