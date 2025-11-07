@@ -55,9 +55,13 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useProfileStore } from '@/stores/profile'
+import { useMilestoneStore } from '@/stores/milestone'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const profileStore = useProfileStore()
+const milestoneStore = useMilestoneStore()
 
 const loading = ref(false)
 const form = ref({
@@ -106,7 +110,10 @@ const handleLogin = async () => {
     const success = await authStore.login(form.value.username, form.value.password)
 
     if (success) {
-      router.push('/dashboard')
+      // --- NEW: Explicitly load data AFTER login ---
+      await profileStore.loadProfile()
+      await milestoneStore.loadUserGoals()
+      await router.push('/dashboard')
     } else {
       errors.value.general = 'Invalid username or password'
     }

@@ -17,50 +17,66 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!token.value && !!user.value)
 
   // Actions
-  const login = async (username: string, password: string): Promise<boolean> => {
+const login = async (username: string, password: string): Promise<boolean> => {
+  try {
+    // The response object itself will contain user and session
+    const response = await ApiService.callConceptAction<{ user: string; session: string } | { error: string }>(
+      'PasswordAuthentication',
+      'authenticate',
+      { username, password },
+    );
+
+    if ('error' in response) {
+      console.error('Login failed:', response.error);
+      return false;
+    }
+
+    // CORRECT: Destructure the 'user' and 'session' properties directly from the response
+    const { user: userId, session: sessionToken } = response;
+
+    const userData = {
+      id: userId,
+      username: username,
+    };
+
+    user.value = userData;
+    token.value = sessionToken;
+
+    setToStorage('user', userData);
+    setToStorage('token', sessionToken);
+
+    return true;
+  } catch (error) {
+    console.error('An unexpected error occurred during login:', error);
+    return false;
+  }
+};
+
+  const register = async (username: string, password: string): Promise<boolean> => {
     try {
       const response = await ApiService.callConceptAction<
-        { user: string; session: string } | { error: string }
-      >('PasswordAuthentication', 'authenticate', { username, password })
+        { msg: { user: string; session: string } } | { error: string }
+      >('PasswordAuthentication', 'register', { username, password })
 
       if ('error' in response) {
-        return false
+        throw new Error(response.error || 'Registration failed')
       }
 
-      // Set user data
+      // Destructure user and session from response.msg
+      const { user: userId, session } = response.msg
       const userData = {
-        id: response.user,
+        id: userId,
         username: username,
       }
 
       user.value = userData
-      token.value = response.session // Store session token from backend
-
-      // Persist to localStorage
+      token.value = session
       setToStorage('user', userData)
-      setToStorage('token', response.session)
+      setToStorage('token', session)
 
       return true
     } catch (error) {
-      return false
-    }
-  }
-
-  const register = async (username: string, password: string): Promise<boolean> => {
-    try {
-      const response = await ApiService.callConceptAction<{ user: string } | { error: string }>(
-        'PasswordAuthentication',
-        'register',
-        { username, password },
-      )
-
-      if ('error' in response) {
-        return false
-      }
-
-      return await login(username, password)
-    } catch (error) {
-      return false
+      throw error
     }
   }
 

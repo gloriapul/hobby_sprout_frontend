@@ -70,10 +70,14 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useProfileStore } from '@/stores/profile'
+import { useMilestoneStore } from '@/stores/milestone'
 import { isValidPassword } from '@/utils'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const profileStore = useProfileStore()
+const milestoneStore = useMilestoneStore()
 
 const loading = ref(false)
 const form = ref({
@@ -139,18 +143,10 @@ const handleRegister = async () => {
     const success = await authStore.register(form.value.username, form.value.password)
 
     if (success) {
-      try {
-        await router.push('/dashboard')
-      } catch (error: any) {
-        if (error.code === 'ECONNABORTED') {
-          errors.value.general =
-            'Connection timeout while setting up your profile. Please try again.'
-        } else {
-          errors.value.general = 'Error loading dashboard. Please try logging in.'
-          // Redirect to login after a short delay
-          setTimeout(() => router.push('/login'), 2000)
-        }
-      }
+      // --- NEW: Explicitly load data AFTER registration/login ---
+      await profileStore.loadProfile()
+      await milestoneStore.loadUserGoals()
+      await router.push('/dashboard')
     } else {
       errors.value.general = 'Registration failed. Username may already be taken.'
     }

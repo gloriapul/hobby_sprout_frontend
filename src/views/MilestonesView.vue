@@ -278,21 +278,6 @@ const handleGoalCreated = async (goalData: {
     }
   }
 }
-
-// Load data on mount
-onMounted(async () => {
-  if (authStore.user) {
-    await Promise.all([milestoneStore.loadUserGoals(), profileStore.loadProfile()])
-    if (currentGoal.value) {
-      stepsLoading.value = true
-      try {
-        await milestoneStore.loadGoalSteps(currentGoal.value.id)
-      } finally {
-        stepsLoading.value = false
-      }
-    }
-  }
-})
 </script>
 
 <style scoped>

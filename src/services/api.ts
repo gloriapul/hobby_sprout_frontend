@@ -1,4 +1,5 @@
 import axios, { type AxiosInstance, type AxiosResponse } from 'axios'
+import { useAuthStore } from '@/stores/auth'
 import { getFromStorage, removeFromStorage } from '@/utils'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
@@ -19,9 +20,28 @@ const apiClient: AxiosInstance = axios.create({
   },
 })
 
-// Request interceptor (for adding auth tokens, logging, etc.)
+// Request interceptor to automatically add session token
 apiClient.interceptors.request.use(
   (config) => {
+    console.log('--- [Axios Interceptor Debug] ---')
+    console.log('Request URL:', config.url)
+    const isPublic = PUBLIC_ENDPOINTS.some((endpoint) => config.url?.endsWith(endpoint))
+    console.log('Is Public Endpoint:', isPublic)
+    const token = getFromStorage('token', null)
+    console.log('Token from localStorage:', token)
+    if (!isPublic) {
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+        console.log('Authorization header set:', config.headers.Authorization)
+      } else {
+        console.log('No token found, Authorization header NOT set.')
+      }
+    } else {
+      console.log('Public endpoint, Authorization header not required.')
+    }
+    console.log('Final Request Headers:', config.headers)
+    console.log('Request Data:', config.data)
+    console.log('-------------------------------')
     return config
   },
   (error) => {
@@ -70,15 +90,7 @@ export class ApiService {
   ): Promise<T> {
     try {
       const endpoint = actionName ? `/${conceptName}/${actionName}` : `/${conceptName}`
-
-      // Always add session token if it exists
-      let requestData = { ...data }
-      const session = getFromStorage('token', null)
-      if (session) {
-        requestData = { ...data, session }
-      }
-
-      const response = await apiClient.post(endpoint, requestData)
+      const response = await apiClient.post(endpoint, data)
       return response.data
     } catch (error) {
       throw error

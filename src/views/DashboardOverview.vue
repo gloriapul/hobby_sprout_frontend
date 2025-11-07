@@ -113,25 +113,6 @@ async function reloadAllGoals() {
   allGoalsLoading.value = false
 }
 
-onMounted(async () => {
-  if (user.value) {
-    // Load profile and goals with error handling
-    try {
-      await profileStore.loadProfile() // Session token is used, not user ID
-    } catch (err) {
-      // Continue loading goals even if profile fails
-      error.value = 'Failed to load profile'
-    }
-
-    try {
-      await milestoneStore.loadUserGoals()
-      await reloadAllGoals()
-    } catch (err) {
-      error.value = 'Failed to load goals'
-    }
-  }
-})
-
 // Only watch for changes in the goals array length, not deep changes
 // This prevents infinite loops while still detecting when goals are added/removed
 watch(
