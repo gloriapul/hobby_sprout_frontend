@@ -64,7 +64,6 @@ const router = createRouter({
 // Navigation guard for authentication
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
-  authStore.checkAuth()
 
   const isLoggedIn = !!authStore.user
 
