@@ -34,9 +34,11 @@ The check in video follows this user journey carefully and the final video demo 
 
 This study visually goes into my thought process behind the design process for my app.
 
-### Updated Backend
+### Backend Notes
 
 [Assignment 4b Backend Document Updates](https://github.com/gloriapul/hobby_sprout/blob/main/design/assignment4b-design-changes.md)
+
+[Assignment 4c Backend Document Updates](https://github.com/gloriapul/hobby_sprout/blob/main/design/assignment4c-final-design-doc.md)
 
 ## Setup
 
