@@ -75,7 +75,7 @@ export class ApiService {
       let requestData = { ...data }
       const session = getFromStorage('token', null)
       if (session) {
-        requestData = { session, ...data }
+        requestData = { ...data, session }
       }
 
       const response = await apiClient.post(endpoint, requestData)
