@@ -69,7 +69,7 @@ export class ApiService {
     data: Record<string, any> = {},
   ): Promise<T> {
     try {
-      const endpoint = `/${conceptName}/${actionName}`
+      const endpoint = actionName ? `/${conceptName}/${actionName}` : `/${conceptName}`
 
       // Always add session token if it exists
       let requestData = { ...data }
