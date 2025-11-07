@@ -30,7 +30,9 @@ This document provides the REST API specification for all concepts in the HobbyS
 ```json
 {
   "user": "string",
-  "description": "string"
+  "description": "string",
+  "hobby": "string",
+  "autoGenerate": "boolean"
 }
 ```
 
@@ -74,7 +76,8 @@ steps.
 
 ```json
 {
-  "goal": "string"
+  "goal": "string",
+  "user": "string"
 }
 ```
 
@@ -116,7 +119,8 @@ steps.
 
 ```json
 {
-  "goal": "string"
+  "goal": "string",
+  "user": "string"
 }
 ```
 
@@ -158,7 +162,8 @@ steps.
 ```json
 {
   "goal": "string",
-  "description": "string"
+  "description": "string",
+  "user": "string"
 }
 ```
 
@@ -198,7 +203,8 @@ steps.
 
 ```json
 {
-  "step": "string"
+  "step": "string",
+  "user": "string"
 }
 ```
 
@@ -236,7 +242,8 @@ steps.
 
 ```json
 {
-  "step": "string"
+  "step": "string",
+  "user": "string"
 }
 ```
 
@@ -272,7 +279,8 @@ steps.
 
 ```json
 {
-  "goal": "string"
+  "goal": "string",
+  "user": "string"
 }
 ```
 
@@ -308,7 +316,8 @@ steps.
 
 ```json
 {
-  "user": "string"
+  "user": "string",
+  "hobby": "string"
 }
 ```
 
@@ -855,10 +864,6 @@ steps.
 
 ---
 
-## PasswordAuthentication Concept
-
-**Purpose:** Associate usernames and passwords with user identities for authentication purposes, thereby limiting access to known users.
-
 ### POST /api/PasswordAuthentication/register
 
 **Description:** Registers a new user with username and password.
@@ -926,6 +931,79 @@ steps.
 {
   "user": "string"
 }
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
+### POST /api/PasswordAuthentication/deleteUser
+
+**Description:** Permanently deletes a user and their stored credentials.
+
+**Requirements:**
+
+- A user with the given user ID exists
+
+**Effects:**
+
+- Permanently deletes the user and their credentials from the database
+- Prevents future authentication with those credentials
+
+**Request Body:**
+
+```json
+{
+  "user": "string"
+}
+```
+
+**Success Response Body:**
+
+```json
+{}
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
+### POST /api/QuizMatchmaker/\_getAllHobbyMatches
+
+**Description:** Retrieves all hobby matches for a user, most recent first.
+
+**Requirements:**
+
+- The user exists and has at least one HobbyMatch
+
+**Effects:**
+
+- Returns all hobby matches for the user, most recent first
+
+**Request Body:**
+
+```json
+{
+  "user": "string"
+}
+```
+
+**Success Response Body:**
+
+```json
+[{ "id": "string", "hobby": "string", "matchedAt": "string" }]
 ```
 
 **Error Response Body:**
