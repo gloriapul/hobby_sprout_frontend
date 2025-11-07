@@ -7,6 +7,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
 const PUBLIC_ENDPOINTS = [
   '/PasswordAuthentication/register',
   '/PasswordAuthentication/authenticate',
+  '/logout',
 ]
 
 // Create axios instance with default configuration
@@ -69,15 +70,12 @@ export class ApiService {
   ): Promise<T> {
     try {
       const endpoint = `/${conceptName}/${actionName}`
-      const isPublic = PUBLIC_ENDPOINTS.includes(endpoint)
 
-      // Automatically add session token for authenticated endpoints
+      // Always add session token if it exists
       let requestData = { ...data }
-      if (!isPublic) {
-        const session = getFromStorage('token', null)
-        if (session) {
-          requestData = { session, ...data }
-        }
+      const session = getFromStorage('token', null)
+      if (session) {
+        requestData = { session, ...data }
       }
 
       const response = await apiClient.post(endpoint, requestData)
