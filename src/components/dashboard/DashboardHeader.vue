@@ -104,8 +104,9 @@ const toggleUserMenu = () => {
 }
 
 const handleLogout = () => {
-  authStore.logout()
-  router.push('/login')
+  Promise.resolve(authStore.logout()).then(() => {
+    window.location.replace('/login')
+  })
 }
 
 // Close menu when clicking outside

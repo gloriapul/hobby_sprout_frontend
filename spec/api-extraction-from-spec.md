@@ -581,7 +581,7 @@ steps.
 
 ### POST /api/UserProfile/closeProfile
 
-**Description:** Permanently deletes a user profile and all associated data.
+**Description:** Permanently deletes a user profile and all associated data, including authentication and sessions.
 
 **Requirements:**
 
@@ -589,8 +589,8 @@ steps.
 
 **Effects:**
 
-- Permanently deletes the user's profile and all associated hobby records from the
-  database
+- Permanently deletes the user's profile, all associated hobby records, the user's authentication record (username/password), and all active sessions/tokens for that user from the database
+- After this, the user cannot log in again with the same credentials
 
 **Request Body:**
 

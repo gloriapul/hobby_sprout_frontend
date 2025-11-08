@@ -139,7 +139,7 @@
       message="Are you sure you want to delete your profile? This will permanently delete all your hobbies, goals, steps, quiz history, and profile information. This action cannot be undone."
       confirmText="Delete Profile"
       cancelText="Cancel"
-      @confirm="confirmcloseProfile"
+      @confirm="confirmCloseProfile"
       @cancel="showDeleteConfirmation = false"
     />
 
@@ -248,14 +248,11 @@ const closeProfile = () => {
   showDeleteConfirmation.value = true
 }
 
-const confirmcloseProfile = async () => {
-  const userId = user.value?.id || authStore.user?.id
+const confirmCloseProfile = async () => {
   const sessionToken = authStore.session
 
-  if (!userId || !sessionToken) {
-    alert(
-      'Unable to delete profile: User or session not found. Please try logging out and back in.',
-    )
+  if (!sessionToken) {
+    alert('Unable to delete profile: Session not found. Please try logging out and back in.')
     showDeleteConfirmation.value = false
     return
   }
@@ -263,36 +260,34 @@ const confirmcloseProfile = async () => {
   isDeleting.value = true
 
   try {
-    // Make a single call to the backend. The backend's chained sync will handle the rest.
+    // Only send session token as per backend contract
     const result = await ApiService.callConceptAction('UserProfile', 'closeProfile', {
-      user: userId,
       session: sessionToken,
     })
 
-    if (result && typeof result === 'object' && 'error' in result) {
-      const errorMsg = String(result.error)
-      if (/User profile .* not found/.test(errorMsg)) {
-        // Proceed as if successful
-        showDeleteConfirmation.value = false
-        authStore.logout()
-        milestoneStore.clearMilestones()
-        setTimeout(() => {
-          window.location.replace('/')
-        }, 100)
-        return
-      } else {
-        throw new Error(errorMsg)
+    if (result && typeof result === 'object') {
+      if ('error' in result) {
+        const errorMsg = String(result.error)
+        if (/User profile .* not found/.test(errorMsg)) {
+          // Ensure all state is cleared before redirect
+          showDeleteConfirmation.value = false
+          await authStore.logout()
+          milestoneStore.clearMilestones()
+          // Force reload to clear any cached state
+          window.location.replace('/login')
+          return
+        } else {
+          throw new Error(errorMsg)
+        }
       }
     }
 
-    // On success, update UI and redirect
+    // Fallback: treat as success if no error or explicit success
     showDeleteConfirmation.value = false
-    authStore.logout()
+    await authStore.logout()
     milestoneStore.clearMilestones()
-
-    setTimeout(() => {
-      window.location.replace('/')
-    }, 100)
+    // Force reload to clear any cached state
+    window.location.replace('/login')
   } catch (err) {
     isDeleting.value = false
     const errorMsg =
