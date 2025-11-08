@@ -95,17 +95,20 @@
                 Add Manual Step
               </button>
             </div>
-            <button
-              @click="saveGoal"
-              :disabled="steps.length === 0 || saving"
-              class="primary-button"
-            >
-              <span v-if="saving" class="button-spinner"></span>
-              <span v-else>Save Goal & Steps</span>
-            </button>
-            <button @click="onRegenerateClick" class="secondary-button" :disabled="generating">
-              Generate Steps
-            </button>
+            <template v-if="saving">
+              <button class="primary-button" disabled>
+                <span class="button-spinner"></span>
+                Saving...
+              </button>
+            </template>
+            <template v-else>
+              <button @click="saveGoal" :disabled="steps.length === 0" class="primary-button">
+                Save Goal & Steps
+              </button>
+              <button @click="onRegenerateClick" class="secondary-button" :disabled="generating">
+                Generate Steps
+              </button>
+            </template>
           </div>
         </div>
         <div v-else-if="step === 2 && method === 'manual'" class="step-content">
@@ -150,10 +153,17 @@
               </li>
             </template>
           </draggable>
-          <button @click="saveGoal" :disabled="steps.length === 0 || saving" class="primary-button">
-            <span v-if="saving" class="button-spinner"></span>
-            <span v-else>Save Goal & Steps</span>
-          </button>
+          <template v-if="saving">
+            <button class="primary-button" disabled>
+              <span class="button-spinner"></span>
+              Saving...
+            </button>
+          </template>
+          <template v-else>
+            <button @click="saveGoal" :disabled="steps.length === 0" class="primary-button">
+              Save Goal & Steps
+            </button>
+          </template>
         </div>
       </div>
     </div>
