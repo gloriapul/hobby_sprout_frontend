@@ -25,7 +25,7 @@ The check in video follows this user journey carefully and the final video demo 
 
 
 ### Assignment 4c Final
-[Assignment 4c Google Drive Link EDIT](https://drive.google.com/file/d/13lSqX4Wdi4TWI5wO7vQVDXbDHxCN13eO/view?usp=drive_link)
+[Assignment 4c Google Drive Link](https://drive.google.com/file/d/1BUpG8oEfhiek-_jvksNBH9pz-Y3zl0F2/view?usp=sharing)
 
 
 ## Visual Design Study
