@@ -98,8 +98,8 @@
             <button @click="saveGoal" :disabled="steps.length === 0" class="primary-button">
               Save Goal & Steps
             </button>
-            <button @click="confirmRegenerateSteps" class="secondary-button">
-              Regenerate Steps
+            <button @click="onRegenerateClick" class="secondary-button" :disabled="generating">
+              Generate Steps
             </button>
           </div>
         </div>
@@ -155,12 +155,69 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue'
+// Retry logic: if no goal, retry creation; if goal exists, regenerate steps
+async function onRegenerateClick() {
+  generationError.value = ''
+  // Always fetch the current active goal for this hobby and use its ID
+  const { ApiService } = await import('@/services/api')
+  const userId = authStore.user?.id
+  let goalId = null
+  if (userId && props.hobby) {
+    const existingGoalsResponse = await ApiService.callConceptAction<any>(
+      'MilestoneTracker',
+      '_getGoal',
+      {
+        user: userId,
+        hobby: props.hobby,
+      },
+    )
+    // Support both array and {goals: array} response
+    const goalsArray = Array.isArray(existingGoalsResponse.goals)
+      ? existingGoalsResponse.goals
+      : Array.isArray(existingGoalsResponse)
+        ? existingGoalsResponse
+        : []
+    type GoalObj = { goalId?: string; id?: string; goalIsActive?: boolean }
+    if (goalsArray.length > 0) {
+      // Find the active goal
+      const activeGoal = goalsArray.find((g: GoalObj) => g.goalIsActive === true)
+      if (activeGoal) {
+        goalId = activeGoal.goalId || activeGoal.id
+      }
+    }
+  }
+  if (!goalId) {
+    generationError.value = 'No goal to regenerate steps for.'
+    return
+  }
+  try {
+    await milestoneStore.regenerateSteps(goalId)
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+    await milestoneStore.loadGoalSteps(goalId)
+    steps.value = milestoneStore.steps.map((s, index) => ({
+      id: s.id || index,
+      description: s.description,
+    }))
+  } catch (err) {
+    generationError.value = 'Failed to regenerate steps. Please try again.'
+    steps.value = []
+  }
+}
 import { ref } from 'vue'
 import draggable from 'vuedraggable'
 import { useAuthStore } from '@/stores/auth'
 import { useMilestoneStore } from '@/stores/milestone'
 
 // Props and Emits
+
+// Hide background when modal is open
+onMounted(() => {
+  document.body.classList.add('modal-open')
+})
+onUnmounted(() => {
+  document.body.classList.remove('modal-open')
+})
 const props = defineProps<{ hobby: string }>()
 const emit = defineEmits(['close', 'goalCreated'])
 
@@ -265,7 +322,46 @@ async function chooseMethod(selected: 'generate' | 'manual') {
       'createGoal',
       payload,
     )
+    // Handle backend error for existing goal
     if (goalResult && typeof goalResult.error === 'string') {
+      if (goalResult.error.includes('active goal already exists')) {
+        // Fetch the existing goal and switch to regeneration mode
+        const existingGoalsRetry = await ApiService.callConceptAction<any>(
+          'MilestoneTracker',
+          '_getGoal',
+          {
+            user: userId,
+            hobby: props.hobby,
+          },
+        )
+        if (Array.isArray(existingGoalsRetry) && existingGoalsRetry.length > 0) {
+          const goalId = existingGoalsRetry[0].goalId || existingGoalsRetry[0].id
+          goalIdRef.value = goalId
+          await ApiService.callConceptAction<any>('MilestoneTracker', 'regenerateSteps', {
+            goal: goalId,
+          })
+          await new Promise((resolve) => setTimeout(resolve, 2000))
+          const stepsResult = await ApiService.callConceptAction<any>(
+            'MilestoneTracker',
+            '_getSteps',
+            {
+              goal: goalId,
+            },
+          )
+          const stepsArray = stepsResult?.steps || stepsResult
+          if (stepsArray && Array.isArray(stepsArray) && stepsArray.length > 0) {
+            steps.value = stepsArray.map((s: any, index: number) => ({
+              id: s.id || index,
+              description: s.description,
+            }))
+          } else {
+            generationError.value = 'Could not retrieve regenerated steps.'
+          }
+          step.value = 2
+          generating.value = false
+          return
+        }
+      }
       throw new Error(goalResult.error)
     }
     const goalId = goalResult.goalId
@@ -291,13 +387,7 @@ async function chooseMethod(selected: 'generate' | 'manual') {
     }
   } catch (err: any) {
     generationError.value = 'An error occurred. Please try again or manually enter steps.'
-    if (
-      err.message.includes('too detailed') ||
-      err.message.includes('too verbose') ||
-      err.message.includes('Failed to parse')
-    ) {
-      step.value = 2
-    }
+    step.value = 2
   } finally {
     generating.value = false
   }
@@ -362,7 +452,6 @@ async function saveGoal() {
             step: step.id,
           },
         )
-        console.log('[GoalCreationModal] removeStep', step.id, removeResult)
       }
     }
 
@@ -371,12 +460,10 @@ async function saveGoal() {
       (desc, idx) => ({ id: idx, description: desc }),
     )
     for (const step of uniqueSteps) {
-      console.log('[GoalCreationModal] addStep', goalId, step.description)
       const addResult = await ApiService.callConceptAction<any>('MilestoneTracker', 'addStep', {
         goal: goalId,
         description: step.description,
       })
-      console.log('[GoalCreationModal] addStep result', addResult)
     }
 
     // Reload steps from backend to ensure no duplicates
@@ -391,8 +478,6 @@ async function saveGoal() {
         uniqueBackendSteps.push({ id: s.id, description: desc })
       }
     }
-    console.log('[GoalCreationModal] backend steps after save', milestoneStore.steps)
-    console.log('[GoalCreationModal] unique backend steps after save', uniqueBackendSteps)
     steps.value = uniqueBackendSteps
     emit('goalCreated', {
       description: goalDescription.value,
@@ -413,17 +498,29 @@ async function confirmRegenerateSteps() {
     return
   }
   generating.value = true
+  // Always clear error state before attempting regeneration
   generationError.value = ''
   try {
     await milestoneStore.regenerateSteps(goalIdRef.value)
     await new Promise((resolve) => setTimeout(resolve, 2000))
     await milestoneStore.loadGoalSteps(goalIdRef.value)
-    steps.value = milestoneStore.steps.map((s, index) => ({
-      id: s.id || index,
-      description: s.description,
-    }))
+    // Defensive: always clear error state after successful regeneration
+    generationError.value = ''
+    // Always update steps from store, even after previous errors
+    const seen = new Set<string>()
+    const uniqueSteps = []
+    for (const s of milestoneStore.steps) {
+      const desc = s.description.trim()
+      if (!seen.has(desc)) {
+        seen.add(desc)
+        uniqueSteps.push({ id: s.id, description: desc })
+      }
+    }
+    steps.value = uniqueSteps
   } catch (err: any) {
     generationError.value = 'Failed to regenerate steps. Please try again.'
+    // Also clear steps if regeneration fails, to avoid stale UI
+    steps.value = []
   } finally {
     generating.value = false
   }
@@ -663,5 +760,18 @@ async function confirmRegenerateSteps() {
   100% {
     transform: rotate(360deg);
   }
+}
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
 }
 </style>

@@ -46,7 +46,6 @@ export const useProfileStore = defineStore('profile', () => {
           name: profileData.displayname || '',
           image: profileData.profile || '',
         }
-        console.debug('[profile.ts] loadProfile: set profile.value =', profile.value)
 
         // Load all hobbies (active and inactive) after profile loads
         const hobbyResponse = await ApiService.callConceptAction<any>(
@@ -67,7 +66,6 @@ export const useProfileStore = defineStore('profile', () => {
         // Initialize with empty values and let the user know to refresh
         profile.value = { name: '', image: '' }
         hobbies.value = []
-        console.debug('[profile.ts] loadProfile: set profile.value to empty')
       }
     } catch (err: any) {
       if (err.response?.status === 504) {

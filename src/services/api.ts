@@ -21,26 +21,19 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor to automatically add session token
 apiClient.interceptors.request.use(
   (config) => {
-    console.log('[api.ts] interceptor: config.url =', config.url)
     const isPublic = PUBLIC_ENDPOINTS.some((endpoint) => config.url?.endsWith(endpoint))
-    console.log('[api.ts] interceptor: isPublic =', isPublic)
-    
+
     if (!isPublic) {
       const session = getFromStorage('session', null)
-      console.log('[api.ts] interceptor: session from storage =', session)
       
       if (session) {
         // ✅ Add session to Authorization header (preferred method)
         config.headers.Authorization = `Bearer ${session}`
-        console.log('[api.ts] interceptor: added session to Authorization header')
-      } else {
-        console.warn('[api.ts] interceptor: no session found in storage for authenticated endpoint')
       }
     }
     return config
   },
   (error) => {
-    console.error('[api.ts] interceptor: request error =', error)
     return Promise.reject(error)
   },
 )
@@ -48,15 +41,11 @@ apiClient.interceptors.request.use(
 // Response interceptor (for handling common response patterns)
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
-    console.log('[api.ts] response interceptor: success', response.data)
     return response
   },
   (error) => {
-    console.error('[api.ts] response interceptor: error', error.response?.data || error.message)
-
     // Clear stale session only on authentication failures (not timeouts)
     if (error.response?.status === 401) {
-      console.log('[api.ts] response interceptor: 401 error, clearing session')
       removeFromStorage('session')
       removeFromStorage('user')
 
@@ -86,14 +75,10 @@ export class ApiService {
     data: Record<string, any> = {},
   ): Promise<T> {
     try {
-      console.log('[api.ts] callConceptAction:', { conceptName, actionName, data })
       const endpoint = actionName ? `/${conceptName}/${actionName}` : `/${conceptName}`
-      console.log('[api.ts] callConceptAction: endpoint =', endpoint)
       const response = await apiClient.post(endpoint, data)
-      console.log('[api.ts] callConceptAction: response =', response.data)
       return response.data
     } catch (error) {
-      console.error('[api.ts] callConceptAction: error =', error)
       throw error
     }
   }
@@ -103,12 +88,9 @@ export class ApiService {
    */
   static async get<T = any>(endpoint: string): Promise<T> {
     try {
-      console.log('[api.ts] get:', endpoint)
       const response = await apiClient.get(endpoint)
-      console.log('[api.ts] get: response =', response.data)
       return response.data
     } catch (error) {
-      console.error('[api.ts] get: error =', error)
       throw error
     }
   }
@@ -118,12 +100,9 @@ export class ApiService {
    */
   static async post<T = any>(endpoint: string, data: any = {}): Promise<T> {
     try {
-      console.log('[api.ts] post:', { endpoint, data })
       const response = await apiClient.post(endpoint, data)
-      console.log('[api.ts] post: response =', response.data)
       return response.data
     } catch (error) {
-      console.error('[api.ts] post: error =', error)
       throw error
     }
   }

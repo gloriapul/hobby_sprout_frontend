@@ -1,5 +1,6 @@
 <template>
-  <div class="my-journey-view">
+  <div class="my-journey-view milestones-container" style="position: relative">
+    <div v-if="showCreateGoal" class="milestones-overlay"></div>
     <div class="journey-header">
       <h1>My Hobby Journey</h1>
       <p class="page-description">Track your progress and achieve your hobby goals step by step</p>
@@ -285,6 +286,8 @@ const handleGoalCreated = async (goalData: {
 
 onMounted(async () => {
   if (authStore.user) {
+    // Always load user profile to get hobbies
+    await profileStore.loadProfile()
     // Only fetch goals if store is empty (first load or after logout)
     if (!milestoneStore.goals.length) {
       await milestoneStore.loadUserGoals()
@@ -302,6 +305,20 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.milestones-container {
+  position: relative;
+}
+.milestones-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  opacity: 1;
+  z-index: 10;
+  pointer-events: none;
+}
 .my-journey-view {
   width: 100%;
   padding: 0;

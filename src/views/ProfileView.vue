@@ -250,9 +250,12 @@ const closeProfile = () => {
 
 const confirmcloseProfile = async () => {
   const userId = user.value?.id || authStore.user?.id
+  const sessionToken = authStore.session
 
-  if (!userId) {
-    alert('Unable to delete profile: User not found. Please try logging out and back in.')
+  if (!userId || !sessionToken) {
+    alert(
+      'Unable to delete profile: User or session not found. Please try logging out and back in.',
+    )
     showDeleteConfirmation.value = false
     return
   }
@@ -263,10 +266,23 @@ const confirmcloseProfile = async () => {
     // Make a single call to the backend. The backend's chained sync will handle the rest.
     const result = await ApiService.callConceptAction('UserProfile', 'closeProfile', {
       user: userId,
+      session: sessionToken,
     })
 
     if (result && typeof result === 'object' && 'error' in result) {
-      throw new Error(result.error as string)
+      const errorMsg = String(result.error)
+      if (/User profile .* not found/.test(errorMsg)) {
+        // Proceed as if successful
+        showDeleteConfirmation.value = false
+        authStore.logout()
+        milestoneStore.clearMilestones()
+        setTimeout(() => {
+          window.location.replace('/')
+        }, 100)
+        return
+      } else {
+        throw new Error(errorMsg)
+      }
     }
 
     // On success, update UI and redirect
