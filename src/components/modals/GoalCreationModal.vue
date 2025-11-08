@@ -155,8 +155,7 @@
 </template>
 
 <script setup lang="ts">
-type Step = { id: string | number; description: string }
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import draggable from 'vuedraggable'
 import { useAuthStore } from '@/stores/auth'
 import { useMilestoneStore } from '@/stores/milestone'
@@ -220,10 +219,40 @@ async function chooseMethod(selected: 'generate' | 'manual') {
       hobby: props.hobby,
     })
     if (Array.isArray(existingGoals) && existingGoals.length > 0) {
-      generationError.value =
-        'You already have an active goal for this hobby. Please close it before creating a new one.'
-      generating.value = false
-      return
+      // If generate is selected and a goal exists, regenerate steps for that goal
+      if (selected === 'generate') {
+        const goalId = existingGoals[0].goalId || existingGoals[0].id
+        goalIdRef.value = goalId
+        // Call regenerateSteps endpoint
+        await ApiService.callConceptAction<any>('MilestoneTracker', 'regenerateSteps', {
+          goal: goalId,
+        })
+        await new Promise((resolve) => setTimeout(resolve, 2000))
+        const stepsResult = await ApiService.callConceptAction<any>(
+          'MilestoneTracker',
+          '_getSteps',
+          {
+            goal: goalId,
+          },
+        )
+        const stepsArray = stepsResult?.steps || stepsResult
+        if (stepsArray && Array.isArray(stepsArray) && stepsArray.length > 0) {
+          steps.value = stepsArray.map((s: any, index: number) => ({
+            id: s.id || index,
+            description: s.description,
+          }))
+        } else {
+          generationError.value = 'Could not retrieve regenerated steps.'
+        }
+        step.value = 2
+        generating.value = false
+        return
+      } else {
+        generationError.value =
+          'You already have an active goal for this hobby. Please close it before creating a new one.'
+        generating.value = false
+        return
+      }
     }
 
     const payload = {
@@ -290,6 +319,11 @@ function validateManualStep() {
 function handleAddStep() {
   if (!validateManualStep()) return
   const stepText = manualStepInput.value.trim()
+  // Prevent duplicate descriptions in UI
+  if (steps.value.some((s) => s.description.trim() === stepText)) {
+    validationError.value = 'This step already exists.'
+    return
+  }
   steps.value.push({ id: Date.now(), description: stepText })
   manualStepInput.value = ''
   validationError.value = ''
@@ -313,72 +347,59 @@ async function saveGoal() {
 
     const { ApiService } = await import('@/services/api')
 
-    // Only update steps if in manual mode, or if user has edited generated steps
-    if (method.value === 'manual' || (method.value === 'generate' && stepsWereEdited())) {
-      // Remove all existing steps
-      const existingStepsResult = await ApiService.callConceptAction<any>(
-        'MilestoneTracker',
-        '_getSteps',
-        { goal: goalId },
-      )
-      const existingSteps = existingStepsResult?.steps || existingStepsResult
-      if (Array.isArray(existingSteps)) {
-        for (const step of existingSteps) {
-          await ApiService.callConceptAction<any>('MilestoneTracker', 'removeStep', {
-            step: step.id,
-          })
-        }
-      }
-      // Add all steps from UI
-      for (const step of steps.value) {
-        await ApiService.callConceptAction<any>('MilestoneTracker', 'addStep', {
-          goal: goalId,
-          description: step.description,
-        })
-      }
-    }
-    // Helper to check if steps were edited in generate mode
-    function stepsWereEdited() {
-      // If the user is in generate mode, compare the current steps to the originally generated steps
-      // If any step description has changed, or steps were added/removed, return true
-      // For simplicity, we can store the original generated steps when they are first loaded
-      if (!originalGeneratedSteps.value.length) return false
-      if (originalGeneratedSteps.value.length !== steps.value.length) return true
-      for (let i = 0; i < steps.value.length; i++) {
-        if (
-          (steps.value[i]?.description ?? '') !==
-          (originalGeneratedSteps.value[i]?.description ?? '')
-        ) {
-          return true
-        }
-      }
-      return false
-    }
-
-    // Store the original generated steps for comparison
-    const originalGeneratedSteps = ref<{ id: string | number; description: string }[]>([])
-
-    // When steps are generated, store them for later comparison
-    watch(
-      () => steps.value,
-      (newSteps, oldSteps) => {
-        if (
-          method.value === 'generate' &&
-          originalGeneratedSteps.value.length === 0 &&
-          newSteps.length > 0
-        ) {
-          // Deep copy
-          originalGeneratedSteps.value = newSteps.map((s) => ({ ...s }))
-        }
-      },
-      { immediate: true, deep: true },
+    const existingStepsResult = await ApiService.callConceptAction<any>(
+      'MilestoneTracker',
+      '_getSteps',
+      { goal: goalId },
     )
+    const existingSteps = existingStepsResult?.steps || existingStepsResult
+    if (Array.isArray(existingSteps)) {
+      for (const step of existingSteps) {
+        const removeResult = await ApiService.callConceptAction<any>(
+          'MilestoneTracker',
+          'removeStep',
+          {
+            step: step.id,
+          },
+        )
+        console.log('[GoalCreationModal] removeStep', step.id, removeResult)
+      }
+    }
 
+    // Only add unique step descriptions to backend
+    const uniqueSteps = Array.from(new Set(steps.value.map((s) => s.description.trim()))).map(
+      (desc, idx) => ({ id: idx, description: desc }),
+    )
+    for (const step of uniqueSteps) {
+      console.log('[GoalCreationModal] addStep', goalId, step.description)
+      const addResult = await ApiService.callConceptAction<any>('MilestoneTracker', 'addStep', {
+        goal: goalId,
+        description: step.description,
+      })
+      console.log('[GoalCreationModal] addStep result', addResult)
+    }
+
+    // Reload steps from backend to ensure no duplicates
+    await milestoneStore.loadGoalSteps(goalId)
+    // Filter backend steps to only unique descriptions
+    const seen = new Set<string>()
+    const uniqueBackendSteps = []
+    for (const s of milestoneStore.steps) {
+      const desc = s.description.trim()
+      if (!seen.has(desc)) {
+        seen.add(desc)
+        uniqueBackendSteps.push({ id: s.id, description: desc })
+      }
+    }
+    console.log('[GoalCreationModal] backend steps after save', milestoneStore.steps)
+    console.log('[GoalCreationModal] unique backend steps after save', uniqueBackendSteps)
+    steps.value = uniqueBackendSteps
     emit('goalCreated', {
       description: goalDescription.value,
-      steps: steps.value.map((s) => s.description).filter((s) => s.trim()),
+      steps: uniqueBackendSteps.map((s) => s.description),
       hobby: props.hobby,
     })
+    steps.value = []
     resetModalState()
     emit('close')
   } catch (err: any) {
@@ -456,6 +477,7 @@ async function confirmRegenerateSteps() {
   color: #256b28;
   font-size: 1.5rem;
   font-weight: 500;
+
   letter-spacing: 0.5px;
 }
 .close-button {

@@ -199,15 +199,7 @@ export const useMilestoneStore = defineStore('milestone', () => {
         throw new Error(response.error)
       }
 
-      // Add the new step to our list
-      const newStep: Step = {
-        id: response.step,
-        description,
-        start: new Date().toISOString(),
-        isComplete: false,
-      }
-
-      steps.value.push(newStep)
+      // Do not push to steps.value here; rely on backend reloads for canonical state
     } catch (err: any) {
       error.value = err.message || 'Failed to add step'
       throw err
