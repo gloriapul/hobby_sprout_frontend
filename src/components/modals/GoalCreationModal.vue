@@ -95,8 +95,13 @@
                 Add Manual Step
               </button>
             </div>
-            <button @click="saveGoal" :disabled="steps.length === 0" class="primary-button">
-              Save Goal & Steps
+            <button
+              @click="saveGoal"
+              :disabled="steps.length === 0 || saving"
+              class="primary-button"
+            >
+              <span v-if="saving" class="button-spinner"></span>
+              <span v-else>Save Goal & Steps</span>
             </button>
             <button @click="onRegenerateClick" class="secondary-button" :disabled="generating">
               Generate Steps
@@ -145,8 +150,9 @@
               </li>
             </template>
           </draggable>
-          <button @click="saveGoal" :disabled="steps.length === 0" class="primary-button">
-            Save Goal & Steps
+          <button @click="saveGoal" :disabled="steps.length === 0 || saving" class="primary-button">
+            <span v-if="saving" class="button-spinner"></span>
+            <span v-else>Save Goal & Steps</span>
           </button>
         </div>
       </div>
@@ -423,7 +429,10 @@ function removeStep(idx: number) {
   steps.value.splice(idx, 1)
 }
 
+const saving = ref(false)
 async function saveGoal() {
+  if (saving.value) return
+  saving.value = true
   try {
     const goalId = goalIdRef.value
     if (!goalId) {
@@ -489,6 +498,8 @@ async function saveGoal() {
     emit('close')
   } catch (err: any) {
     generationError.value = 'Failed to save goal. Please try again or manually enter steps.'
+  } finally {
+    saving.value = false
   }
 }
 
